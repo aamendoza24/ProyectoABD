@@ -105,7 +105,7 @@
                 </span>
                 <h4 class="text-section">Operaciones</h4>
               </li>
-              <li class="nav-item">
+              <li class="nav-item {% if current_path in [url_for('catalogo'), url_for('ventas')] %}active{% endif %}">
                 <a data-bs-toggle="collapse" href="#base">
                   <i class="fas fa-layer-group"></i>
                   <p>Ventas</p>
@@ -114,7 +114,7 @@
                 <div class="collapse" id="base">
                   <ul class="nav nav-collapse">
                     <li>
-                      <a href="components/avatars.html">
+                      <a href="{{ url_for('catalogo') }}">
                         <span class="sub-item">Realizar Venta</span>
                       </a>
                     </li>
@@ -137,7 +137,7 @@
                   <p>Inventario</p>
                 </a>
               </li>
-              <li class="nav-item {% if current_path in [url_for('ventas'), url_for('historial_compras')] %}active{% endif %}">
+              <li class="nav-item {% if current_path in [url_for('compras'), url_for('historial_compras')] %}active{% endif %}">
                 <a data-bs-toggle="collapse" href="#forms">
                   <i class="fas fa-pen-square"></i>
                   <p>Compras</p>
