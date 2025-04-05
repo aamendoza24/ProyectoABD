@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Historial de Ventas
+{% endblock %}
+
+{% block main %}
+<h2 class="text-center">📊 Historial de Ventas</h2>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <label for="filtro-ventas">Filtrar por:</label>
+        <select id="filtro-ventas" class="form-control">
+            <option value="todas">Todas las ventas</option>
+            <option value="semana">Última semana</option>
+            <option value="mes">Último mes</option>
+        </select>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID Venta</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Detalles</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-ventas">
+            {% for venta in ventas %}
+            <tr>
+                <td>{{ venta.id }}</td>
+                <td>{{ venta.fecha }}</td>
+                <td>C$ {{ venta.total | round(2) }}</td>
+                <td>
+                    <button class="btn btn-info ver-detalle" data-id="{{ venta.id }}">
+                        📄 Ver Detalles
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL PARA VER DETALLES DE LA VENTA -->
+<div class="modal fade" id="modalDetalles" tabindex="-1" aria-labelledby="modalDetallesLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalDetallesLabel">Detalles de la Venta</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <i class="mdi mdi-close-circle "></i> 
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio Unitario</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-detalles">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Filtro de ventas
+        $("#filtro-ventas").change(function() {
+            let filtro = $(this).val();
+            $.ajax({
+                url: "/ventas",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ filtro: filtro }),
+                success: function(response) {
+                    let tbody = $("#tabla-ventas");
+                    tbody.empty();
+                    response.ventas.forEach(venta => {
+                        let fila = `<tr>
+                            <td>${venta.id}</td>
+                            <td>${venta.fecha}</td>
+                            <td>C$ ${venta.total.toFixed(2)}</td>
+                            <td>
+                                <button class="btn btn-info ver-detalle" data-id="${venta.id}">
+                                    📄 Ver Detalles
+                                </button>
+                            </td>
+                        </tr>`;
+                        tbody.append(fila);
+                    });
+                }
+            });
+        });
+
+        // Ver detalles de la venta
+        $(document).on("click", ".ver-detalle", function() {
+            let idVenta = $(this).data("id");
+
+            $.ajax({
+                url: `/detalles_venta/${idVenta}`,
+                method: "GET",
+                success: function(response) {
+                    let tbody = $("#tabla-detalles");
+                    tbody.empty();
+                    response.detalles.forEach(detalle => {
+                        let fila = `<tr>
+                            <td>${detalle.nombre}</td>
+                            <td>${detalle.cantidad}</td>
+                            <td>C$ ${detalle.precio_unitario.toFixed(2)}</td>
+                            <td>C$ ${(detalle.precio_unitario * detalle.cantidad).toFixed(2)}</td>
+                        </tr>`;
+                        tbody.append(fila);
+                    });
+
+                    // Mostrar modal
+                    $("#modalDetalles").modal("show");
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,327 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Catálogo de Ventas
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Carrito de compras (Fijo) -->
+        <div class="col-md-4">
+            <div class="card carrito-card">
+                <div class="card-header bg-primary text-white text-center">Carrito</div>
+                <div class="card-body">
+                    <div class="table-responsive carrito-tabla">
+                        <table class="table table-sm">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th class="small">Producto</th>
+                                    <th class="small text-center">Cant.</th>
+                                    <th class="small text-center">Precio</th>
+                                    <th class="small text-center">X</th>
+                                </tr>
+                            </thead>
+                            <tbody id="carrito">
+                                <!-- Productos añadidos dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label for="descuento" class="small">Descuento:</label>
+                        <input type="number" class="form-control form-control-sm" id="descuento" placeholder="Ingrese descuento">
+                    </div>
+                    <h6>Total: <span id="total">C$ 0.00</span></h6>
+                    <button class="btn btn-success btn-block btn-sm">Pagar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Catálogo de productos con scroll -->
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between mb-2">
+                <input type="text" id="buscar" class="form-control form-control-sm w-50" placeholder="Buscar producto...">
+                <select id="filtro-categoria" class="form-control form-control-sm w-25">
+                    <option value="0">Todas las categorías</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.IDCategoria }}">{{ categoria.Nombre }}</option>
+                    {% endfor %}
+                </select>|
+            </div>
+            <div class="catalogo-scroll">
+                <div class="row" id="productos">
+                    {% for producto in productos %}
+                        <div class="col-md-4 producto-card" data-categoria="{{ producto.IDCategoria }}">
+                            <div class="card">
+                                <img src="{{ producto.ImagenURL }}" class="card-img-top" alt="{{ producto.Nombre }}">
+                                <div class="card-body text-center">
+                                    <h6 class="small">{{ producto.Nombre }}</h6>
+                                    <p class="text-success small">C$ {{ producto.Precio }}</p>
+                                    <button class="btn btn-primary btn-sm agregar-carrito" 
+                                            data-id="{{ producto.IDProducto }}"
+                                            data-nombre="{{ producto.Nombre }}"
+                                            data-precio="{{ producto.Precio }}">
+                                        Agregar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Pago -->
+<div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPagoLabel">Información de Pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formPago">
+                    <!-- Información del Cliente -->
+                     <div class="row">
+                        <h5 class="text-center">Información del cliente (Opcional)</h4>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="clienteNombre" class="form-label">Nombre del Cliente</label>
+                                <input type="text" class="form-control" id="clienteNombre" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="clienteId" class="form-label">ID del Cliente</label>
+                                <input type="text" class="form-control" id="clienteId" required>
+                            </div>
+                        </div>
+
+                     </div>
+
+                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dineroRecibido" class="form-label">Cantidad Recibida</label>
+                                <input type="number" class="form-control" id="dineroRecibido" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="cambio" class="form-label">Cambio</label>
+                                <input type="number" class="form-control" id="cambio" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="totalPago" class="form-label">Total a Pagar</label>
+                                <input type="text" class="form-control" id="totalPago" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tipoPago" class="form-label">Tipo de Pago</label>
+                                <select class="form-control" id="tipoPago">
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="tarjeta">Tarjeta</option>
+                                </select>
+                            </div>
+                        </div>
+
+                     </div>
+                    <!-- Detalles de Pago -->
+
+
+
+                    <div class="mb-3">
+                        <label for="notaVenta" class="form-label">Nota de Venta</label>
+                        <textarea class="form-control" id="notaVenta" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="finalizarPago">Finalizar Pago</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- CSS mejorado -->
+<style>
+    /* Hace que el carrito se mantenga fijo */
+    .carrito-card {
+        position: sticky;
+        top: 20px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        font-size: 0.85rem; /* Reduce el tamaño de fuente */
+    }
+
+    /* La tabla del carrito tendrá scroll */
+    .carrito-tabla {
+        max-height: 40vh;
+        overflow-y: auto;
+    }
+
+    /* Estilo reducido para los textos */
+    .small {
+        font-size: 0.8rem;
+    }
+
+    /* Sección del catálogo con scroll */
+    .catalogo-scroll {
+        max-height: 80vh;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let carrito = [];
+        const carritoTable = document.getElementById("carrito");
+        const totalSpan = document.getElementById("total");
+        const buscarInput = document.getElementById("buscar");
+        const filtroCategoria = document.getElementById("filtro-categoria");
+        const productosContainer = document.getElementById("productos");
+    
+        // Agregar productos al carrito
+        productosContainer.addEventListener("click", function (e) {
+            if (e.target.classList.contains("agregar-carrito")) {
+                let id = e.target.dataset.id;
+                let nombre = e.target.dataset.nombre;
+                let precio = parseFloat(e.target.dataset.precio);
+                let productoExistente = carrito.find(p => p.id === id);
+    
+                if (productoExistente) {
+                    productoExistente.cantidad++;
+                } else {
+                    carrito.push({ id, nombre, precio, cantidad: 1 });
+                }
+                actualizarCarrito();
+            }
+        });
+    
+        function actualizarCarrito() {
+            carritoTable.innerHTML = "";
+            let total = 0;
+            carrito.forEach(producto => {
+                let subtotal = producto.precio * producto.cantidad;
+                total += subtotal;
+                let row = `<tr>
+                            <td class="small">${producto.nombre}</td>
+                            <td class="text-center"><input type="number" class="form-control form-control-sm cantidad" data-id="${producto.id}" value="${producto.cantidad}" min="1"></td>
+                            <td class="text-center small">${producto.precio.toFixed(2)}</td>
+                            <td class="text-center"><button class="btn btn-danger btn-sm eliminar" data-id="${producto.id}">X</button></td>
+                          </tr>`;
+                carritoTable.innerHTML += row;
+            });
+            totalSpan.textContent = `C$ ${total.toFixed(2)}`;
+        }
+    
+        carritoTable.addEventListener("input", function (e) {
+            if (e.target.classList.contains("cantidad")) {
+                let id = e.target.dataset.id;
+                let nuevaCantidad = parseInt(e.target.value);
+                let producto = carrito.find(p => p.id === id);
+                if (producto && nuevaCantidad >= 1) {
+                    producto.cantidad = nuevaCantidad;
+                    actualizarCarrito();
+                }
+            }
+        });
+    
+        carritoTable.addEventListener("click", function (e) {
+            if (e.target.classList.contains("eliminar")) {
+                let id = e.target.dataset.id;
+                carrito = carrito.filter(p => p.id !== id);
+                actualizarCarrito();
+            }
+        });
+    
+        document.getElementById("descuento").addEventListener("input", function () {
+            let descuento = parseFloat(this.value) || 0;
+            let total = carrito.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
+            totalSpan.textContent = `C$ ${(total - descuento).toFixed(2)}`;
+        });
+    
+        // FILTRO POR NOMBRE Y CATEGORÍA
+        function filtrarProductos() {
+            let textoBusqueda = buscarInput.value.toLowerCase();
+            let categoriaSeleccionada = filtroCategoria.value;
+    
+            document.querySelectorAll(".producto-card").forEach(function (card) {
+                let nombre = card.querySelector("h6").textContent.toLowerCase();
+                let categoria = card.getAttribute("data-categoria");
+    
+                // Muestra solo si coincide con la búsqueda y la categoría seleccionada
+                let coincideBusqueda = nombre.includes(textoBusqueda);
+                let coincideCategoria = categoriaSeleccionada === "0" || categoria === categoriaSeleccionada;
+    
+                card.style.display = coincideBusqueda && coincideCategoria ? "block" : "none";
+            });
+        }
+    
+        // Eventos de búsqueda y filtrado
+        buscarInput.addEventListener("keyup", filtrarProductos);
+        filtroCategoria.addEventListener("change", filtrarProductos);
+
+        const botonPagar = document.querySelector(".btn-success");
+    const modalPago = new bootstrap.Modal(document.getElementById('modalPago'), {
+        keyboard: false
+    });
+    const totalPagoInput = document.getElementById('totalPago');
+    const dineroRecibidoInput = document.getElementById('dineroRecibido');
+    const cambioInput = document.getElementById('cambio');
+    const finalizarPagoBtn = document.getElementById('finalizarPago');
+    
+    // Calcular el total a pagar
+    botonPagar.addEventListener("click", function () {
+        let total = 0;
+        carrito.forEach(producto => {
+            total += producto.precio * producto.cantidad;
+        });
+        totalPagoInput.value = `C$ ${total.toFixed(2)}`;
+        // Mostrar el modal de pago
+        modalPago.show();
+    });
+
+    // Calcular el cambio cuando el usuario ingresa la cantidad recibida
+    dineroRecibidoInput.addEventListener("input", function () {
+        const total = parseFloat(totalPagoInput.value.replace("C$ ", ""));
+        const recibido = parseFloat(dineroRecibidoInput.value) || 0;
+        const cambio = recibido - total;
+        cambioInput.value = cambio >= 0 ? cambio.toFixed(2) : '0.00';
+    });
+
+    // Finalizar pago
+    finalizarPagoBtn.addEventListener("click", function () {
+        const clienteNombre = document.getElementById('clienteNombre').value;
+        const clienteId = document.getElementById('clienteId').value;
+        const tipoPago = document.getElementById('tipoPago').value;
+        const dineroRecibido = parseFloat(dineroRecibidoInput.value) || 0;
+        const cambio = parseFloat(cambioInput.value) || 0;
+        const notaVenta = document.getElementById('notaVenta').value;
+
+        // Aquí puedes agregar la lógica para guardar la venta en la base de datos
+        // Ejemplo:
+        // fetch('/procesar_pago', { method: 'POST', body: JSON.stringify(...), headers: {'Content-Type': 'application/json'} })
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Venta Finalizada',
+            text: `Venta registrada con éxito. Cambio: C$ ${cambio.toFixed(2)}.`,
+            confirmButtonText: 'Aceptar'
+        }).then(() => {
+            // Limpiar carrito y cerrar modal
+            carrito = [];
+            actualizarCarrito();
+            modalPago.hide();
+        });
+    });
+    });
+    </script>
+    
+{% endblock %}
