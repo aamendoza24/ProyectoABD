@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Reporte de Ventas Diarias
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid">
+    <h2 class="my-4">Reporte de Ventas Diarias</h2>
+
+    <!-- Filtro por rango de fechas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <label for="fechaInicio">Desde:</label>
+            <input type="date" id="fechaInicio" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="fechaFin">Hasta:</label>
+            <input type="date" id="fechaFin" class="form-control">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-primary" onclick="filtrarTabla()">Filtrar</button>
+        </div>
+    </div>
+
+    <!-- Tabla de ventas diarias -->
+    <div class="table-responsive mb-5">
+        <table class="table table-bordered table-striped" id="tablaVentas">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Total Ventas (C$)</th>
+                    <th>Crecimiento vs Día Anterior (C$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in ventas_dia %}
+                <tr>
+                    <td>{{ row.Fecha }}</td>
+                    <td>{{ row.TotalVentas }}</td>
+                    <td>{{ row.Crecimiento }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+                <!-- Gráfico de barras: crecimiento últimos 7 días -->
+            <h4 class="mb-3">Crecimiento de Ventas - Últimos 7 Días</h4>
+             <canvas id="graficoBarras" height="120"></canvas>
+        </div>
+
+        <div class="col-md-4">
+            <h4 class="mt-5 mb-3">Top 5 Productos Más Vendidos (Últimos 7 días)</h4>
+            <canvas id="graficoPastel" height="100"></canvas>
+        </div>
+    </div>
+
+
+    <!-- Gráfico de pastel: top 5 productos -->
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labelsBarras = {{ fechas|tojson }};
+    const datosBarras = {{ totales|tojson }};
+
+    const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
+    new Chart(ctxBarras, {
+        type: 'bar',
+        data: {
+            labels: labelsBarras,
+            datasets: [{
+                label: 'Ventas C$ por Día',
+                data: datosBarras,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    const labelsPastel = {{ nombres_productos|tojson }};
+    const datosPastel = {{ cantidades_vendidas|tojson }};
+
+
+    const ctxPastel = document.getElementById('graficoPastel').getContext('2d');
+    new Chart(ctxPastel, {
+        type: 'pie',
+        data: {
+            labels: labelsPastel,
+            datasets: [{
+                data: datosPastel,
+                backgroundColor: [
+                    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+
+    function filtrarTabla() {
+        const desde = document.getElementById('fechaInicio').value;
+        const hasta = document.getElementById('fechaFin').value;
+
+        document.querySelectorAll('#tablaVentas tbody tr').forEach(row => {
+            const fechaTexto = row.children[0].textContent.trim().substring(0, 10); // YYYY-MM-DD
+            if ((desde && fechaTexto < desde) || (hasta && fechaTexto > hasta)) {
+                row.style.display = 'none';
+            } else {
+                row.style.display = '';
+            }
+        });
+    }
+</script>
+{% endblock %}
