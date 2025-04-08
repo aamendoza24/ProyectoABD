@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_session import Session #manejo de sesiones
 from functools import wraps
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import bcrypt
 
 app = Flask(__name__)
@@ -267,12 +267,57 @@ def finalizar_venta():
     return jsonify({"success": True, "message": "Venta finalizada correctamente!"})
 
 
+@app.route("/guardar_venta", methods=["POST"])
+def guardar_venta():
+    data = request.get_json()
+
+    productos = data.get("carrito", [])
+    total = data.get("total")
+    descuento = data.get("descuento", 0)
+    tipo_pago = data.get("tipo_pago")
+    cliente_nombre = data.get("cliente_nombre")
+    cliente_id = data.get("cliente_id")
+    cambio = data.get("cambio", 0)
+    nota = data.get("nota", "")
+    fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+
+        # Insertar la venta
+        cursor.execute("""
+            INSERT INTO Venta (Fecha, Total)
+            VALUES (?, ?)
+        """, (fecha, total))
+        venta_id = cursor.lastrowid
+
+        # Insertar los productos vendidos
+        print(productos)
+        for producto in productos:
+            print("Producto insertado ", producto)
+            cursor.execute("""
+                INSERT INTO Detalle_Venta (IDVenta, IDProducto, Cantidad, PrecioUnitario, Subtotal)
+                VALUES (?, ?, ?, ?, ?)
+            """, (venta_id, producto["id"], producto["cantidad"], producto["precio"], producto["cantidad"] * producto["precio"] ))
+
+        db.commit()
+        return jsonify({"success": True, "mensaje": "Venta guardada exitosamente"}), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": "No se pudo guardar la venta"}), 500
+
+
 def obtener_ventas(filtro):
     conexion = get_db_connection()
 
     cursor = conexion.cursor()
 
-    if filtro == "semana":
+    if filtro == "hoy":
+        fecha_limite = date.today() 
+        cursor.execute("SELECT IDVenta, Fecha, Total FROM Venta WHERE DATE(Fecha) = ?", (fecha_limite,))
+    elif filtro == "semana":
         fecha_limite = datetime.now() - timedelta(days=7)
         cursor.execute("SELECT IDVenta, Fecha, Total FROM Venta WHERE Fecha >= ?", (fecha_limite,))
     elif filtro == "mes":
@@ -501,6 +546,65 @@ def mostrar_stock():
     return render_template("stock.html", productos=productos, categorias=categorias)
 
 
+@app.route("/reporte")
+def reporte():
+    db = get_db_connection()
+    cursor = db.cursor()
+
+    # Agrupar ventas por fecha (solo fecha sin hora)
+    cursor.execute("""
+        SELECT DATE(Fecha) AS Fecha, SUM(Total) AS TotalVentas
+        FROM Venta
+        GROUP BY DATE(Fecha)
+        ORDER BY DATE(Fecha)
+    """)
+    ventas = cursor.fetchall()
+
+    fechas = [row["Fecha"] for row in reversed(ventas)]
+    totales = [row["TotalVentas"] for row in reversed(ventas)]
+    # Calcular crecimiento respecto al día anterior
+    ventas_con_crecimiento = []
+    prev_total = None
+    for row in ventas:
+        fecha = row["Fecha"]
+        total = row["TotalVentas"]
+        if prev_total is None:
+            crecimiento = 0
+        else:
+            try:
+                crecimiento = ((total - prev_total) )
+            except ZeroDivisionError:
+                crecimiento = 0
+        ventas_con_crecimiento.append({
+            "Fecha": fecha,
+            "TotalVentas": total,
+            "Crecimiento": round(crecimiento, 2)
+        })
+        prev_total = total
+
+    # Gráfico: top 5 productos últimos 7 días
+    cursor.execute("""
+        SELECT P.Nombre, SUM(DV.Cantidad) as TotalVendido
+        FROM Detalle_Venta DV
+        JOIN Producto P ON DV.IDProducto = P.IDProducto
+        JOIN Venta V ON V.IDVenta = DV.IDVenta
+        WHERE Fecha >= date('now', '-6 days')
+        GROUP BY P.IDProducto
+        ORDER BY TotalVendido DESC
+        LIMIT 5
+    """)
+    top_productos = cursor.fetchall()
+    
+    nombres_productos = [p["Nombre"] for p in top_productos]
+    cantidades_vendidas = [p["TotalVendido"] for p in top_productos]
+
+
+    return render_template("reporte_ventas.html",
+                           ventas_dia=ventas_con_crecimiento,
+                           fechas=fechas,
+                           totales=totales,
+                           nombres_productos=nombres_productos,
+                           cantidades_vendidas=cantidades_vendidas)
 
 if __name__ == '__main__':
     app.run(debug=True)
