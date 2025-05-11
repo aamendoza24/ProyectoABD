@@ -1,0 +1,129 @@
+<div class="modal fade" id="modalRegistrar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg ">
+      <form method="POST" action="/registrar-producto" enctype="multipart/form-data" class="needs-validation" novalidate>
+          <div class="modal-content border-0 shadow-lg">
+              <!-- Encabezado del modal -->
+              <div class="modal-header bg-primary text-white">
+                  <h5 class="modal-title fw-semibold">
+                      <i class="bi bi-plus-circle me-2"></i>Registrar Nuevo Producto
+                  </h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              
+              <!-- Cuerpo del modal -->
+              <div class="modal-body p-4">
+                  <div class="row g-3">
+                      <!-- Columna izquierda -->
+                      <div class="col-md-6">
+                          <!-- Nombre del Producto -->
+                          <div class="mb-3">
+                              <label for="nombre" class="form-label fw-medium">Nombre del Producto <span class="text-danger">*</span></label>
+                              <input type="text" class="form-control form-control-lg" id="nombre" name="nombre" required>
+                              <div class="invalid-feedback">
+                                  Por favor ingrese un nombre válido
+                              </div>
+                          </div>
+                          
+                          <!-- Precio -->
+                          <div class="mb-3">
+                              <label for="precio" class="form-label fw-medium">Precio (C$) <span class="text-danger">*</span></label>
+                              <div class="input-group">
+                                  <span class="input-group-text bg-light">C$</span>
+                                  <input type="number" step="0.01" min="0" class="form-control" id="precio" name="precio" required>
+                              </div>
+                              <div class="invalid-feedback">
+                                  Ingrese un precio válido
+                              </div>
+                          </div>
+                          
+                          <!-- Categoría -->
+                          <div class="mb-3">
+                              <label for="categoria" class="form-label fw-medium">Categoría <span class="text-danger">*</span></label>
+                              <select class="form-select" id="categoria" name="categoria" required>
+                                  <option value="" selected disabled>Seleccione una categoría</option>
+                                  {% for categoria in categorias %}
+                                  <option value="{{ categoria[0] }}">{{ categoria[1] }}</option>
+                                  {% endfor %}
+                              </select>
+                          </div>
+                          
+                          <!-- Stock Inicial -->
+                          <div class="mb-3">
+                              <label for="stock" class="form-label fw-medium">Stock Inicial <span class="text-danger">*</span></label>
+                              <input type="number" min="0" class="form-control" id="stock" name="stock" value="0" required>
+                          </div>
+                      </div>
+                      
+                      <!-- Columna derecha -->
+                      <div class="col-md-6">
+                          <!-- Imagen del Producto -->
+                          <div class="mb-3">
+                              <label for="imagen" class="form-label fw-medium">Imagen del Producto</label>
+                              <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*">
+                              <div class="form-text">Formatos aceptados: JPG, PNG, GIF (Max. 2MB)</div>
+                              <div class="mt-2 text-center">
+                                  <img id="imagenPrevisualizacion" src="https://via.placeholder.com/200x200?text=Previsualización" 
+                                       class="img-thumbnail d-none" style="max-height: 150px;">
+                              </div>
+                          </div>
+                          
+                          <!-- Descripción -->
+                          <div class="mb-3">
+                              <label for="descripcion" class="form-label fw-medium">Descripción</label>
+                              <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Pie del modal -->
+              <div class="modal-footer bg-light">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                      <i class="bi bi-x-lg me-1"></i> Cancelar
+                  </button>
+                  <button type="submit" class="btn btn-success">
+                      <i class="bi bi-save me-1"></i> Registrar Producto
+                  </button>
+              </div>
+          </div>
+      </form>
+  </div>
+</div>
+
+<!-- Script para previsualización de imagen y validación -->
+<script>
+// Previsualización de imagen
+document.getElementById('imagen').addEventListener('change', function(e) {
+  const preview = document.getElementById('imagenPrevisualizacion');
+  const file = e.target.files[0];
+  
+  if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.classList.remove('d-none');
+      }
+      reader.readAsDataURL(file);
+  } else {
+      preview.src = "https://via.placeholder.com/200x200?text=Previsualización";
+      preview.classList.add('d-none');
+  }
+});
+
+// Validación de formulario con Bootstrap
+(function() {
+  'use strict'
+  const forms = document.querySelectorAll('.needs-validation')
+  
+  Array.from(forms).forEach(form => {
+      form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+          }
+          
+          form.classList.add('was-validated')
+      }, false)
+  })
+})()
+</script>

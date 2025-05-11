@@ -136,7 +136,10 @@ def index():
 def catalogo():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT IDProducto, Nombre, Precio, ImagenURL, IDCategoria FROM Producto")
+    cursor.execute("""SELECT Producto.IDProducto, Nombre, Precio, ImagenURL, 
+                        IDCategoria, Stock_Sucursal.Cantidad FROM Producto
+                   JOIN Stock_Sucursal ON Producto.IDProducto = Stock_Sucursal.IDProducto
+                   Where Stock_Sucursal.IDSucursal = 1""")
     productos = cursor.fetchall()
     cursor.execute("SELECT IDCategoria, Nombre FROM Categoria")
     categorias = cursor.fetchall()
@@ -301,6 +304,11 @@ def guardar_venta():
                 VALUES (?, ?, ?, ?, ?)
             """, (venta_id, producto["id"], producto["cantidad"], producto["precio"], producto["cantidad"] * producto["precio"] ))
 
+
+            #Actualizacion del stock de productos
+            cursor.execute("UPDATE Stock_Sucursal SET Cantidad = Cantidad - ? WHERE IDProducto = ?", (item["cantidad"], item["id"]))
+
+
         db.commit()
         return jsonify({"success": True, "mensaje": "Venta guardada exitosamente"}), 200
 
@@ -341,11 +349,37 @@ def ventas():
     return render_template("ventas.html", ventas=ventas)
 
 
+#Ruta que retorna todos los detalles de la venta
 @app.route("/detalles_venta/<int:id_venta>", methods=["GET"])
 def detalles_venta(id_venta):
     conexion = get_db_connection()
     cursor = conexion.cursor()
 
+    # Obtener información de la venta
+    cursor.execute("""
+        SELECT v.IDVenta, v.Fecha, v.Total, COALESCE(c.NombreCompleto, 'Cliente General') as Cliente, 
+               COALESCE(v.MetodoPago, 'efectivo') as MetodoPago, COALESCE(v.Descuento, 0) as Descuento
+        FROM Venta v
+        LEFT JOIN Cliente c ON v.IDCliente = c.IDCliente
+        WHERE v.IDVenta = ?
+    """, (id_venta,))
+    
+    venta_row = cursor.fetchone()
+    
+    if not venta_row:
+        conexion.close()
+        return jsonify({"error": "Venta no encontrada"}), 404
+    
+    venta = {
+        "id": venta_row[0],
+        "fecha": venta_row[1],
+        "total": venta_row[2],
+        "cliente": venta_row[3],
+        "metodo_pago": venta_row[4],
+        "descuento": venta_row[5]
+    }
+
+    # Obtener detalles de la venta
     cursor.execute("""
         SELECT Producto.Nombre, Detalle_Venta.Cantidad, Detalle_Venta.PrecioUnitario
         FROM Detalle_Venta
@@ -359,7 +393,7 @@ def detalles_venta(id_venta):
     ]
     
     conexion.close()
-    return jsonify({"detalles": detalles})
+    return jsonify({"venta": venta, "detalles": detalles})
 
 
 
@@ -543,14 +577,17 @@ def mostrar_stock():
 
     conexion.close()
     
-    return render_template("stock.html", productos=productos, categorias=categorias)
+    return render_template("inventario.html", productos=productos, categorias=categorias)
 
 
 @app.route("/reporte")
 def reporte():
     db = get_db_connection()
     cursor = db.cursor()
-
+    
+    # Fecha actual para filtros predeterminados
+    fecha_actual = datetime.now().strftime('%Y-%m-%d')
+    
     # Agrupar ventas por fecha (solo fecha sin hora)
     cursor.execute("""
         SELECT DATE(Fecha) AS Fecha, SUM(Total) AS TotalVentas
@@ -560,8 +597,10 @@ def reporte():
     """)
     ventas = cursor.fetchall()
 
-    fechas = [row["Fecha"] for row in reversed(ventas)]
-    totales = [row["TotalVentas"] for row in reversed(ventas)]
+    # Preparar datos para gráficos
+    fechas = [row["Fecha"] for row in reversed(ventas[-7:] if len(ventas) > 7 else ventas)]
+    totales = [row["TotalVentas"] for row in reversed(ventas[-7:] if len(ventas) > 7 else ventas)]
+    
     # Calcular crecimiento respecto al día anterior
     ventas_con_crecimiento = []
     prev_total = None
@@ -572,7 +611,7 @@ def reporte():
             crecimiento = 0
         else:
             try:
-                crecimiento = ((total - prev_total) )
+                crecimiento = (total - prev_total)
             except ZeroDivisionError:
                 crecimiento = 0
         ventas_con_crecimiento.append({
@@ -584,7 +623,7 @@ def reporte():
 
     # Gráfico: top 5 productos últimos 7 días
     cursor.execute("""
-        SELECT P.Nombre, SUM(DV.Cantidad) as TotalVendido
+        SELECT P.Nombre, SUM(DV.Cantidad) as TotalVendido, SUM(DV.Cantidad * DV.PrecioUnitario) as TotalVentas
         FROM Detalle_Venta DV
         JOIN Producto P ON DV.IDProducto = P.IDProducto
         JOIN Venta V ON V.IDVenta = DV.IDVenta
@@ -597,14 +636,254 @@ def reporte():
     
     nombres_productos = [p["Nombre"] for p in top_productos]
     cantidades_vendidas = [p["TotalVendido"] for p in top_productos]
+    
+    # Obtener ventas recientes
+    cursor.execute("""
+        SELECT V.IDVenta, V.Fecha, V.Total, COALESCE(C.NombreCompleto, 'Cliente General') as Cliente
+        FROM Venta V
+        LEFT JOIN Cliente C ON V.IDCliente = C.IDCliente
+        ORDER BY V.Fecha DESC
+        LIMIT 5
+    """)
+    ventas_recientes = cursor.fetchall()
+    
+    # Calcular KPIs para el dashboard
+    
+    # 1. Total ventas del período (último mes por defecto)
+    cursor.execute("""
+        SELECT SUM(Total) as TotalVentas
+        FROM Venta
+        WHERE Fecha >= date('now', '-30 days')
+    """)
+    result = cursor.fetchone()
+    total_ventas_periodo = result["TotalVentas"] if result and result["TotalVentas"] else 0
+    
+    # 2. Total ventas del período anterior (para comparación)
+    cursor.execute("""
+        SELECT SUM(Total) as TotalVentas
+        FROM Venta
+        WHERE Fecha >= date('now', '-60 days') AND Fecha < date('now', '-30 days')
+    """)
+    result = cursor.fetchone()
+    total_ventas_periodo_anterior = result["TotalVentas"] if result and result["TotalVentas"] else 0
+    
+    # 3. Calcular porcentaje de crecimiento
+    if total_ventas_periodo_anterior > 0:
+        porcentaje_crecimiento_ventas = round(((total_ventas_periodo - total_ventas_periodo_anterior) / total_ventas_periodo_anterior) * 100, 2)
+    else:
+        porcentaje_crecimiento_ventas = 100 if total_ventas_periodo > 0 else 0
+    
+    # 4. Ticket promedio
+    cursor.execute("""
+        SELECT AVG(Total) as TicketPromedio
+        FROM Venta
+        WHERE Fecha >= date('now', '-30 days')
+    """)
+    result = cursor.fetchone()
+    ticket_promedio = result["TicketPromedio"] if result and result["TicketPromedio"] else 0
+    
+    # 5. Ticket promedio período anterior
+    cursor.execute("""
+        SELECT AVG(Total) as TicketPromedio
+        FROM Venta
+        WHERE Fecha >= date('now', '-60 days') AND Fecha < date('now', '-30 days')
+    """)
+    result = cursor.fetchone()
+    ticket_promedio_anterior = result["TicketPromedio"] if result and result["TicketPromedio"] else 0
+    
+    # 6. Calcular porcentaje de crecimiento del ticket promedio
+    if ticket_promedio_anterior > 0:
+        porcentaje_crecimiento_ticket = round(((ticket_promedio - ticket_promedio_anterior) / ticket_promedio_anterior) * 100, 2)
+    else:
+        porcentaje_crecimiento_ticket = 100 if ticket_promedio > 0 else 0
+    
+    # 7. Total transacciones
+    cursor.execute("""
+        SELECT COUNT(*) as TotalTransacciones
+        FROM Venta
+        WHERE Fecha >= date('now', '-30 days')
+    """)
+    result = cursor.fetchone()
+    total_transacciones = result["TotalTransacciones"] if result else 0
+    
+    # 8. Total transacciones período anterior
+    cursor.execute("""
+        SELECT COUNT(*) as TotalTransacciones
+        FROM Venta
+        WHERE Fecha >= date('now', '-60 days') AND Fecha < date('now', '-30 days')
+    """)
+    result = cursor.fetchone()
+    total_transacciones_anterior = result["TotalTransacciones"] if result else 0
+    
+    # 9. Calcular porcentaje de crecimiento de transacciones
+    if total_transacciones_anterior > 0:
+        porcentaje_crecimiento_transacciones = round(((total_transacciones - total_transacciones_anterior) / total_transacciones_anterior) * 100, 2)
+    else:
+        porcentaje_crecimiento_transacciones = 100 if total_transacciones > 0 else 0
+    
+    # 10. Total productos vendidos
+    cursor.execute("""
+        SELECT SUM(Cantidad) as TotalProductos
+        FROM Detalle_Venta DV
+        JOIN Venta V ON V.IDVenta = DV.IDVenta
+        WHERE V.Fecha >= date('now', '-30 days')
+    """)
+    result = cursor.fetchone()
+    total_productos_vendidos = result["TotalProductos"] if result and result["TotalProductos"] else 0
+    
+    # 11. Total productos vendidos período anterior
+    cursor.execute("""
+        SELECT SUM(Cantidad) as TotalProductos
+        FROM Detalle_Venta DV
+        JOIN Venta V ON V.IDVenta = DV.IDVenta
+        WHERE V.Fecha >= date('now', '-60 days') AND V.Fecha < date('now', '-30 days')
+    """)
+    result = cursor.fetchone()
+    total_productos_vendidos_anterior = result["TotalProductos"] if result and result["TotalProductos"] else 0
+    
+    # 12. Calcular porcentaje de crecimiento de productos vendidos
+    if total_productos_vendidos_anterior > 0:
+        porcentaje_crecimiento_productos = round(((total_productos_vendidos - total_productos_vendidos_anterior) / total_productos_vendidos_anterior) * 100, 2)
+    else:
+        porcentaje_crecimiento_productos = 100 if total_productos_vendidos > 0 else 0
+    
+    # Obtener categorías para filtros
+    cursor.execute("""
+        SELECT IDCategoria, Nombre
+        FROM Categoria
+        ORDER BY Nombre
+    """)
+    categorias = cursor.fetchall()
+    
+    # Obtener rendimiento de productos (ejemplo)
+    cursor.execute("""
+        SELECT 
+            P.Nombre, 
+            C.Nombre as Categoria,
+            SUM(DV.Cantidad) as UnidadesVendidas,
+            AVG(DV.PrecioUnitario) as PrecioPromedio,
+            SUM(DV.Cantidad * DV.PrecioUnitario) as TotalVentas
+        FROM Detalle_Venta DV
+        JOIN Producto P ON DV.IDProducto = P.IDProducto
+        JOIN Categoria C ON P.IDCategoria = C.IDCategoria
+        JOIN Venta V ON V.IDVenta = DV.IDVenta
+        WHERE V.Fecha >= date('now', '-30 days')
+        GROUP BY P.IDProducto
+        ORDER BY TotalVentas DESC
+        LIMIT 20
+    """)
+    productos_rendimiento_raw = cursor.fetchall()
+    
+    # Calcular porcentaje del total para cada producto
+    total_ventas_productos = sum(p["TotalVentas"] for p in productos_rendimiento_raw)
+    productos_rendimiento = []
+    
+    for producto in productos_rendimiento_raw:
+        porcentaje = round((producto["TotalVentas"] / total_ventas_productos * 100), 2) if total_ventas_productos > 0 else 0
+        productos_rendimiento.append({
+            "Nombre": producto["Nombre"],
+            "Categoria": producto["Categoria"],
+            "UnidadesVendidas": producto["UnidadesVendidas"],
+            "PrecioPromedio": round(producto["PrecioPromedio"], 2),
+            "TotalVentas": round(producto["TotalVentas"], 2),
+            "PorcentajeTotal": porcentaje
+        })
+    
+    db.close()
+    
+    return render_template(
+        "reporte_ventas.html",
+        fecha_actual=fecha_actual,
+        ventas_dia=ventas_con_crecimiento,
+        fechas=fechas,
+        totales=totales,
+        nombres_productos=nombres_productos,
+        cantidades_vendidas=cantidades_vendidas,
+        top_productos=top_productos,
+        ventas_recientes=ventas_recientes,
+        total_ventas_periodo=round(total_ventas_periodo, 2),
+        porcentaje_crecimiento_ventas=porcentaje_crecimiento_ventas,
+        ticket_promedio=round(ticket_promedio, 2),
+        porcentaje_crecimiento_ticket=porcentaje_crecimiento_ticket,
+        total_transacciones=total_transacciones,
+        porcentaje_crecimiento_transacciones=porcentaje_crecimiento_transacciones,
+        total_productos_vendidos=total_productos_vendidos,
+        porcentaje_crecimiento_productos=porcentaje_crecimiento_productos,
+        categorias=categorias,
+        productos_rendimiento=productos_rendimiento
+    )
+
+def obtener_producto_por_id(producto_id):
+    try:
+        dbconection = get_db_connection()
+        db = dbconection.cursor()
+        db.execute(
+            """SELECT p.IDProducto, p.Nombre, p.Precio, p.ImagenURL, 
+                      p.IDCategoria, c.Nombre AS categoria_nombre,
+                      COALESCE(s.Cantidad, 0) AS stock_total, 
+                      p.Descripcion
+               FROM Producto p 
+               LEFT JOIN Categoria c ON p.IDCategoria = c.IDCategoria
+               LEFT JOIN Stock_Sucursal s ON p.IDProducto = s.IDProducto AND s.IDSucursal = 1
+               WHERE p.IDProducto = ?""",
+            (producto_id,)
+        )
+        producto = db.fetchone()
+        return producto
+    except Exception as e:
+        print(f"Error al obtener producto: {e}")
+        return None
+    finally:
+        db.close()
+        dbconection.close()
+
+#rutas para el renderizado de los modals 
+@app.route("/ver/<int:producto_id>")
+def ver_detalle(producto_id):
+    producto = obtener_producto_por_id(producto_id)
+    print(producto)
+    return render_template("modals/modal_detalles.html", producto=producto)
+
+@app.route("/editar/<int:producto_id>")
+def editar_producto(producto_id):
+    producto = obtener_producto_por_id(producto_id)
+    return render_template("modals/modal_editar.html", producto=producto)
+
+@app.route("/nuevo")
+def nuevo_producto():
+    return render_template("modals/modal_registrar.html")
+
+#rutas para procesar los formularios de los modals del inventario
+@app.route("/registrar_producto", methods=["POST"])
+def registrar_producto():
+
+    nombre = request.form["nombre"]
+    precio = request.form["precio"]
+    imagen = request.form["imagen"]
+    categoria = request.form["categoria"]
+    dbconexion = get_db_connection()
+    db = dbconexion.cursor()
+    db.execute("INSERT INTO productos (nombre, precio, imagen, categoria_id) VALUES (?, ?, ?, ?)",
+               nombre, precio, imagen, categoria)
+    db.commit()
+    db.close()
+    return redirect("/inventario")
 
 
-    return render_template("reporte_ventas.html",
-                           ventas_dia=ventas_con_crecimiento,
-                           fechas=fechas,
-                           totales=totales,
-                           nombres_productos=nombres_productos,
-                           cantidades_vendidas=cantidades_vendidas)
+@app.route("/editar_producto_ruta/<int:id>", methods=["POST"])
+def editar_producto_ruta(id):
+    nombre = request.form["nombre"]
+    precio = request.form["precio"]
+    imagen = request.form["imagen"]
+    categoria = request.form["categoria"]
+    dbconexion = get_db_connection()
+    db = dbconexion.cursor()
+    db.execute("UPDATE productos SET nombre = ?, precio = ?, imagen = ?, categoria_id = ? WHERE id = ?",
+               nombre, precio, imagen, categoria, id)
+    db.commit()
+    db.close()
+    return redirect("/inventario")
+
 
 if __name__ == '__main__':
     app.run(debug=True)
