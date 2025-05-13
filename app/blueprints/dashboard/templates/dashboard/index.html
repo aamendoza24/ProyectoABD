@@ -1,0 +1,715 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard Principal
+{% endblock %}
+
+{% block page_title %}
+    Panel de Control
+{% endblock %}
+
+{% block style %}
+<style>
+    /* Estilos personalizados para el dashboard */
+    .dashboard-card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    
+    .dashboard-card .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .dashboard-card .card-header h5 {
+        margin-bottom: 0;
+        font-weight: 600;
+        color: #4e73df;
+    }
+    
+    .dashboard-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .kpi-card {
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        background-color: white;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    
+    .kpi-card .kpi-icon {
+        position: absolute;
+        right: 1.25rem;
+        top: 1.25rem;
+        font-size: 2rem;
+        opacity: 0.2;
+    }
+    
+    .kpi-card .kpi-title {
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.05rem;
+    }
+    
+    .kpi-card .kpi-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #222d44;
+    }
+    
+    .kpi-card .kpi-trend {
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .kpi-card .kpi-trend i {
+        margin-right: 0.25rem;
+    }
+    
+    .kpi-card .kpi-trend.up {
+        color: #1cc88a;
+    }
+    
+    .kpi-card .kpi-trend.down {
+        color: #e74a3b;
+    }
+    
+    .kpi-card .kpi-trend.neutral {
+        color: #6c757d;
+    }
+    
+    .kpi-card.primary {
+        border-left: 4px solid #4e73df;
+    }
+    
+    .kpi-card.success {
+        border-left: 4px solid #1cc88a;
+    }
+    
+    .kpi-card.warning {
+        border-left: 4px solid #f6c23e;
+    }
+    
+    .kpi-card.danger {
+        border-left: 4px solid #e74a3b;
+    }
+    
+    .kpi-card.info {
+        border-left: 4px solid #36b9cc;
+    }
+    
+    .chart-container {
+        position: relative;
+        margin: auto;
+        height: 300px;
+    }
+    
+    .table-container {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .table-container .table-header {
+        background-color: #f8f9fc;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-container .table-header h5 {
+        margin-bottom: 0;
+        font-weight: 600;
+        color: #4e73df;
+        display: flex;
+        align-items: center;
+    }
+    
+    .table-container .table-header h5 i {
+        margin-right: 0.5rem;
+    }
+    
+    .table-container .table {
+        margin-bottom: 0;
+    }
+    
+    .table-container .table thead th {
+        background-color: #f8f9fc;
+        color: #4e73df;
+        font-weight: 600;
+        border-top: none;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .table-container .table tbody td {
+        padding: 0.75rem 1.25rem;
+        border-color: #e3e6f0;
+        vertical-align: middle;
+    }
+    
+    .table-container .table tbody tr:hover {
+        background-color: #f8f9fc;
+    }
+    
+    .progress {
+        height: 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .progress-sm {
+        height: 0.25rem;
+    }
+    
+    .stock-badge {
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 600;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .stock-badge i {
+        margin-right: 0.25rem;
+    }
+    
+    .stock-badge.low {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+    }
+    
+    .stock-badge.medium {
+        background-color: rgba(246, 194, 62, 0.1);
+        color: #f6c23e;
+    }
+    
+    .stock-badge.high {
+        background-color: rgba(28, 200, 138, 0.1);
+        color: #1cc88a;
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    }
+    
+    .alert-warning {
+        background-color: rgba(246, 194, 62, 0.1);
+        color: #f6c23e;
+    }
+    
+    .alert-success {
+        background-color: rgba(28, 200, 138, 0.1);
+        color: #1cc88a;
+    }
+    
+    .alert-danger {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+    }
+    
+    .alert-info {
+        background-color: rgba(54, 185, 204, 0.1);
+        color: #36b9cc;
+    }
+    
+    .alert-dismissible .close {
+        padding: 0.75rem 1.25rem;
+        color: inherit;
+    }
+    
+    .category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+    
+    .category-icon i {
+        font-size: 1.25rem;
+        color: white;
+    }
+    
+    .bg-books {
+        background-color: #4e73df;
+    }
+    
+    .bg-school {
+        background-color: #1cc88a;
+    }
+    
+    .bg-office {
+        background-color: #f6c23e;
+    }
+    
+    .bg-art {
+        background-color: #e74a3b;
+    }
+    
+    .bg-tech {
+        background-color: #36b9cc;
+    }
+    
+    .quick-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .quick-action-btn {
+        flex: 1;
+        text-align: center;
+        padding: 1rem;
+        border-radius: 10px;
+        background-color: #f8f9fc;
+        color: #4e73df;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    
+    .quick-action-btn:hover {
+        background-color: #4e73df;
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    .quick-action-btn i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .quick-action-btn span {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .date-filter {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .date-filter select {
+        border-radius: 0.25rem;
+        border: 1px solid #d1d3e2;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- Alertas -->
+<div class="row mb-4">
+    <div class="col-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="white-space: pre-line;">
+                        {{ message }}
+                        <button type="button" class="close" data-bs-dismiss="alert" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Filtro de fecha -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="date-filter">
+            <label for="date-range" class="mb-0 me-2">Período:</label>
+            <select id="date-range" class="form-select" onchange="updateDashboard()">
+                <option value="today">Hoy</option>
+                <option value="yesterday">Ayer</option>
+                <option value="week" selected>Esta semana</option>
+                <option value="month">Este mes</option>
+                <option value="year">Este año</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs principales -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card primary">
+            <i class="mdi mdi-cash-multiple kpi-icon"></i>
+            <div class="kpi-title">Ventas Totales</div>
+            <div class="kpi-value">C$ {{ total_ventas|default('0.00') }}</div>
+            <div class="kpi-trend {% if porcentaje_ventas > 0 %}up{% elif porcentaje_ventas < 0 %}down{% else %}neutral{% endif %}">
+                <i class="mdi {% if porcentaje_ventas > 0 %}mdi-arrow-top-right{% elif porcentaje_ventas < 0 %}mdi-arrow-bottom-left{% else %}mdi-minus{% endif %}"></i>
+                {{ porcentaje_ventas|abs|default('0') }}% vs período anterior
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card success">
+            <i class="mdi mdi-cart kpi-icon"></i>
+            <div class="kpi-title">Transacciones</div>
+            <div class="kpi-value">{{ total_transacciones|default('0') }}</div>
+            <div class="kpi-trend {% if porcentaje_transacciones > 0 %}up{% elif porcentaje_transacciones < 0 %}down{% else %}neutral{% endif %}">
+                <i class="mdi {% if porcentaje_transacciones > 0 %}mdi-arrow-top-right{% elif porcentaje_transacciones < 0 %}mdi-arrow-bottom-left{% else %}mdi-minus{% endif %}"></i>
+                {{ porcentaje_transacciones|abs|default('0') }}% vs período anterior
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card warning">
+            <i class="mdi mdi-tag kpi-icon"></i>
+            <div class="kpi-title">Ticket Promedio</div>
+            <div class="kpi-value">C$ {{ ticket_promedio|default('0.00') }}</div>
+            <div class="kpi-trend {% if porcentaje_ticket > 0 %}up{% elif porcentaje_ticket < 0 %}down{% else %}neutral{% endif %}">
+                <i class="mdi {% if porcentaje_ticket > 0 %}mdi-arrow-top-right{% elif porcentaje_ticket < 0 %}mdi-arrow-bottom-left{% else %}mdi-minus{% endif %}"></i>
+                {{ porcentaje_ticket|abs|default('0') }}% vs período anterior
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card danger">
+            <i class="mdi mdi-package-variant kpi-icon"></i>
+            <div class="kpi-title">Productos Vendidos</div>
+            <div class="kpi-value">{{ productos_vendidos|default('0') }}</div>
+            <div class="kpi-trend {% if porcentaje_productos > 0 %}up{% elif porcentaje_productos < 0 %}down{% else %}neutral{% endif %}">
+                <i class="mdi {% if porcentaje_productos > 0 %}mdi-arrow-top-right{% elif porcentaje_productos < 0 %}mdi-arrow-bottom-left{% else %}mdi-minus{% endif %}"></i>
+                {{ porcentaje_productos|abs|default('0') }}% vs período anterior
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos principales -->
+<div class="row">
+    <div class="col-xl-8">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5><i class="mdi mdi-chart-line me-2"></i> Tendencia de Ventas</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="ventasChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5><i class="mdi mdi-chart-pie me-2"></i> Ventas por Categoría</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="categoriasChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Productos con bajo stock y más vendidos -->
+<div class="row">
+    <div class="col-xl-6">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5><i class="mdi mdi-alert-circle-outline me-2"></i> Productos con Bajo Stock</h5>
+                <a href="{{ url_for('inventario.mostrar_stock') }}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th class="text-center">Stock</th>
+                                <th class="text-end">Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_bajo_stock %}
+                            <tr>
+                                <td>{{ producto.Nombre }}</td>
+                                <td>{{ producto.Categoria }}</td>
+                                <td class="text-center">
+                                    <span class="stock-badge {% if producto.Stock < 5 %}low{% elif producto.Stock < 10 %}medium{% else %}high{% endif %}">
+                                        <i class="mdi {% if producto.Stock < 5 %}mdi-alert-circle{% elif producto.Stock < 10 %}mdi-alert{% else %}mdi-check-circle{% endif %}"></i>
+                                        {{ producto.Stock }}
+                                    </span>
+                                </td>
+                                <td class="text-end">C$ {{ producto.Precio }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5><i class="mdi mdi-trophy me-2"></i> Productos Más Vendidos</h5>
+                <a href="{{ url_for('ventas.reporte') }}" class="btn btn-sm btn-outline-primary">Ver reporte</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th class="text-center">Unidades</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_mas_vendidos %}
+                            <tr>
+                                <td>{{ producto.Nombre }}</td>
+                                <td>{{ producto.Categoria }}</td>
+                                <td class="text-center">{{ producto.Unidades }}</td>
+                                <td class="text-end">C$ {{ producto.Total }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ventas recientes y categorías populares -->
+<div class="row">
+    <div class="col-xl-8">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5><i class="mdi mdi-receipt me-2"></i> Ventas Recientes</h5>
+                <a href="{{ url_for('ventas.historial') }}" class="btn btn-sm btn-outline-primary">Ver historial</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Método de Pago</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ventas_recientes %}
+                            <tr>
+                                <td>{{ venta.IDVenta }}</td>
+                                <td>{{ venta.Fecha }}</td>
+                                <td>{{ venta.Cliente }}</td>
+                                <td>{{ venta.MetodoPago }}</td>
+                                <td class="text-end">C$ {{ venta.Total }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5><i class="mdi mdi-tag-multiple me-2"></i> Categorías Populares</h5>
+            </div>
+            <div class="card-body">
+                {% for categoria in categorias_populares %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="category-icon bg-{{ categoria.Color }}">
+                        <i class="mdi {{ categoria.Icono }}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-bold">{{ categoria.Nombre }}</span>
+                            <span>{{ categoria.Porcentaje }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-{{ categoria.Color }}" role="progressbar" style="width: {{ categoria.Porcentaje }}%" aria-valuenow="{{ categoria.Porcentaje }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h5 class="mb-3">Acciones Rápidas</h5>
+        <div class="quick-actions">
+            <a href="{{ url_for('ventas.catalogo') }}" class="quick-action-btn">
+                <i class="mdi mdi-cash-register"></i>
+                <span>Nueva Venta</span>
+            </a>
+            <a href="{{ url_for('compras.realizar_compras') }}" class="quick-action-btn">
+                <i class="mdi mdi-cart-plus"></i>
+                <span>Nueva Compra</span>
+            </a>
+            <a href="{{ url_for('inventario.mostrar_stock') }}" class="quick-action-btn">
+                <i class="mdi mdi-package-variant"></i>
+                <span>Inventario</span>
+            </a>
+            <a href="{{ url_for('ventas.reporte') }}" class="quick-action-btn">
+                <i class="mdi mdi-chart-bar"></i>
+                <span>Reportes</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Datos para los gráficos
+    const ventasData = {
+        labels: {{ fechas|tojson }},
+        datasets: [{
+            label: 'Ventas',
+            data: {{ ventas_diarias|tojson }},
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            borderColor: '#4e73df',
+            pointBackgroundColor: '#4e73df',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: '#4e73df',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    };
+    
+    const categoriasData = {
+        labels: {{ categorias_labels|tojson }},
+        datasets: [{
+            data: {{ categorias_data|tojson }},
+            backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc'],
+            borderWidth: 1,
+            borderColor: '#fff'
+        }]
+    };
+    
+    // Inicializar gráficos
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gráfico de ventas
+        const ventasCtx = document.getElementById('ventasChart').getContext('2d');
+        new Chart(ventasCtx, {
+            type: 'line',
+            data: ventasData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Ventas: C$ ${context.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de categorías
+        const categoriasCtx = document.getElementById('categoriasChart').getContext('2d');
+        new Chart(categoriasCtx, {
+            type: 'doughnut',
+            data: categoriasData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((context.raw / total) * 100);
+                                return `${context.label}: ${percentage}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+    
+    // Función para actualizar el dashboard según el período seleccionado
+    function updateDashboard() {
+        const periodo = document.getElementById('date-range').value;
+        window.location.href = `{{ url_for('dashboard.index') }}?periodo=${periodo}`;
+    }
+</script>
+{% endblock %}

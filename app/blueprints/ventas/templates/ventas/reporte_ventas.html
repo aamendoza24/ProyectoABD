@@ -1,0 +1,1664 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard de Ventas
+{% endblock %}
+
+{% block page_title %}
+    Dashboard de Ventas
+{% endblock %}
+
+{% block style %}
+<style>
+    /* Estilos personalizados para el dashboard */
+    .dashboard-card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    
+    .dashboard-card .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .dashboard-card .card-header h5 {
+        margin-bottom: 0;
+        font-weight: 600;
+        color: #4e73df;
+    }
+    
+    .dashboard-card .card-header .card-header-icon {
+        color: #4e73df;
+        font-size: 1.25rem;
+    }
+    
+    .dashboard-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .kpi-card {
+        border-left: 4px solid;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background-color: white;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    }
+    
+    .kpi-card.primary {
+        border-left-color: #4e73df;
+    }
+    
+    .kpi-card.success {
+        border-left-color: #1cc88a;
+    }
+    
+    .kpi-card.warning {
+        border-left-color: #f6c23e;
+    }
+    
+    .kpi-card.danger {
+        border-left-color: #e74a3b;
+    }
+    
+    .kpi-card .kpi-title {
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .kpi-card .kpi-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    
+    .kpi-card .kpi-primary {
+        color: #4e73df;
+    }
+    
+    .kpi-card .kpi-success {
+        color: #1cc88a;
+    }
+    
+    .kpi-card .kpi-warning {
+        color: #f6c23e;
+    }
+    
+    .kpi-card .kpi-danger {
+        color: #e74a3b;
+    }
+    
+    .kpi-card .kpi-trend {
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+    
+    .kpi-card .kpi-trend i {
+        margin-right: 0.25rem;
+    }
+    
+    .kpi-card .kpi-trend.up {
+        color: #1cc88a;
+    }
+    
+    .kpi-card .kpi-trend.down {
+        color: #e74a3b;
+    }
+    
+    .kpi-card .kpi-trend.neutral {
+        color: #6c757d;
+    }
+    
+    .filter-card {
+        background-color: #f8f9fc;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);
+    }
+    
+    .filter-card .filter-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4e73df;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .filter-card .filter-title i {
+        margin-right: 0.5rem;
+    }
+    
+    .table-container {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .table-container .table-header {
+        background-color: #f8f9fc;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-container .table-header h5 {
+        margin-bottom: 0;
+        font-weight: 600;
+        color: #4e73df;
+        display: flex;
+        align-items: center;
+    }
+    
+    .table-container .table-header h5 i {
+        margin-right: 0.5rem;
+    }
+    
+    .table-container .table {
+        margin-bottom: 0;
+    }
+    
+    .table-container .table thead th {
+        background-color: #f8f9fc;
+        color: #4e73df;
+        font-weight: 600;
+        border-top: none;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .table-container .table tbody td {
+        padding: 0.75rem 1.25rem;
+        border-color: #e3e6f0;
+        vertical-align: middle;
+    }
+    
+    .table-container .table tbody tr:hover {
+        background-color: #f8f9fc;
+    }
+    
+    .badge-trend {
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 600;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .badge-trend i {
+        margin-right: 0.25rem;
+    }
+    
+    .badge-trend.up {
+        background-color: rgba(28, 200, 138, 0.1);
+        color: #1cc88a;
+    }
+    
+    .badge-trend.down {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+    }
+    
+    .badge-trend.neutral {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+    }
+    
+    .btn-export {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        transition: all 0.2s;
+    }
+    
+    .btn-export i {
+        margin-right: 0.5rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        margin: auto;
+        height: 300px;
+    }
+    
+    .date-range-picker {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .date-range-picker .form-control {
+        border-radius: 0.25rem;
+        border: 1px solid #d1d3e2;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .date-range-picker .btn {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+    }
+    
+    .date-range-picker .btn i {
+        margin-right: 0.5rem;
+    }
+    
+    .quick-date-filters {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .quick-date-filters .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .comparison-toggle {
+        display: flex;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+    
+    .comparison-toggle .form-check-input {
+        margin-right: 0.5rem;
+    }
+    
+    .comparison-toggle .form-check-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .positive-value {
+        color: #1cc88a;
+    }
+    
+    .negative-value {
+        color: #e74a3b;
+    }
+    
+    .neutral-value {
+        color: #6c757d;
+    }
+    
+    /* Estilos para los tabs */
+    .nav-tabs {
+        border-bottom: 1px solid #e3e6f0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .nav-tabs .nav-item {
+        margin-bottom: -1px;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-color: transparent;
+        color: #4e73df;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #4e73df;
+        border-bottom: 2px solid #4e73df;
+        background-color: transparent;
+    }
+    
+    /* Estilos para los tooltips de los gráficos */
+    .chart-tooltip {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid ">
+    <!-- Tabs de navegación -->
+    <ul class="nav nav-tabs" id="reportTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="true">
+                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ventas-diarias-tab" data-bs-toggle="tab" data-bs-target="#ventas-diarias" type="button" role="tab" aria-controls="ventas-diarias" aria-selected="false">
+                <i class="fas fa-calendar-day me-1"></i> Ventas Diarias
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="productos-tab" data-bs-toggle="tab" data-bs-target="#productos" type="button" role="tab" aria-controls="productos" aria-selected="false">
+                <i class="fas fa-box me-1"></i> Análisis de Productos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tendencias-tab" data-bs-toggle="tab" data-bs-target="#tendencias" type="button" role="tab" aria-controls="tendencias" aria-selected="false">
+                <i class="fas fa-chart-line me-1"></i> Tendencias
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Contenido de los tabs -->
+    <div class="tab-content" id="reportTabsContent">
+        <!-- Tab Dashboard -->
+        <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+            <!-- Filtros -->
+            <div class="filter-card">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i> Filtros
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="date-range-picker">
+                            <input type="date" id="dashboardFechaInicio" class="form-control" value="{{ fecha_actual }}">
+                            <span>a</span>
+                            <input type="date" id="dashboardFechaFin" class="form-control" value="{{ fecha_actual }}">
+                            <button class="btn btn-primary" onclick="actualizarDashboard()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                        <div class="quick-date-filters">
+                            <button class="btn btn-outline-secondary" onclick="seleccionarPeriodo('hoy')">Hoy</button>
+                            <button class="btn btn-outline-secondary" onclick="seleccionarPeriodo('ayer')">Ayer</button>
+                            <button class="btn btn-outline-secondary" onclick="seleccionarPeriodo('semana')">Esta semana</button>
+                            <button class="btn btn-outline-secondary" onclick="seleccionarPeriodo('mes')">Este mes</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-end align-items-center">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-download"></i> Exportar
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="exportarPDF()"><i class="fas fa-file-pdf me-2 text-danger"></i> Exportar a PDF</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportarExcel()"><i class="fas fa-file-excel me-2 text-success"></i> Exportar a Excel</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- KPIs -->
+            <div class="row">
+                <div class="col-xl-3 col-md-6">
+                    <div class="kpi-card primary">
+                        <div class="kpi-title">Ventas Totales</div>
+                        <div class="kpi-value kpi-primary">C$ {{ total_ventas_periodo|default('0.00') }}</div>
+                        <div class="kpi-trend {% if porcentaje_crecimiento_ventas > 0 %}up{% elif porcentaje_crecimiento_ventas < 0 %}down{% else %}neutral{% endif %}">
+                            <i class="fas {% if porcentaje_crecimiento_ventas > 0 %}fa-arrow-up{% elif porcentaje_crecimiento_ventas < 0 %}fa-arrow-down{% else %}fa-equals{% endif %}"></i>
+                            {{ porcentaje_crecimiento_ventas|abs|default('0') }}% vs período anterior
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="kpi-card success">
+                        <div class="kpi-title">Ticket Promedio</div>
+                        <div class="kpi-value kpi-success">C$ {{ ticket_promedio|default('0.00') }}</div>
+                        <div class="kpi-trend {% if porcentaje_crecimiento_ticket > 0 %}up{% elif porcentaje_crecimiento_ticket < 0 %}down{% else %}neutral{% endif %}">
+                            <i class="fas {% if porcentaje_crecimiento_ticket > 0 %}fa-arrow-up{% elif porcentaje_crecimiento_ticket < 0 %}fa-arrow-down{% else %}fa-equals{% endif %}"></i>
+                            {{ porcentaje_crecimiento_ticket|abs|default('0') }}% vs período anterior
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="kpi-card warning">
+                        <div class="kpi-title">Total Transacciones</div>
+                        <div class="kpi-value kpi-warning">{{ total_transacciones|default('0') }}</div>
+                        <div class="kpi-trend {% if porcentaje_crecimiento_transacciones > 0 %}up{% elif porcentaje_crecimiento_transacciones < 0 %}down{% else %}neutral{% endif %}">
+                            <i class="fas {% if porcentaje_crecimiento_transacciones > 0 %}fa-arrow-up{% elif porcentaje_crecimiento_transacciones < 0 %}fa-arrow-down{% else %}fa-equals{% endif %}"></i>
+                            {{ porcentaje_crecimiento_transacciones|abs|default('0') }}% vs período anterior
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="kpi-card danger">
+                        <div class="kpi-title">Productos Vendidos</div>
+                        <div class="kpi-value kpi-danger">{{ total_productos_vendidos|default('0') }}</div>
+                        <div class="kpi-trend {% if porcentaje_crecimiento_productos > 0 %}up{% elif porcentaje_crecimiento_productos < 0 %}down{% else %}neutral{% endif %}">
+                            <i class="fas {% if porcentaje_crecimiento_productos > 0 %}fa-arrow-up{% elif porcentaje_crecimiento_productos < 0 %}fa-arrow-down{% else %}fa-equals{% endif %}"></i>
+                            {{ porcentaje_crecimiento_productos|abs|default('0') }}% vs período anterior
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráficos principales -->
+            <div class="row mt-4">
+                <div class="col-lg-8">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-line card-header-icon me-2"></i> Tendencia de Ventas</h5>
+                            <div class="comparison-toggle">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="comparePeriodToggle" onchange="toggleComparePeriod()">
+                                    <label class="form-check-label" for="comparePeriodToggle">Comparar con período anterior</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="graficoTendencia"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie card-header-icon me-2"></i> Distribución de Ventas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="graficoPastelDashboard"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top productos y ventas recientes -->
+            <div class="row mt-4">
+                <div class="col-lg-6">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-trophy card-header-icon me-2"></i> Top 5 Productos</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th class="text-center">Unidades</th>
+                                            <th class="text-end">Ventas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for producto in top_productos %}
+                                        <tr>
+                                            <td>{{ producto.Nombre }}</td>
+                                            <td class="text-center">{{ producto.TotalVendido }}</td>
+                                            <td class="text-end">C$ {{ producto.TotalVentas|default('0.00') }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-clock card-header-icon me-2"></i> Ventas Recientes</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fecha</th>
+                                            <th>Cliente</th>
+                                            <th class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for venta in ventas_recientes %}
+                                        <tr>
+                                            <td>{{ venta.IDVenta }}</td>
+                                            <td>{{ venta.Fecha }}</td>
+                                            <td>{{ venta.Cliente|default('Cliente General') }}</td>
+                                            <td class="text-end">C$ {{ venta.Total }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Ventas Diarias -->
+        <div class="tab-pane fade" id="ventas-diarias" role="tabpanel" aria-labelledby="ventas-diarias-tab">
+            <!-- Filtros -->
+            <div class="filter-card">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i> Filtros
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="fechaInicio" class="form-label">Desde:</label>
+                        <input type="date" id="fechaInicio" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fechaFin" class="form-label">Hasta:</label>
+                        <input type="date" id="fechaFin" class="form-control">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-primary" onclick="filtrarTabla()">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end justify-content-end">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportVentasDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-download"></i> Exportar
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="exportVentasDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="exportarTablaPDF()"><i class="fas fa-file-pdf me-2 text-danger"></i> Exportar a PDF</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportarTablaExcel()"><i class="fas fa-file-excel me-2 text-success"></i> Exportar a Excel</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tabla de ventas diarias -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h5><i class="fas fa-table me-2"></i> Reporte de Ventas Diarias</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tablaVentas">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th class="text-end">Total Ventas (C$)</th>
+                                <th class="text-end">Crecimiento vs Día Anterior (C$)</th>
+                                <th class="text-center">Tendencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in ventas_dia %}
+                            <tr>
+                                <td>{{ row.Fecha }}</td>
+                                <td class="text-end">{{ row.TotalVentas }}</td>
+                                <td class="text-end">{{ row.Crecimiento }}</td>
+                                <td class="text-center">
+                                    {% if row.Crecimiento > 0 %}
+                                    <span class="badge-trend up">
+                                        <i class="fas fa-arrow-up"></i> Aumento
+                                    </span>
+                                    {% elif row.Crecimiento < 0 %}
+                                    <span class="badge-trend down">
+                                        <i class="fas fa-arrow-down"></i> Disminución
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-trend neutral">
+                                        <i class="fas fa-equals"></i> Sin cambio
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Gráficos -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-bar card-header-icon me-2"></i> Crecimiento de Ventas - Últimos 7 Días</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="graficoBarras"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie card-header-icon me-2"></i> Top 5 Productos Más Vendidos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="graficoPastel"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Análisis de Productos -->
+        <div class="tab-pane fade" id="productos" role="tabpanel" aria-labelledby="productos-tab">
+            <div class="filter-card">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i> Filtros
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="productosFechaInicio" class="form-label">Desde:</label>
+                        <input type="date" id="productosFechaInicio" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="productosFechaFin" class="form-label">Hasta:</label>
+                        <input type="date" id="productosFechaFin" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="categoriaProducto" class="form-label">Categoría:</label>
+                        <select id="categoriaProducto" class="form-select">
+                            <option value="">Todas las categorías</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.IDCategoria }}">{{ categoria.Nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-primary" onclick="filtrarProductos()">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie card-header-icon me-2"></i> Ventas por Categoría</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="graficoCategorias"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-bar card-header-icon me-2"></i> Top 10 Productos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="graficoTopProductos"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container mt-4">
+                <div class="table-header">
+                    <h5><i class="fas fa-box me-2"></i> Rendimiento de Productos</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tablaProductos">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th class="text-center">Unidades Vendidas</th>
+                                <th class="text-end">Precio Promedio</th>
+                                <th class="text-end">Total Ventas</th>
+                                <th class="text-center">% del Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_rendimiento %}
+                            <tr>
+                                <td>{{ producto.Nombre }}</td>
+                                <td>{{ producto.Categoria }}</td>
+                                <td class="text-center">{{ producto.UnidadesVendidas }}</td>
+                                <td class="text-end">C$ {{ producto.PrecioPromedio }}</td>
+                                <td class="text-end">C$ {{ producto.TotalVentas }}</td>
+                                <td class="text-center">{{ producto.PorcentajeTotal }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Tendencias -->
+        <div class="tab-pane fade" id="tendencias" role="tabpanel" aria-labelledby="tendencias-tab">
+            <div class="filter-card">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i> Filtros
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="tendenciasPeriodo" class="form-label">Período:</label>
+                        <select id="tendenciasPeriodo" class="form-select" onchange="cambiarPeriodoTendencias()">
+                            <option value="diario">Diario</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="mensual">Mensual</option>
+                            <option value="anual">Anual</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tendenciasFechaInicio" class="form-label">Desde:</label>
+                        <input type="date" id="tendenciasFechaInicio" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tendenciasFechaFin" class="form-label">Hasta:</label>
+                        <input type="date" id="tendenciasFechaFin" class="form-control">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-primary" onclick="filtrarTendencias()">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-line card-header-icon me-2"></i> Tendencia de Ventas</h5>
+                            <div class="comparison-toggle">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="tendenciasCompareToggle" onchange="toggleTendenciasCompare()">
+                                    <label class="form-check-label" for="tendenciasCompareToggle">Comparar con período anterior</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 400px;">
+                                <canvas id="graficoTendenciasVentas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-lg-6">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-bar card-header-icon me-2"></i> Ventas por Día de la Semana</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="graficoDiasSemana"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-bar card-header-icon me-2"></i> Ventas por Hora del Día</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="graficoHorasDia"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-area card-header-icon me-2"></i> Proyección de Ventas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="graficoProyeccion"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts para exportación de PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<!-- Script para exportación de Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Moment.js para manejo de fechas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<!-- Chart.js Datalabels plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+<script>
+    // Datos para los gráficos
+    const labelsBarras = {{ fechas|tojson }};
+    const datosBarras = {{ totales|tojson }};
+    const labelsPastel = {{ nombres_productos|tojson }};
+    const datosPastel = {{ cantidades_vendidas|tojson }};
+    
+    // Colores para gráficos
+    const coloresPrimarios = [
+        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+        '#6f42c1', '#20c9a6', '#5a5c69', '#858796', '#5a5c69'
+    ];
+    
+    const coloresSecundarios = [
+        'rgba(78, 115, 223, 0.7)', 'rgba(28, 200, 138, 0.7)', 
+        'rgba(54, 185, 204, 0.7)', 'rgba(246, 194, 62, 0.7)', 
+        'rgba(231, 74, 59, 0.7)', 'rgba(111, 66, 193, 0.7)',
+        'rgba(32, 201, 166, 0.7)', 'rgba(90, 92, 105, 0.7)',
+        'rgba(133, 135, 150, 0.7)', 'rgba(90, 92, 105, 0.7)'
+    ];
+    
+    // Configuración común para gráficos
+    Chart.defaults.font.family = "'Poppins', 'Public Sans', sans-serif";
+    Chart.defaults.color = '#6c757d';
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 4;
+    Chart.defaults.plugins.tooltip.titleFont = { weight: 'bold' };
+    
+    // Inicializar gráficos al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar fechas
+        const hoy = new Date();
+        document.getElementById('fechaInicio').valueAsDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1); // Primer día del mes actual
+        document.getElementById('fechaFin').valueAsDate = hoy;
+        
+        document.getElementById('dashboardFechaInicio').valueAsDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        document.getElementById('dashboardFechaFin').valueAsDate = hoy;
+        
+        document.getElementById('productosFechaInicio').valueAsDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        document.getElementById('productosFechaFin').valueAsDate = hoy;
+        
+        document.getElementById('tendenciasFechaInicio').valueAsDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        document.getElementById('tendenciasFechaFin').valueAsDate = hoy;
+        
+        // Inicializar gráficos
+        inicializarGraficos();
+    });
+    
+    // Función para inicializar todos los gráficos
+    function inicializarGraficos() {
+        // Gráfico de barras
+        const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
+        new Chart(ctxBarras, {
+            type: 'bar',
+            data: {
+                labels: labelsBarras,
+                datasets: [{
+                    label: 'Ventas C$ por Día',
+                    data: datosBarras,
+                    backgroundColor: coloresSecundarios[0],
+                    borderColor: coloresPrimarios[0],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Ventas: C$ ${context.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de pastel
+        const ctxPastel = document.getElementById('graficoPastel').getContext('2d');
+        new Chart(ctxPastel, {
+            type: 'pie',
+            data: {
+                labels: labelsPastel,
+                datasets: [{
+                    data: datosPastel,
+                    backgroundColor: coloresPrimarios.slice(0, labelsPastel.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((context.raw / total) * 100);
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de tendencia (Dashboard)
+        const ctxTendencia = document.getElementById('graficoTendencia').getContext('2d');
+        new Chart(ctxTendencia, {
+            type: 'line',
+            data: {
+                labels: labelsBarras,
+                datasets: [{
+                    label: 'Ventas',
+                    data: datosBarras,
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderColor: '#4e73df',
+                    pointBackgroundColor: '#4e73df',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#4e73df',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Ventas: C$ ${context.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de pastel (Dashboard)
+        const ctxPastelDashboard = document.getElementById('graficoPastelDashboard').getContext('2d');
+        new Chart(ctxPastelDashboard, {
+            type: 'doughnut',
+            data: {
+                labels: labelsPastel,
+                datasets: [{
+                    data: datosPastel,
+                    backgroundColor: coloresPrimarios.slice(0, labelsPastel.length),
+                    borderWidth: 1,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Inicializar gráficos de análisis de productos (con datos de ejemplo)
+        inicializarGraficosCategorias();
+        inicializarGraficosTopProductos();
+        
+        // Inicializar gráficos de tendencias (con datos de ejemplo)
+        inicializarGraficosTendencias();
+    }
+    
+    // Función para inicializar gráficos de categorías
+    function inicializarGraficosCategorias() {
+        // Datos de ejemplo para categorías
+        const categorias = ['Libros', 'Útiles Escolares', 'Papelería', 'Arte', 'Oficina'];
+        const ventasCategorias = [12500, 8700, 6300, 4200, 3100];
+        
+        const ctxCategorias = document.getElementById('graficoCategorias').getContext('2d');
+        new Chart(ctxCategorias, {
+            type: 'pie',
+            data: {
+                labels: categorias,
+                datasets: [{
+                    data: ventasCategorias,
+                    backgroundColor: coloresPrimarios.slice(0, categorias.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((context.raw / total) * 100);
+                                return `${context.label}: C$ ${context.raw} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Función para inicializar gráficos de top productos
+    function inicializarGraficosTopProductos() {
+        // Datos de ejemplo para top productos
+        const topProductos = ['Cuaderno Universitario', 'Lápiz Grafito', 'Borrador', 'Marcador Permanente', 'Papel Bond', 'Tijeras', 'Pegamento', 'Cartulina', 'Folder', 'Regla'];
+        const ventasTopProductos = [3200, 2800, 2500, 2200, 1900, 1700, 1500, 1300, 1100, 900];
+        
+        const ctxTopProductos = document.getElementById('graficoTopProductos').getContext('2d');
+        new Chart(ctxTopProductos, {
+            type: 'bar',
+            data: {
+                labels: topProductos,
+                datasets: [{
+                    label: 'Ventas C$',
+                    data: ventasTopProductos,
+                    backgroundColor: coloresSecundarios.slice(0, topProductos.length),
+                    borderColor: coloresPrimarios.slice(0, topProductos.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Ventas: C$ ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Función para inicializar gráficos de tendencias
+    function inicializarGraficosTendencias() {
+        // Datos de ejemplo para tendencias
+        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const ventasMensuales = [15000, 17000, 14000, 16000, 18000, 19000, 22000, 24000, 21000, 23000, 25000, 28000];
+        const ventasAñoAnterior = [14000, 15000, 13000, 15000, 16000, 17000, 19000, 21000, 18000, 20000, 22000, 24000];
+        
+        const ctxTendenciasVentas = document.getElementById('graficoTendenciasVentas').getContext('2d');
+        new Chart(ctxTendenciasVentas, {
+            type: 'line',
+            data: {
+                labels: meses,
+                datasets: [{
+                    label: 'Ventas 2023',
+                    data: ventasMensuales,
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderColor: '#4e73df',
+                    pointBackgroundColor: '#4e73df',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#4e73df',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Ventas 2022',
+                    data: ventasAñoAnterior,
+                    backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                    borderColor: '#1cc88a',
+                    pointBackgroundColor: '#1cc88a',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#1cc88a',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: C$ ${context.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de días de la semana
+        const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const ventasDiasSemana = [12000, 13500, 11000, 14000, 18000, 22000, 9000];
+        
+        const ctxDiasSemana = document.getElementById('graficoDiasSemana').getContext('2d');
+        new Chart(ctxDiasSemana, {
+            type: 'bar',
+            data: {
+                labels: diasSemana,
+                datasets: [{
+                    label: 'Ventas por día',
+                    data: ventasDiasSemana,
+                    backgroundColor: coloresSecundarios[0],
+                    borderColor: coloresPrimarios[0],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Ventas: C$ ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de horas del día
+        const horasDia = ['8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+        const ventasHorasDia = [800, 1200, 1500, 1800, 2200, 1900, 1700, 2000, 2300, 2500, 2100, 1600];
+        
+        const ctxHorasDia = document.getElementById('graficoHorasDia').getContext('2d');
+        new Chart(ctxHorasDia, {
+            type: 'line',
+            data: {
+                labels: horasDia,
+                datasets: [{
+                    label: 'Ventas por hora',
+                    data: ventasHorasDia,
+                    backgroundColor: 'rgba(54, 185, 204, 0.05)',
+                    borderColor: '#36b9cc',
+                    pointBackgroundColor: '#36b9cc',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#36b9cc',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Ventas: C$ ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de proyección
+        const mesesProyeccion = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const ventasReales = [15000, 17000, 14000, 16000, 18000, 19000, 22000, 24000, null, null, null, null];
+        const ventasProyectadas = [null, null, null, null, null, null, null, 24000, 26000, 28000, 30000, 32000];
+        
+        const ctxProyeccion = document.getElementById('graficoProyeccion').getContext('2d');
+        new Chart(ctxProyeccion, {
+            type: 'line',
+            data: {
+                labels: mesesProyeccion,
+                datasets: [{
+                    label: 'Ventas Reales',
+                    data: ventasReales,
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderColor: '#4e73df',
+                    pointBackgroundColor: '#4e73df',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#4e73df',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Ventas Proyectadas',
+                    data: ventasProyectadas,
+                    backgroundColor: 'rgba(246, 194, 62, 0.05)',
+                    borderColor: '#f6c23e',
+                    pointBackgroundColor: '#f6c23e',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#f6c23e',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.raw === null) return '';
+                                return `${context.dataset.label}: C$ ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + value;
+                            }
+                        }
+                        }
+                    }
+                
+            }
+        });
+    }
+    
+    // Función para filtrar la tabla de ventas
+    function filtrarTabla() {
+        const desde = document.getElementById('fechaInicio').value;
+        const hasta = document.getElementById('fechaFin').value;
+
+        document.querySelectorAll('#tablaVentas tbody tr').forEach(row => {
+            const fechaTexto = row.children[0].textContent.trim().substring(0, 10); // YYYY-MM-DD
+            if ((desde && fechaTexto < desde) || (hasta && fechaTexto > hasta)) {
+                row.style.display = 'none';
+            } else {
+                row.style.display = '';
+            }
+        });
+    }
+    
+    // Función para actualizar el dashboard
+    function actualizarDashboard() {
+        const desde = document.getElementById('dashboardFechaInicio').value;
+        const hasta = document.getElementById('dashboardFechaFin').value;
+        
+        // Aquí se implementaría una llamada AJAX para obtener datos actualizados
+        // Por ahora, mostramos un mensaje de actualización
+        alert(`Dashboard actualizado para el período: ${desde} a ${hasta}`);
+    }
+    
+    // Función para seleccionar períodos predefinidos
+    function seleccionarPeriodo(periodo) {
+        const hoy = new Date();
+        let inicio = new Date();
+        
+        switch(periodo) {
+            case 'hoy':
+                inicio = new Date(hoy);
+                break;
+            case 'ayer':
+                inicio = new Date(hoy);
+                inicio.setDate(hoy.getDate() - 1);
+                hoy.setDate(hoy.getDate() - 1);
+                break;
+            case 'semana':
+                inicio = new Date(hoy);
+                inicio.setDate(hoy.getDate() - 7);
+                break;
+            case 'mes':
+                inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                break;
+        }
+        
+        document.getElementById('dashboardFechaInicio').valueAsDate = inicio;
+        document.getElementById('dashboardFechaFin').valueAsDate = hoy;
+        
+        actualizarDashboard();
+    }
+    
+    // Función para alternar la comparación con período anterior
+    function toggleComparePeriod() {
+        // Aquí se implementaría la lógica para mostrar/ocultar datos comparativos
+        const isChecked = document.getElementById('comparePeriodToggle').checked;
+        alert(`Comparación con período anterior: ${isChecked ? 'Activada' : 'Desactivada'}`);
+    }
+    
+    // Función para alternar la comparación en tendencias
+    function toggleTendenciasCompare() {
+        // Aquí se implementaría la lógica para mostrar/ocultar datos comparativos en tendencias
+        const isChecked = document.getElementById('tendenciasCompareToggle').checked;
+        alert(`Comparación con período anterior en tendencias: ${isChecked ? 'Activada' : 'Desactivada'}`);
+    }
+    
+    // Función para cambiar el período de tendencias
+    function cambiarPeriodoTendencias() {
+        const periodo = document.getElementById('tendenciasPeriodo').value;
+        alert(`Período de tendencias cambiado a: ${periodo}`);
+    }
+    
+    // Función para filtrar tendencias
+    function filtrarTendencias() {
+        const desde = document.getElementById('tendenciasFechaInicio').value;
+        const hasta = document.getElementById('tendenciasFechaFin').value;
+        const periodo = document.getElementById('tendenciasPeriodo').value;
+        
+        alert(`Tendencias filtradas para el período ${periodo}: ${desde} a ${hasta}`);
+    }
+    
+    // Función para filtrar productos
+    function filtrarProductos() {
+        const desde = document.getElementById('productosFechaInicio').value;
+        const hasta = document.getElementById('productosFechaFin').value;
+        const categoria = document.getElementById('categoriaProducto').value;
+        
+        alert(`Productos filtrados: ${desde} a ${hasta}, Categoría: ${categoria || 'Todas'}`);
+    }
+    
+    // Función para exportar a PDF
+    function exportarPDF() {
+        try {
+            const { jsPDF } = window.jspdf;
+            
+            // Crear nuevo documento PDF
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Añadir título
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text('Reporte de Ventas', 105, 20, { align: 'center' });
+            
+            // Añadir fecha
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            const fechaInicio = document.getElementById('dashboardFechaInicio').value;
+            const fechaFin = document.getElementById('dashboardFechaFin').value;
+            doc.text(`Período: ${fechaInicio} a ${fechaFin}`, 105, 30, { align: 'center' });
+            
+            // Añadir KPIs
+            doc.setFontSize(12);
+            doc.text('Resumen de Ventas', 20, 45);
+            
+            doc.setFontSize(10);
+            doc.text('Ventas Totales:', 20, 55);
+            doc.text(`C$ ${document.querySelector('.kpi-card.primary .kpi-value').textContent}`, 70, 55);
+            
+            doc.text('Ticket Promedio:', 20, 62);
+            doc.text(`C$ ${document.querySelector('.kpi-card.success .kpi-value').textContent}`, 70, 62);
+            
+            doc.text('Total Transacciones:', 20, 69);
+            doc.text(`${document.querySelector('.kpi-card.warning .kpi-value').textContent}`, 70, 69);
+            
+            doc.text('Productos Vendidos:', 20, 76);
+            doc.text(`${document.querySelector('.kpi-card.danger .kpi-value').textContent}`, 70, 76);
+            
+            // Guardar PDF
+            doc.save(`Reporte_Ventas_${fechaInicio}_${fechaFin}.pdf`);
+            
+            alert('PDF exportado correctamente');
+        } catch (error) {
+            console.error('Error al exportar PDF:', error);
+            alert('Error al exportar PDF. Consulte la consola para más detalles.');
+        }
+    }
+    
+    // Función para exportar a Excel
+    function exportarExcel() {
+        try {
+            // Crear un libro de trabajo
+            const wb = XLSX.utils.book_new();
+            
+            // Obtener datos de la tabla
+            const tablaVentas = document.getElementById('tablaVentas');
+            const wsVentas = XLSX.utils.table_to_sheet(tablaVentas);
+            
+            // Añadir hoja de ventas
+            XLSX.utils.book_append_sheet(wb, wsVentas, 'Ventas Diarias');
+            
+            // Guardar archivo
+            const fechaInicio = document.getElementById('dashboardFechaInicio').value;
+            const fechaFin = document.getElementById('dashboardFechaFin').value;
+            XLSX.writeFile(wb, `Reporte_Ventas_${fechaInicio}_${fechaFin}.xlsx`);
+            
+            alert('Excel exportado correctamente');
+        } catch (error) {
+            console.error('Error al exportar Excel:', error);
+            alert('Error al exportar Excel. Consulte la consola para más detalles.');
+        }
+    }
+    
+    // Funciones para exportar tabla específica
+    function exportarTablaPDF() {
+        try {
+            const { jsPDF } = window.jspdf;
+            
+            // Crear nuevo documento PDF
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Añadir título
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text('Reporte de Ventas Diarias', 150, 20, { align: 'center' });
+            
+            // Añadir fecha
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            doc.text(`Período: ${fechaInicio} a ${fechaFin}`, 150, 30, { align: 'center' });
+            
+            // Añadir tabla
+            doc.autoTable({
+                html: '#tablaVentas',
+                startY: 40,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [78, 115, 223],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                },
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 3
+                }
+            });
+            
+            // Guardar PDF
+            doc.save(`Ventas_Diarias_${fechaInicio}_${fechaFin}.pdf`);
+            
+            alert('Tabla exportada a PDF correctamente');
+        } catch (error) {
+            console.error('Error al exportar tabla a PDF:', error);
+            alert('Error al exportar tabla a PDF. Consulte la consola para más detalles.');
+        }
+    }
+    
+    function exportarTablaExcel() {
+        try {
+            // Crear un libro de trabajo
+            const wb = XLSX.utils.book_new();
+            
+            // Obtener datos de la tabla
+            const tablaVentas = document.getElementById('tablaVentas');
+            const wsVentas = XLSX.utils.table_to_sheet(tablaVentas);
+            
+            // Añadir hoja de ventas
+            XLSX.utils.book_append_sheet(wb, wsVentas, 'Ventas Diarias');
+            
+            // Guardar archivo
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            XLSX.writeFile(wb, `Ventas_Diarias_${fechaInicio}_${fechaFin}.xlsx`);
+            
+            alert('Tabla exportada a Excel correctamente');
+        } catch (error) {
+            console.error('Error al exportar tabla a Excel:', error);
+            alert('Error al exportar tabla a Excel. Consulte la consola para más detalles.');
+        }
+    }
+</script>
+{% endblock %}
+

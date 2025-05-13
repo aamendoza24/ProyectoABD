@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}Error del Servidor{% endblock %}
+
+{% block main %}
+<div class="container text-center py-5">
+    <div class="error-container">
+        <h1 class="display-1">500</h1>
+        <p class="lead">Error Interno del Servidor</p>
+        <p>Lo sentimos, ha ocurrido un error en el servidor. Por favor, inténtalo de nuevo más tarde.</p>
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary mt-3">
+            <i class="fas fa-home me-2"></i> Volver al inicio
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,746 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Catálogo de Ventas
+{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --primary-color: #4e73df;
+        --secondary-color: #f8f9fa;
+        --success-color: #1cc88a;
+        --danger-color: #e74a3b;
+        --warning-color: #f6c23e;
+        --dark-color: #5a5c69;
+    }
+
+    /* Estilo general */
+    body {
+        background-color: #f8f9fc;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Contenedor principal */
+    .main-container {
+        height: calc(100vh - 56px); /* Resta la altura del navbar si lo tienes */
+        overflow: hidden;
+    }
+
+    /* Tarjeta de carrito */
+    .carrito-card {
+        position: sticky;
+        top: 20px;
+        height: calc(100vh - 110px); /* Ajusta según tu navbar */
+        display: flex;
+        flex-direction: column;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        border: none;
+    }
+
+    .carrito-header {
+        background-color: var(--primary-color);
+        color: 4e73df;
+        font-weight: 600;
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+        padding: 1rem;
+    }
+
+    /* Tabla del carrito */
+    .carrito-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .carrito-tabla-container {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .carrito-tabla {
+        max-height: 100%;
+        overflow-y: auto;
+        margin-bottom: 0;
+        display: block;
+    }
+
+    .carrito-tabla thead {
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 1;
+    }
+
+    .carrito-tabla th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--dark-color);
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .carrito-tabla td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .cantidad-input {
+        width: 60px;
+        text-align: center;
+    }
+
+    /* Sección de total y acciones */
+    .carrito-actions {
+        border-top: 1px solid #e3e6f0;
+        padding: 1rem;
+        background: white;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    .total-display {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--dark-color);
+    }
+
+    /* Catálogo de productos */
+    .catalogo-scroll-container {
+        height: calc(100vh - 76px); /* Ajusta según tu navbar */
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .search-container {
+        background-color: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        flex-shrink: 0;
+    }
+
+    .catalogo-container {
+        flex: 1;
+        overflow: hidden;
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        padding: 1rem;
+    }
+
+    .productos-grid {
+        height: 100%;
+        overflow-y: auto;
+        padding-right: 5px; /* Espacio para el scroll */
+    }
+
+    .producto-card {
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .producto-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .producto-card .card {
+        border: none;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        height: 100%;
+    }
+
+    .producto-card .card-img-top {
+        height: 150px;
+        object-fit: contain;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .producto-card .card-body {
+        padding: 1rem;
+    }
+
+    .producto-card .card-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--dark-color);
+    }
+
+    .producto-card .card-text {
+        font-size: 0.85rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .producto-precio {
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+
+    .stock-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .stock-high {
+        background-color: #e6f7ee;
+        color: #0d8a5b;
+    }
+
+    .stock-low {
+        background-color: #feeaea;
+        color: #d92525;
+        font-weight: 500;
+    }
+
+    /* Modal de pago */
+    .modal-header {
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .modal-title {
+        font-weight: 600;
+    }
+
+    .payment-section {
+        border-bottom: 1px solid #e3e6f0;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .payment-section-title {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    /* Scroll personalizado */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    /* Efecto para cuando hay scroll */
+    .has-scroll::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+        pointer-events: none;
+    }
+    
+    /* Animaciones */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.3s ease forwards;
+    }
+    
+    .shake {
+        animation: shake 0.5s ease;
+    }
+    
+    /* Estilos para el carrito vacío */
+    .empty-cart-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+        color: var(--dark-color);
+        opacity: 0.7;
+    }
+    
+    .empty-cart-message i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+        opacity: 0.5;
+    }
+    
+    /* Estilos para notificaciones */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background-color: white;
+        border-left: 4px solid var(--primary-color);
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        border-radius: 0.25rem;
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        max-width: 350px;
+        animation: fadeIn 0.3s ease forwards;
+    }
+    
+    .notification i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+    }
+    
+    .notification.success {
+        border-left-color: var(--success-color);
+    }
+    
+    .notification.warning {
+        border-left-color: var(--warning-color);
+    }
+    
+    .notification.error {
+        border-left-color: var(--danger-color);
+    }
+    
+    /* Estilos para validación de formularios */
+    .is-invalid {
+        border-color: var(--danger-color) !important;
+    }
+    
+    .invalid-feedback {
+        display: block;
+        color: var(--danger-color);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Seccion para estilos del pdf */
+    /* Estilos para la previsualización de factura */
+    .invoice-preview {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .invoice-header {
+        border-bottom: 2px solid #4e73df;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .invoice-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #4e73df;
+        margin-bottom: 0.5rem;
+    }
+    
+    .invoice-subtitle {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .invoice-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+    
+    .invoice-info-section {
+        flex: 1;
+    }
+    
+    .invoice-info-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #5a5c69;
+        margin-bottom: 0.5rem;
+    }
+    
+    .invoice-info-item {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .invoice-table {
+        width: 100%;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .invoice-table th {
+        background-color: #f8f9fc;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        padding: 0.75rem;
+    }
+    
+    .invoice-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .invoice-total {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        margin-top: 1rem;
+    }
+    
+    .invoice-total-row {
+        display: flex;
+        justify-content: space-between;
+        width: 200px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .invoice-total-label {
+        font-weight: 600;
+        color: #5a5c69;
+    }
+    
+    .invoice-total-value {
+        font-weight: 700;
+    }
+    
+    .invoice-total-final {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #4e73df;
+        border-top: 2px solid #4e73df;
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+        width: 200px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .invoice-footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e3e6f0;
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-align: center;
+    }
+    
+    /* Estilos para el modal de venta completada */
+    .success-modal-content {
+        max-width: 800px;
+    }
+    
+    .invoice-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .btn-invoice {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-invoice:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Animación para la previsualización de factura */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .invoice-preview {
+        animation: fadeInUp 0.5s ease forwards;
+    }
+    
+    /* Estilos para la marca de agua en el PDF */
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 6rem;
+        color: rgba(78, 115, 223, 0.05);
+        pointer-events: none;
+        z-index: -1;
+    }
+
+
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid py-4 main-container">
+    <div class="row g-4 h-100">
+        <!-- Carrito de compras (Fijo) -->
+        <div class="col-lg-4 h-100">
+            <div class="card carrito-card">
+                <div class="card-header carrito-header text-center">
+                    <i class="fas fa-shopping-cart me-2"></i>Carrito de Compras
+                </div>
+                <div class="card-body carrito-body p-0">
+                    <div class="carrito-tabla-container">
+                        <table class="table carrito-tabla">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="small">Producto</th>
+                                    <th scope="col" class="small text-center">Cant.</th>
+                                    <th scope="col" class="small text-center">Precio</th>
+                                    <th scope="col" class="small text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="carrito">
+                                <!-- Productos añadidos dinámicamente -->
+                                <tr class="empty-cart">
+                                    <td colspan="4" class="text-center">
+                                        <div class="empty-cart-message">
+                                            <i class="fas fa-shopping-basket"></i>
+                                            <p>El carrito está vacío</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="carrito-actions">
+                    <div class="mb-3">
+                        <label for="descuento" class="form-label small text-muted">Descuento (C$)</label>
+                        <input type="number" class="form-control" id="descuento" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0 text-muted">Total:</h6>
+                        <h5 class="mb-0 total-display"><span id="total">C$ 0.00</span></h5>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" id="btnPagar">
+                            <i class="fas fa-credit-card me-2"></i>Procesar Pago
+                        </button>
+                        <button class="btn btn-outline-danger" id="vaciarCarrito">
+                            <i class="fas fa-trash-alt me-2"></i>Vaciar Carrito
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Catálogo de productos -->
+        <div class="col-lg-8 h-100">
+            <div class="catalogo-scroll-container">
+                <div class="search-container">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                                <input type="text" id="buscar" class="form-control" placeholder="Buscar producto...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="filtro-categoria" class="form-select">
+                                <option value="0">Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                    <option value="{{ categoria.IDCategoria }}">{{ categoria.Nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="catalogo-container">
+                    <div class="productos-grid">
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="productos">
+                            {% for producto in productos %}
+                                <div class="col producto-card" data-categoria="{{ producto.IDCategoria }}" data-nombre="{{ producto.Nombre | lower }}">
+                                    <div class="card h-100">
+                                        <img src="{{ producto.ImagenURL or 'https://via.placeholder.com/300?text=Sin+imagen' }}" 
+                                             class="card-img-top" 
+                                             alt="{{ producto.Nombre }}"
+                                             onerror="this.src='https://via.placeholder.com/300?text=Imagen+no+disponible'">
+                                        <div class="card-body text-center d-flex flex-column">
+                                            <h5 class="card-title">{{ producto.Nombre }}</h5>
+                                            <p class="producto-precio mb-2">C$ {{ "%.2f"|format(producto.Precio) }}</p>
+                                            <p class="stock-badge {% if producto.Cantidad > 10 %}stock-high{% else %}stock-low{% endif %}">
+                                                {{ producto.Cantidad }} unidades
+                                            </p>
+                                            <div class="mt-auto">
+                                                <button class="btn btn-primary btn-sm agregar-carrito" 
+                                                        data-id="{{ producto.IDProducto }}"
+                                                        data-nombre="{{ producto.Nombre }}"
+                                                        data-precio="{{ producto.Precio }}">
+                                                    <i class="fas fa-cart-plus me-1"></i>Agregar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Mensaje de no resultados -->
+                        <div id="no-resultados" class="text-center py-5 d-none">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No se encontraron productos</h5>
+                            <p class="text-muted">Intenta con otra búsqueda o categoría</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Pago -->
+<div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPagoLabel">
+                    <i class="fas fa-cash-register me-2"></i>Procesar Pago
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formPago">
+                    <!-- Información del Cliente -->
+                    <div class="payment-section">
+                        <h6 class="payment-section-title">
+                            <i class="fas fa-user me-2"></i>Información del Cliente (Opcional)
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="clienteNombre" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="clienteNombre">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="clienteId" class="form-label">ID/NIT</label>
+                                    <input type="text" class="form-control" id="clienteId">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detalles de Pago -->
+                    <div class="payment-section">
+                        <h6 class="payment-section-title">
+                            <i class="fas fa-money-bill-wave me-2"></i>Detalles de Pago
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="totalPago" class="form-label">Total a Pagar</label>
+                                    <input type="text" class="form-control bg-light" id="totalPago" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dineroRecibido" class="form-label">Cantidad Recibida</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">C$</span>
+                                        <input type="number" class="form-control" id="dineroRecibido" required>
+                                    </div>
+                                    <div class="invalid-feedback" id="dineroRecibidoFeedback"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tipoPago" class="form-label">Método de Pago</label>
+                                    <select class="form-select" id="tipoPago">
+                                        <option value="efectivo">Efectivo</option>
+                                        <option value="tarjeta">Tarjeta</option>
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="mixto">Mixto</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cambio" class="form-label">Cambio</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">C$</span>
+                                        <input type="text" class="form-control bg-light" id="cambio" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notas -->
+                    <div class="mb-3">
+                        <label for="notaVenta" class="form-label">
+                            <i class="fas fa-sticky-note me-2"></i>Notas Adicionales
+                        </label>
+                        <textarea class="form-control" id="notaVenta" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success" id="finalizarPago">
+                    <i class="fas fa-check-circle me-2"></i>Finalizar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incluir Font Awesome para los íconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+
+<!-- Bibliotecas necesarias para generar PDFs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="{{ url_for('static', filename='js/ventas.js') }}?v=1.0"></script>
+<!-- JavaScript -->
+
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends "layout.html" %} {% block title %}Compras{% endblock %} {% block main
+    %}
+    <div class="container">
+        <h2 class="mt-4">Registro de Compras</h2>
+    
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %} {% endif %} {% endwith %}
+    
+        <!-- Formulario de Registro de Compra -->
+        <form id="compraForm" method="POST">
+            <div class="form-group">
+                <label for="proveedor">Proveedor:</label>
+                <select name="proveedor" id="proveedor" class="form-control" required>
+                    {% for proveedor in proveedores %}
+                    <option value="{{ proveedor.IDProveedor }}">
+                        {{ proveedor.Nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+    
+            <div class="form-group">
+                <label for="buscarProducto">Buscar Producto:</label>
+                <input type="text" id="buscarProducto" class="form-control"
+                    placeholder="Escribe el nombre del producto..." />
+                <div id="sugerencias" class="list-group"></div>
+            </div>
+    
+            <div class="form-group">
+                <label for="cantidad">Cantidad:</label>
+                <input type="number" id="cantidad" class="form-control" min="1" value="1" />
+            </div>
+            <div class="form-group">
+                <label for="sucursal">Sucursal:</label>
+                <select name="sucursal" id="sucursal" class="form-control" required>>
+                    {% for sucursal in sucursales %}
+                    <option value="{{ sucursal.IDSucursal }}">{{ sucursal.Nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+    
+            <button type="button" id="agregarProducto" class="btn btn-success mt-3">
+                Agregar a la compra
+            </button>
+        </form>
+    
+        <h3 class="mt-5">Productos a Comprar</h3>
+        <table class="table table-hover table-light">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tablaProductos">
+                <!-- Aquí se agregarán los productos temporalmente -->
+            </tbody>
+        </table>
+    
+        <button type="button" id="registrarCompra" class="btn btn-primary mt-3">
+            Registrar Compra
+        </button>
+    
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let productos = [];
+    
+            // Buscar productos mientras se escribe
+            document
+                .getElementById("buscarProducto")
+                .addEventListener("input", function () {
+                    let query = this.value.trim();
+                    if (query.length >= 1) {
+                        fetch(`/buscar_productos?q=${query}`)
+                            .then((response) => response.json())
+                            .then((data) => {
+                                let sugerencias = document.getElementById("sugerencias");
+                                sugerencias.innerHTML = "";
+                                data.forEach((producto) => {
+                                    let item = document.createElement("a");
+                                    item.href = "#";
+                                    item.classList.add("list-group-item", "list-group-item-action");
+                                    item.textContent = producto.Nombre;
+                                    item.dataset.id = producto.IDProducto;
+                                    item.onclick = function () {
+                                        document.getElementById("buscarProducto").value =
+                                            producto.Nombre;
+                                        document.getElementById("buscarProducto").dataset.id =
+                                            producto.IDProducto;
+                                        sugerencias.innerHTML = "";
+                                    };
+                                    sugerencias.appendChild(item);
+                                });
+                            });
+                    }
+                });
+    
+            // Agregar producto a la tabla temporal
+            document
+                .getElementById("agregarProducto")
+                .addEventListener("click", function () {
+                    let productoNombre = document.getElementById("buscarProducto").value;
+                    let productoID = document.getElementById("buscarProducto").dataset.id;
+                    let cantidad = document.getElementById("cantidad").value;
+    
+                    if (!productoID) {
+                        alert("Selecciona un producto de la lista.");
+                        return;
+                    }
+    
+                    productos.push({
+                        IDProducto: productoID,
+                        Nombre: productoNombre,
+                        Cantidad: cantidad,
+                    });
+    
+                    let fila = `<tr>
+                <td>${productoNombre}</td>
+                <td>${cantidad}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="eliminarProducto(${productoID})">Eliminar</button></td>
+            </tr>`;
+                    document.getElementById("tablaProductos").innerHTML += fila;
+    
+                    // Reset input
+                    document.getElementById("buscarProducto").value = "";
+                    document.getElementById("buscarProducto").dataset.id = "";
+                    document.getElementById("cantidad").value = 1;
+                });
+    
+            // Eliminar producto de la tabla temporal
+            window.eliminarProducto = function (id) {
+                productos = productos.filter((p) => p.IDProducto != id);
+                let tabla = document.getElementById("tablaProductos");
+                tabla.innerHTML = "";
+                productos.forEach((p) => {
+                    let fila = `<tr>
+                    <td>${p.Nombre}</td>
+                    <td>${p.Cantidad}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="eliminarProducto(${p.IDProducto})">Eliminar</button></td>
+                </tr>`;
+                    tabla.innerHTML += fila;
+                });
+            };
+    
+            // Enviar la compra al backend
+            document
+                .getElementById("registrarCompra")
+                .addEventListener("click", function () {
+                    let proveedorID = document.getElementById("proveedor").value;
+                    let SucursalID = document.getElementById("sucursal").value
+    
+                    if (productos.length === 0) {
+                        alert("Agrega productos a la compra.");
+                        return;
+                    }
+    
+                    fetch("/compras", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            proveedor: proveedorID, // ID del proveedor
+                            productos: productos, // Lista de productos (con IDProducto, Cantidad, etc.)
+                            sucursal: SucursalID, // ID de la Sucursal
+                        }),
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            alert(data.message);
+                            document.getElementById("tablaProductos").innerHTML = "";
+                            productos = [];
+                        });
+                });
+        });
+    </script>
+    {% endblock %}

@@ -1,0 +1,138 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Historial de Ventas
+{% endblock %}
+
+{% block main %}
+<h2 class="text-center">📊 Historial de Compras</h2>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <label for="filtro-compras">Filtrar por:</label>
+        <select id="filtro-compras" class="form-control">
+            <option value="todas">Todas las Compras</option>
+            <option value="semana">Última semana</option>
+            <option value="mes">Último mes</option>
+        </select>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-head-bg-primary mt-4">
+        <thead>
+            <tr>
+                <th>ID Compra</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Detalles</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-compra">
+            {% for compra in compras %}
+            <tr>
+                <td>{{ compra.id }}</td>
+                <td>{{ compra.fecha }}</td>
+                <td>C$ {{ compra.total | round(2) }}</td>
+                <td>
+                    <button class="btn btn-info ver-detalle" data-id="{{ compra.id }}">
+                        📄 Ver Detalles
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL PARA VER DETALLES DE LA Compra -->
+<div class="modal fade" id="modalDetalles" tabindex="-1" aria-labelledby="modalDetallesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetallesLabel">Detalles de la Compra</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <i class="mdi mdi-close-circle "></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Proveedor</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Sucursal</th> <!-- Nueva columna para la sucursal -->
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-detalles">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Filtro de ventas
+        $("#filtro-compras").change(function () {
+            let filtro = $(this).val();
+            $.ajax({
+                url: "/historial_compras",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ filtro: filtro }),
+                success: function (response) {
+                    let tbody = $("#tabla-compras");
+                    tbody.empty();
+                    response.compras.forEach(compra => {
+                        let fila = `<tr>
+                            <td>${compra.id}</td>
+                            <td>${compra.fecha}</td>
+                            <td>C$ ${compra.total.toFixed(2)}</td>
+                            <td>
+                                <button class="btn btn-info ver-detalle" data-id="${compra.id}">
+                                    📄 Ver Detalles
+                                </button>
+                            </td>
+                        </tr>`;
+                        tbody.append(fila);
+                    });
+                }
+            });
+        });
+
+        // Ver detalles de la compra
+        $(document).on("click", ".ver-detalle", function () {
+            let idCompra = $(this).data("id");
+
+            $.ajax({
+                url: `/detalles_compra/${idCompra}`,
+                method: "GET",
+                success: function (response) {
+                    let tbody = $("#tabla-detalles");
+                    tbody.empty();
+                    response.detalles.forEach(detalle => {
+                        let fila = `<tr>
+                            <td>${detalle.Fecha}</td>
+                            <td>${detalle.Proveedor}</td>
+                            <td>${detalle.Producto}</td>
+                            <td>${detalle.Cantidad}</td>
+                            <td>${detalle.Sucursal}</td>
+                            <td>${detalle.Total}</td>
+                        </tr>`;
+                        tbody.append(fila);
+                    });
+
+                    // Mostrar modal
+                    $("#modalDetalles").modal("show");
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}Página no encontrada{% endblock %}
+
+{% block main %}
+<div class="container text-center py-5">
+    <div class="error-container">
+        <h1 class="display-1">404</h1>
+        <p class="lead">Página no encontrada</p>
+        <p>Lo sentimos, la página que estás buscando no existe o ha sido movida.</p>
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary mt-3">
+            <i class="fas fa-home me-2"></i> Volver al inicio
+        </a>
+    </div>
+</div>
+{% endblock %}
