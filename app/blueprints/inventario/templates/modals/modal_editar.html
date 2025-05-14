@@ -1,6 +1,6 @@
 <div class="modal fade" id="modalEditar{{ producto[0] }}" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-      <form method="POST" action="/editar-producto/{{ producto[0] }}" class="needs-validation" novalidate>
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+      <form method="POST" action="{{ url_for('inventario.editar_producto_bk', producto_id=producto[0]) }}" enctype="multipart/form-data" class="needs-validation" novalidate>
           <div class="modal-content border-0 shadow-lg">
               <!-- Encabezado del modal -->
               <div class="modal-header bg-primary text-white">
@@ -12,55 +12,87 @@
               
               <!-- Cuerpo del modal -->
               <div class="modal-body p-4">
-                  <div class="mb-3">
-                      <label for="nombre{{producto[0]}}" class="form-label fw-medium">Nombre del Producto</label>
-                      <input type="text" class="form-control form-control-lg" id="nombre{{producto[0]}}" 
-                             name="nombre" value="{{ producto[1] }}" required>
-                      <div class="invalid-feedback">
-                          Por favor ingrese un nombre válido
-                      </div>
-                  </div>
-                  
-                  <div class="row g-3">
-                      <div class="col-md-6">
-                          <label for="precio{{producto[0]}}" class="form-label fw-medium">Precio (C$)</label>
-                          <div class="input-group">
-                              <span class="input-group-text bg-light">C$</span>
-                              <input type="number" step="0.01" class="form-control" id="precio{{producto[0]}}" 
-                                     name="precio" value="{{ producto[2] }}" required>
+                  <div class="row">
+                      <!-- Columna izquierda - Información básica -->
+                      <div class="col-md-7">
+                          <div class="mb-3">
+                              <label for="nombre{{producto[0]}}" class="form-label fw-medium">Nombre del Producto <span class="text-danger">*</span></label>
+                              <input type="text" class="form-control" id="nombre{{producto[0]}}" 
+                                     name="nombre" value="{{ producto[1] }}" required>
+                              <div class="invalid-feedback">
+                                  Por favor ingrese un nombre válido
+                              </div>
                           </div>
-                          <div class="invalid-feedback">
-                              Ingrese un precio válido
+                          
+                          <div class="row g-3 mb-3">
+                              <div class="col-md-6">
+                                  <label for="precio{{producto[0]}}" class="form-label fw-medium">Precio (C$) <span class="text-danger">*</span></label>
+                                  <div class="input-group">
+                                      <span class="input-group-text bg-light">C$</span>
+                                      <input type="number" step="0.01" min="0" class="form-control" id="precio{{producto[0]}}" 
+                                             name="precio" value="{{ producto[2] }}" required>
+                                  </div>
+                                  <div class="invalid-feedback">
+                                      Ingrese un precio válido
+                                  </div>
+                              </div>
+                              
+                              <div class="col-md-6">
+                                  <label for="categoria{{producto[0]}}" class="form-label fw-medium">Categoría <span class="text-danger">*</span></label>
+                                  <select class="form-select" id="categoria{{producto[0]}}" name="categoria" required>
+                                      {% for categoria in categorias %}
+                                      <option value="{{ categoria[0] }}" {% if categoria[0] == producto[5] %}selected{% endif %}>
+                                          {{ categoria[1] }}
+                                      </option>
+                                      {% endfor %}
+                                  </select>
+                              </div>
+                          </div>
+                          
+                          <div class="mb-3">
+                              <label for="stock{{producto[0]}}" class="form-label fw-medium">Stock Actual</label>
+                              <input type="number" class="form-control" id="stock{{producto[0]}}" 
+                                     value="{{ producto[6] }}" readonly>
+                              <div class="form-text">Para modificar el stock, use el módulo de inventario</div>
+                          </div>
+                          
+                          <div class="mb-3">
+                              <label for="descripcion{{producto[0]}}" class="form-label fw-medium">Descripción</label>
+                              <textarea class="form-control" id="descripcion{{producto[0]}}" 
+                                        name="descripcion" rows="4">{{ producto[7] if producto|length > 7 else '' }}</textarea>
                           </div>
                       </div>
                       
-                      <div class="col-md-6">
-                          <label for="categoria{{producto[0]}}" class="form-label fw-medium">Categoría</label>
-                          <select class="form-select" id="categoria{{producto[0]}}" name="categoria" required>
-                              {% for categoria in categorias %}
-                              <option value="{{ categoria[0] }}" {% if categoria[0] == producto[4] %}selected{% endif %}>
-                                  {{ categoria[1] }}
-                              </option>
-                              {% endfor %}
-                          </select>
+                      <!-- Columna derecha - Imagen y previsualización -->
+                      <div class="col-md-5">
+                          <div class="card h-100 border">
+                              <div class="card-header bg-light py-2">
+                                  <h6 class="mb-0 fw-medium">Imagen del Producto</h6>
+                              </div>
+                              <div class="card-body text-center d-flex flex-column justify-content-between">
+                                  <div class="mb-3">
+                                      <img id="imagenPreview{{producto[0]}}" 
+                                           src="{{ producto[3] or 'https://via.placeholder.com/200x200?text=Sin+imagen' }}" 
+                                           class="img-fluid rounded mb-3" style="max-height: 180px; object-fit: contain;">
+                                  </div>
+                                  
+                                  <div class="mb-3">
+                                      <label for="imagenFile{{producto[0]}}" class="form-label">Subir nueva imagen</label>
+                                      <input type="file" class="form-control" id="imagenFile{{producto[0]}}" 
+                                             name="imagenFile" accept="image/*">
+                                      <div class="form-text">Formatos: JPG, PNG, GIF (Max. 2MB)</div>
+                                  </div>
+                                  
+                                  <div class="form-check">
+                                      <input class="form-check-input" type="checkbox" id="eliminarImagen{{producto[0]}}" name="eliminarImagen">
+                                      <label class="form-check-label" for="eliminarImagen{{producto[0]}}">
+                                          Eliminar imagen actual
+                                      </label>
+                                  </div>
+                              </div>
+                          </div>
                       </div>
                   </div>
-                  
-                  <div class="mt-3">
-                      <label for="imagen{{producto[0]}}" class="form-label fw-medium">URL de la Imagen</label>
-                      <input type="url" class="form-control" id="imagen{{producto[0]}}" 
-                             name="imagen" value="{{ producto[3] }}" placeholder="https://ejemplo.com/imagen.jpg">
-                      <div class="form-text">Deje vacío para usar imagen predeterminada</div>
-                  </div>
-                  
-                  <!-- Campo de descripción (si lo agregas posteriormente) -->
-                  <!--
-                  <div class="mt-3">
-                      <label for="descripcion{{producto[0]}}" class="form-label fw-medium">Descripción</label>
-                      <textarea class="form-control" id="descripcion{{producto[0]}}" 
-                                name="descripcion" rows="2">{{ producto[6] or '' }}</textarea>
-                  </div>
-                  -->
               </div>
               
               <!-- Pie del modal -->
@@ -77,8 +109,36 @@
   </div>
 </div>
 
-<!-- Script para validación -->
 <script>
+// Previsualización y manejo de imagen para el producto {{ producto[0] }}
+document.addEventListener('DOMContentLoaded', function() {
+    // Referencias a elementos
+    const productoId = {{ producto[0] }};
+    const imagenPreview = document.getElementById('imagenPreview' + productoId);
+    const fileInput = document.getElementById('imagenFile' + productoId);
+    const eliminarCheck = document.getElementById('eliminarImagen' + productoId);
+    
+    // Previsualizar archivo
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagenPreview.src = e.target.result;
+                eliminarCheck.checked = false;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    // Manejar checkbox de eliminar imagen
+    eliminarCheck.addEventListener('change', function() {
+        if (this.checked) {
+            imagenPreview.src = 'https://via.placeholder.com/200x200?text=Sin+imagen';
+            fileInput.value = '';
+        }
+    });
+});
+
 // Validación de formulario con Bootstrap
 (function() {
   'use strict'

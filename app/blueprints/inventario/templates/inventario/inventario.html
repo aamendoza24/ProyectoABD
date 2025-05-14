@@ -267,11 +267,117 @@
     .no-results p {
         color: var(--text-secondary);
     }
+
+    
+    /* Flash Messages Styling */
+    .flash-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .alert {
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        position: relative;
+        animation: slideDown 0.3s ease-out forwards;
+    }
+    
+    .alert-success {
+        background-color: var(--success-bg);
+        color: var(--success-color);
+    }
+    
+    .alert-danger {
+        background-color: var(--danger-bg);
+        color: var(--danger-color);
+    }
+    
+    .alert-warning {
+        background-color: var(--warning-bg);
+        color: var(--warning-color);
+    }
+    
+    .alert-info {
+        background-color: var(--info-bg);
+        color: var(--info-color);
+    }
+    
+    .alert i {
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+    }
+    
+    .alert-dismissible .btn-close {
+        position: absolute;
+        top: 50%;
+        right: 1rem;
+        transform: translateY(-50%);
+        padding: 0.5rem;
+        background: transparent;
+        opacity: 0.6;
+        transition: var(--transition);
+    }
+    
+    .alert-dismissible .btn-close:hover {
+        opacity: 1;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+    
+    .fade-out {
+        animation: fadeOut 0.5s ease-out forwards;
+    }
+    
 </style>
 {% endblock %}
 
 {% block main %}
 <div class="container">
+        <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {% if category == 'success' %}
+                            <i class="bi bi-check-circle-fill"></i>
+                        {% elif category == 'danger' %}
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        {% elif category == 'warning' %}
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                        {% elif category == 'info' %}
+                            <i class="bi bi-info-circle-fill"></i>
+                        {% else %}
+                            <i class="bi bi-bell-fill"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
     <!-- Barra de filtros mejorada -->
     <div class="filter-bar row align-items-center">
         <div class="col-md-4 mb-2 mb-md-0">
@@ -300,11 +406,12 @@
         {% for producto in productos %}
         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 producto" 
              data-id="{{ producto[0] }}"
-             data-categoria="{{ producto[5] }}" 
+             data-categoria="{{ producto[4] }}" 
              data-nombre="{{ producto[1] | lower }}">
             <div class="card h-100">
                 <div class="img-container">
-                    <img src="{{ producto[3] or 'https://via.placeholder.com/150x180?text=Sin+imagen' }}" 
+                    <img src="{{ producto[3] or url_for('static', filename='img/no-image.jpg') }}" 
+                        onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/no-image.jpg') }}';"
                          class="card-img-top" 
                          alt="{{ producto[1] }}">
                 </div>
@@ -355,6 +462,16 @@
 <script>
     $(document).ready(function(){
         // Filtro por categoría
+        setTimeout(function() {
+            $('.alert').each(function() {
+                $(this).addClass('fade-out');
+                var alert = $(this);
+                setTimeout(function() {
+                    alert.alert('close');
+                }, 500);
+            });
+        }, 5000);
+        
         $("#categoria").change(function(){
             filtrarProductos();
         });
