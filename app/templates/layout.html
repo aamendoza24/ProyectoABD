@@ -1,74 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>{% block title %} {% endblock %}</title>
-    <meta
-      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
-      name="viewport"
-    />
-    <link
-      rel="icon"
-      href="{{ url_for('static', filename='img/kaiadmin/favicon.ico') }}"
-      type="image/x-icon"
-    />
 
-    <!-- Fonts and icons -->
-    <script src="{{ url_for('static', filename='js/plugin/webfont/webfont.min.js') }}"></script>
-    <script>
-      WebFont.load({
-        google: { families: ["Public Sans:300,400,500,600,700"] },
-        custom: {
-          families: [
-            "Font Awesome 5 Solid",
-            "Font Awesome 5 Regular",
-            "Font Awesome 5 Brands",
-            "simple-line-icons",
-          ],
-          urls: ["{{ url_for('static', filename='css/fonts.min.css') }}"],
-        },
-        active: function () {
-          sessionStorage.fonts = true;
-        },
-      });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!--sweet alerts para el manejo de mensajes-->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>{% block title %} {% endblock %}</title>
+  <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
+  <link rel="icon" href="{{ url_for('static', filename='img/kaiadmin/favicon.ico') }}" type="image/x-icon" />
+
+  <!-- Fonts and icons -->
+  <script src="{{ url_for('static', filename='js/plugin/webfont/webfont.min.js') }}"></script>
+  <script>
+    WebFont.load({
+      google: { families: ["Public Sans:300,400,500,600,700"] },
+      custom: {
+        families: [
+          "Font Awesome 5 Solid",
+          "Font Awesome 5 Regular",
+          "Font Awesome 5 Brands",
+          "simple-line-icons",
+        ],
+        urls: ["{{ url_for('static', filename='css/fonts.min.css') }}"],
+      },
+      active: function () {
+        sessionStorage.fonts = true;
+      },
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!--sweet alerts para el manejo de mensajes-->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
 
 
-    <!-- CSS Files -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/plugins.min.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" />
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/plugins.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" />
 
-    <!-- CSS Just for demo purpose, don't include it in your project -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
-    <style>
-        .navbar-brand {
-          width: 180px;
-          height: 100%;
-          object-fit: contain;
-        }
-    </style>
-    {% block style %} {% endblock %}
-  </head>
-  <body>
-    <div class="wrapper">
-      <!-- Sidebar -->
-      {% set current_path = request.path %}
+  <!-- CSS Just for demo purpose, don't include it in your project -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+  <style>
+    .navbar-brand {
+      width: 180px;
+      height: 100%;
+      object-fit: contain;
+    }
+  </style>
+  {% block style %} {% endblock %}
+</head>
 
-      <div class="sidebar" data-background-color="dark">
-        <div class="sidebar-logo">
+<body>
+  <div class="wrapper">
+    <!-- Sidebar -->
+    {% set current_path = request.path %}
+
+    <div class="sidebar" data-background-color="dark">
+      <div class="sidebar-logo">
+        <!-- Logo Header -->
+        <div class="logo-header" data-background-color="dark">
+          <a href="{{ url_for('dashboard.index') }}" class="logo">
+            <img src="{{ url_for('static', filename='img/logo_libreria.png') }}" alt="navbar brand" class="navbar-brand"
+              height="20" />
+          </a>
+          <div class="nav-toggle">
+            <button class="btn btn-toggle toggle-sidebar">
+              <i class="gg-menu-right"></i>
+            </button>
+            <button class="btn btn-toggle sidenav-toggler">
+              <i class="gg-menu-left"></i>
+            </button>
+          </div>
+          <button class="topbar-toggler more">
+            <i class="gg-more-vertical-alt"></i>
+          </button>
+        </div>
+        <!-- End Logo Header -->
+      </div>
+      <div class="sidebar-wrapper scrollbar scrollbar-inner">
+        <div class="sidebar-content">
+          <ul class="nav nav-secondary">
+            <li class="nav-item {% if current_path == url_for('dashboard.index') %}active{% endif %}">
+              <a data-bs-toggle="collapse" href="{{ url_for('dashboard.index') }}" class="collapsed"
+                aria-expanded="false">
+                <i class="fas fa-home"></i>
+                <p>Principal</p>
+                <span class="caret"></span>
+              </a>
+            </li>
+            <li class="nav-section">
+              <span class="sidebar-mini-icon">
+                <i class="fa fa-ellipsis-h"></i>
+              </span>
+              <h4 class="text-section">Operaciones</h4>
+            </li>
+            <li
+              class="nav-item {% if current_path in [url_for('ventas.catalogo'), url_for('ventas.historial'), url_for('ventas.reporte')] %}active{% endif %}">
+              <a data-bs-toggle="collapse" href="#base">
+                <i class="fas fa-layer-group"></i>
+                <p>Ventas</p>
+                <span class="caret"></span>
+              </a>
+              <div class="collapse" id="base">
+                <ul class="nav nav-collapse">
+                  <li>
+                    <a href="{{ url_for('ventas.catalogo') }}">
+                      <span class="sub-item">Realizar Venta</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="{{ url_for('ventas.historial') }}">
+                      <span class="sub-item">Historial</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="{{ url_for('ventas.reporte') }}">
+                      <span class="sub-item">Reporte</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li class="nav-item {% if current_path == url_for('inventario.mostrar_stock') %}active{% endif %}">
+              <a href="{{ url_for('inventario.mostrar_stock') }}">
+                <i class="fas fa-th-list"></i>
+                <p>Inventario</p>
+              </a>
+            </li>
+            <li class="nav-item {% if request.blueprint == 'compras' %}active{% endif %}">
+              <a data-bs-toggle="collapse" href="#forms">
+                <i class="fas fa-pen-square"></i>
+                <p>Compras</p>
+                <span class="caret"></span>
+              </a>
+              <div class="collapse" id="forms">
+                <ul class="nav nav-collapse">
+                  <li>
+                    <a href="{{ url_for('compras.index') }}">
+                      <span class="sub-item">Realizar Compra</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="{{ url_for('compras.index') }}#historial">
+                      <span class="sub-item">Historial de compras</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="{{ url_for('compras.reporte') }}">
+                      <span class="sub-item">Reportes</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li class="nav-item">
+              <a href="#tables">
+                <i class="icon-user-follow"></i>
+                <p>Clientes</p>
+              </a>
+            </li>
+            <li class="nav-item {% if current_path == url_for('admin.employees') %}active{% endif %}">
+              <a href="{{ url_for('admin.employees') }}">
+                <i class="icon-people"></i>
+                <p>Empleados</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#facturacion">
+                <i class="fas fa-file"></i>
+                <p>Facturacion</p>
+                <span class="badge badge-secondary">1</span>
+              </a>
+            </li>
+
+
+          </ul>
+        </div>
+      </div>
+    </div>
+    <!-- End Sidebar -->
+
+    <div class="main-panel">
+      <div class="main-header">
+        <div class="main-header-logo">
           <!-- Logo Header -->
           <div class="logo-header" data-background-color="dark">
             <a href="{{ url_for('dashboard.index') }}" class="logo">
-              <img
-                src="{{ url_for('static', filename='img/logo_libreria.png') }}"
-                alt="navbar brand"
-                class="navbar-brand"
-                height="20"
-              />
+              <img src="{{ url_for('static', filename='img/kaiadmin/logo_light.svg') }}" alt="navbar brand"
+                class="navbar-brand" height="20" />
             </a>
             <div class="nav-toggle">
               <button class="btn btn-toggle toggle-sidebar">
@@ -84,262 +201,111 @@
           </div>
           <!-- End Logo Header -->
         </div>
-        <div class="sidebar-wrapper scrollbar scrollbar-inner">
-          <div class="sidebar-content">
-            <ul class="nav nav-secondary">
-              <li class="nav-item {% if current_path == url_for('dashboard.index') %}active{% endif %}">
-                <a
-                  data-bs-toggle="collapse"
-                  href="{{ url_for('dashboard.index') }}"
-                  class="collapsed"
-                  aria-expanded="false"
-                >
-                  <i class="fas fa-home"></i>
-                  <p>Principal</p>
-                  <span class="caret"></span>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Operaciones</h4>
-              </li>
-              <li class="nav-item {% if current_path in [url_for('ventas.catalogo'), url_for('ventas.historial'), url_for('ventas.reporte')] %}active{% endif %}">
-                <a data-bs-toggle="collapse" href="#base">
-                  <i class="fas fa-layer-group"></i>
-                  <p>Ventas</p>
-                  <span class="caret"></span>
-                </a>
-                <div class="collapse" id="base">
-                  <ul class="nav nav-collapse">
-                    <li>
-                      <a href="{{ url_for('ventas.catalogo') }}">
-                        <span class="sub-item">Realizar Venta</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="{{ url_for('ventas.historial') }}">
-                        <span class="sub-item">Historial</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="{{ url_for('ventas.reporte') }}">
-                        <span class="sub-item">Reporte</span>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </li>
-              <li class="nav-item {% if current_path == url_for('inventario.mostrar_stock') %}active{% endif %}">
-                <a href="{{ url_for('inventario.mostrar_stock') }}">
-                  <i class="fas fa-th-list"></i>
-                  <p>Inventario</p>
-                </a>
-              </li>
-              <li class="nav-item {% if current_path in [url_for('compras.realizar_compras'), url_for('compras.historial_compras')] %}active{% endif %}">
-                <a data-bs-toggle="collapse" href="#forms">
-                  <i class="fas fa-pen-square"></i>
-                  <p>Compras</p>
-                  <span class="caret"></span>
-                </a>
-                <div class="collapse" id="forms">
-                  <ul class="nav nav-collapse">
-                    <li>
-                      <a href="{{ url_for('compras.realizar_compras') }}">
-                        <span class="sub-item">Realizar Compra</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="{{ url_for('compras.historial_compras') }}">
-                        <span class="sub-item">Historial de compras</span>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </li>
-              <li class="nav-item">
-                <a href="#tables">
-                  <i class="icon-user-follow"></i>
-                  <p>Clientes</p>
-                </a>
-              </li>
-              <li class="nav-item {% if current_path == url_for('admin.employees') %}active{% endif %}">
-                <a href="{{ url_for('admin.employees') }}">
-                  <i class="icon-people"></i>
-                  <p>Empleados</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="#facturacion">
-                  <i class="fas fa-file"></i>
-                  <p>Facturacion</p>
-                  <span class="badge badge-secondary">1</span>
+        <!-- Navbar Header -->
+        <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
+          <div class="container-fluid">
+            <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+              <li class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
+                  aria-expanded="false" aria-haspopup="true">
+                  <i class="fa fa-search"></i>
                 </a>
               </li>
 
-              
+              <li class="nav-item topbar-user dropdown hidden-caret">
+                <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#" aria-expanded="false">
+                  <div class="avatar-sm">
+                    <img src="{{ url_for('static', filename='img/profile.jpg') }}" alt="..."
+                      class="avatar-img rounded-circle" />
+                  </div>
+                  <span class="profile-username">
+                    <span class="fw-bold">{{ session.get('username', 'Usuario') }}</span>
+                  </span>
+                </a>
+                <ul class="dropdown-menu dropdown-user animated fadeIn">
+                  <div class="dropdown-user-scroll scrollbar-outer">
+                    <li>
+                      <div class="user-box">
+                        <div class="avatar-lg">
+                          <img src="{{ url_for('static', filename='img/profile.jpg') }}" alt="image profile"
+                            class="avatar-img rounded" />
+                        </div>
+                        <div class="u-text">
+                          <h4>{{ session.get('username', 'Usuario') }}</h4>
+                          <p class="text-muted">usuario@ejemplo.com</p>
+                          <a href="#profile" class="btn btn-xs btn-secondary btn-sm">Ver Perfil</a>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="dropdown-divider"></div>
+                      <a class="dropdown-item" href="#">Mi Perfil</a>
+                      <a class="dropdown-item" href="#">Configuración</a>
+                      <div class="dropdown-divider"></div>
+                      <form action="{{ url_for('auth.logout') }}" method="post" id="logout-form">
+                        <a class="dropdown-item" href="#"
+                          onclick="document.getElementById('logout-form').submit();">Cerrar Sesión</a>
+                      </form>
+                    </li>
+                  </div>
+                </ul>
+              </li>
             </ul>
           </div>
-        </div>
-      </div>
-      <!-- End Sidebar -->
-
-      <div class="main-panel">
-        <div class="main-header">
-          <div class="main-header-logo">
-            <!-- Logo Header -->
-            <div class="logo-header" data-background-color="dark">
-              <a href="{{ url_for('dashboard.index') }}" class="logo">
-                <img
-                  src="{{ url_for('static', filename='img/kaiadmin/logo_light.svg') }}"
-                  alt="navbar brand"
-                  class="navbar-brand"
-                  height="20"
-                />
-              </a>
-              <div class="nav-toggle">
-                <button class="btn btn-toggle toggle-sidebar">
-                  <i class="gg-menu-right"></i>
-                </button>
-                <button class="btn btn-toggle sidenav-toggler">
-                  <i class="gg-menu-left"></i>
-                </button>
-              </div>
-              <button class="topbar-toggler more">
-                <i class="gg-more-vertical-alt"></i>
-              </button>
-            </div>
-            <!-- End Logo Header -->
-          </div>
-          <!-- Navbar Header -->
-          <nav
-            class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom"
-          >
-            <div class="container-fluid">
-              <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
-                <li
-                  class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none"
-                >
-                  <a
-                    class="nav-link dropdown-toggle"
-                    data-bs-toggle="dropdown"
-                    href="#"
-                    role="button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    <i class="fa fa-search"></i>
-                  </a>
-                </li>
-
-                <li class="nav-item topbar-user dropdown hidden-caret">
-                  <a
-                    class="dropdown-toggle profile-pic"
-                    data-bs-toggle="dropdown"
-                    href="#"
-                    aria-expanded="false"
-                  >
-                    <div class="avatar-sm">
-                      <img
-                        src="{{ url_for('static', filename='img/profile.jpg') }}"
-                        alt="..."
-                        class="avatar-img rounded-circle"
-                      />
-                    </div>
-                    <span class="profile-username">
-                      <span class="fw-bold">{{ session.get('username', 'Usuario') }}</span>
-                    </span>
-                  </a>
-                  <ul class="dropdown-menu dropdown-user animated fadeIn">
-                    <div class="dropdown-user-scroll scrollbar-outer">
-                      <li>
-                        <div class="user-box">
-                          <div class="avatar-lg">
-                            <img
-                              src="{{ url_for('static', filename='img/profile.jpg') }}"
-                              alt="image profile"
-                              class="avatar-img rounded"
-                            />
-                          </div>
-                          <div class="u-text">
-                            <h4>{{ session.get('username', 'Usuario') }}</h4>
-                            <p class="text-muted">usuario@ejemplo.com</p>
-                            <a
-                              href="#profile"
-                              class="btn btn-xs btn-secondary btn-sm"
-                              >Ver Perfil</a
-                            >
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Mi Perfil</a>
-                        <a class="dropdown-item" href="#">Configuración</a>
-                        <div class="dropdown-divider"></div>
-                        <form action="{{ url_for('auth.logout') }}" method="post" id="logout-form">
-                          <a class="dropdown-item" href="#" onclick="document.getElementById('logout-form').submit();">Cerrar Sesión</a>
-                        </form>
-                      </li>
-                    </div>
-                  </ul>
-                </li>
-              </ul>
-            </div>
-          </nav>
-          <!-- End Navbar -->
-        </div>
-
-        <div class="container">
-            {% block main %} {% endblock %}
-        </div>
-
-        <footer class="footer">
-          <div class="container-fluid d-flex justify-content-between">
-            <div>
-              Creado por 
-            </div>
-          </div>
-        </footer>
+        </nav>
+        <!-- End Navbar -->
       </div>
 
-      <!-- Custom template | don't include it in your project! -->
-      
-      <!-- End Custom template -->
+      <div class="container">
+        {% block main %} {% endblock %}
+      </div>
+
+      <footer class="footer">
+        <div class="container-fluid d-flex justify-content-between">
+          <div>
+            Creado por
+          </div>
+        </div>
+      </footer>
     </div>
-    <!--   Core JS Files   -->
-    <script src="{{ url_for('static', filename='js/core/jquery-3.7.1.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/core/popper.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/core/bootstrap.min.js') }}"></script>
 
-    <!-- jQuery Scrollbar -->
-    <script src="{{ url_for('static', filename='js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}"></script>
+    <!-- Custom template | don't include it in your project! -->
 
-    <!-- Chart JS -->
-    <script src="{{ url_for('static', filename='js/plugin/chart.js/chart.min.js') }}"></script>
+    <!-- End Custom template -->
+  </div>
+  <!--   Core JS Files   -->
+  <script src="{{ url_for('static', filename='js/core/jquery-3.7.1.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/popper.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/bootstrap.min.js') }}"></script>
 
-    <!-- jQuery Sparkline -->
-    <script src="{{ url_for('static', filename='js/plugin/jquery.sparkline/jquery.sparkline.min.js') }}"></script>
+  <!-- jQuery Scrollbar -->
+  <script src="{{ url_for('static', filename='js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}"></script>
 
-    <!-- Chart Circle -->
-    <script src="{{ url_for('static', filename='js/plugin/chart-circle/circles.min.js') }}"></script>
+  <!-- Chart JS -->
+  <script src="{{ url_for('static', filename='js/plugin/chart.js/chart.min.js') }}"></script>
 
-    <!-- Datatables -->
-    <script src="{{ url_for('static', filename='js/plugin/datatables/datatables.min.js') }}"></script>
+  <!-- jQuery Sparkline -->
+  <script src="{{ url_for('static', filename='js/plugin/jquery.sparkline/jquery.sparkline.min.js') }}"></script>
 
-    <!-- Bootstrap Notify -->
-    <script src="{{ url_for('static', filename='js/plugin/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
+  <!-- Chart Circle -->
+  <script src="{{ url_for('static', filename='js/plugin/chart-circle/circles.min.js') }}"></script>
 
-    <!-- jQuery Vector Maps -->
-    <script src="{{ url_for('static', filename='js/plugin/jsvectormap/jsvectormap.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/plugin/jsvectormap/world.js') }}"></script>
+  <!-- Datatables -->
+  <script src="{{ url_for('static', filename='js/plugin/datatables/datatables.min.js') }}"></script>
 
-    <!-- Sweet Alert -->
-    <script src="{{ url_for('static', filename='js/plugin/sweetalert/sweetalert.min.js') }}"></script>
+  <!-- Bootstrap Notify -->
+  <script src="{{ url_for('static', filename='js/plugin/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
 
-    <!-- Kaiadmin JS -->
-    <script src="{{ url_for('static', filename='js/kaiadmin.min.js') }}"></script>
-    {% block scripts %}{% endblock %}
-  </body>
+  <!-- jQuery Vector Maps -->
+  <script src="{{ url_for('static', filename='js/plugin/jsvectormap/jsvectormap.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/plugin/jsvectormap/world.js') }}"></script>
+
+  <!-- Sweet Alert -->
+  <script src="{{ url_for('static', filename='js/plugin/sweetalert/sweetalert.min.js') }}"></script>
+
+  <!-- Kaiadmin JS -->
+  <script src="{{ url_for('static', filename='js/kaiadmin.min.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+
 </html>
