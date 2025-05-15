@@ -1243,7 +1243,7 @@
             
             // Realizar petición AJAX con mejor manejo de errores
             $.ajax({
-                url: '/api/compras/filtrar',
+                url: '/compras/api/compras/filtrar',
                 type: 'GET',
                 data: filtroData,
                 dataType: 'json',
@@ -1325,7 +1325,7 @@
         // Cargar detalles de compra
         function cargarDetallesCompra(compraId, callback) {
             $.ajax({
-                url: `/api/compras/detalle/${compraId}`,
+                url: `/compras/api/compras/detalle/${compraId}`,
                 method: "GET",
                 success: function(response) {
                     console.log("Detalles recibidos:", response);

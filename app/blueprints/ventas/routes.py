@@ -72,41 +72,94 @@ def guardar_venta():
         return jsonify({"error": "No se pudo guardar la venta"}), 500
 
 
-def obtener_ventas(filtro):
+def obtener_ventas(filtro, fecha_inicio=None, fecha_fin=None, cliente_id=None):
+    """Obtiene las ventas según los filtros aplicados"""
     conexion = get_db_connection()
-
     cursor = conexion.cursor()
-
+    
+    # Construir la consulta base
+    query = """
+        SELECT v.IDVenta, v.Fecha, v.Total, COALESCE(c.NombreCompleto, 'Cliente General') as cliente
+        FROM Venta v
+        LEFT JOIN Cliente c ON v.IDCliente = c.IDCliente
+        WHERE 1=1
+    """
+    params = []
+    
+    # Aplicar filtros predefinidos
     if filtro == "hoy":
-        fecha_limite = date.today() 
-        cursor.execute("SELECT IDVenta, Fecha, Total FROM Venta WHERE DATE(Fecha) = ?", (fecha_limite,))
+        query += " AND DATE(v.Fecha) = ?"
+        params.append(date.today().strftime('%Y-%m-%d'))
     elif filtro == "semana":
-        fecha_limite = datetime.now() - timedelta(days=7)
-        cursor.execute("SELECT IDVenta, Fecha, Total FROM Venta WHERE Fecha >= ?", (fecha_limite,))
+        fecha_limite = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+        query += " AND v.Fecha >= ?"
+        params.append(fecha_limite)
     elif filtro == "mes":
-        fecha_limite = datetime.now() - timedelta(days=30)
-        cursor.execute("SELECT IDVenta, Fecha, Total FROM Venta WHERE Fecha >= ?", (fecha_limite,))
-    else:
-        cursor.execute("SELECT IDVenta, Fecha, Total FROM Venta")
-
-    ventas = [{"id": row[0], "fecha": row[1], "total": row[2]} for row in cursor.fetchall()]
+        fecha_limite = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        query += " AND v.Fecha >= ?"
+        params.append(fecha_limite)
+    
+    # Aplicar filtros personalizados
+    if filtro == "personalizado":
+        if fecha_inicio:
+            query += " AND DATE(v.Fecha) >= ?"
+            params.append(fecha_inicio)
+        
+        if fecha_fin:
+            query += " AND DATE(v.Fecha) <= ?"
+            params.append(fecha_fin)
+        
+        if cliente_id:
+            query += " AND v.IDCliente = ?"
+            params.append(cliente_id)
+    
+    # Ordenar por fecha descendente
+    query += " ORDER BY v.Fecha DESC"
+    
+    cursor.execute(query, params)
+    
+    ventas = [{"id": row[0], "fecha": row[1], "total": row[2], "cliente": row[3]} for row in cursor.fetchall()]
     conexion.close()
     return ventas
 
+def obtener_clientes():
+    """Obtiene la lista de clientes para el filtro"""
+    conexion = get_db_connection()
+    cursor = conexion.cursor()
+    
+    cursor.execute("SELECT IDCliente, NombreCompleto FROM Cliente ORDER BY NombreCompleto")
+    clientes = [{"IDCliente": row[0], "NombreCompleto": row[1]} for row in cursor.fetchall()]
+    
+    conexion.close()
+    return clientes
+
 @ventas_bp.route("/historial", methods=["GET", "POST"])
 def historial():
-    filtro = request.json["filtro"] if request.method == "POST" else "todas"
-    ventas = obtener_ventas(filtro)
-
+    """Ruta para el historial de ventas"""
     if request.method == "POST":
+        data = request.json
+        filtro = data.get("filtro", "todas")
+        
+        # Si es un filtro personalizado, obtener parámetros adicionales
+        if filtro == "personalizado":
+            fecha_inicio = data.get("fecha_inicio")
+            fecha_fin = data.get("fecha_fin")
+            cliente_id = data.get("cliente_id")
+            ventas = obtener_ventas(filtro, fecha_inicio, fecha_fin, cliente_id)
+        else:
+            ventas = obtener_ventas(filtro)
+        
         return jsonify({"ventas": ventas})
+    
+    # Para solicitudes GET, mostrar la página con todas las ventas
+    ventas = obtener_ventas("todas")
+    clientes = obtener_clientes()
+    
+    return render_template("ventas/ventas.html", ventas=ventas, clientes=clientes)
 
-    return render_template("ventas/ventas.html", ventas=ventas)
-
-
-#Ruta que retorna todos los detalles de la venta
 @ventas_bp.route("/detalles_venta/<int:id_venta>", methods=["GET"])
 def detalles_venta(id_venta):
+    """Ruta que retorna todos los detalles de la venta"""
     conexion = get_db_connection()
     cursor = conexion.cursor()
 
@@ -151,7 +204,7 @@ def detalles_venta(id_venta):
     return jsonify({"venta": venta, "detalles": detalles})
 
 
-
+#rutas para el area de reporte de ventas
 @ventas_bp.route("/reporte")
 @role_required(['admin', 'gerente'])
 def reporte():

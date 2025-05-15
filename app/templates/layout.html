@@ -67,7 +67,7 @@
           <div class="logo-header" data-background-color="dark">
             <a href="{{ url_for('dashboard.index') }}" class="logo">
               <img
-                src="{{ url_for('static', filename='img/logo_libreria.png') }}"
+                src="{{ url_for('static', filename='img/logo_indiana.png') }}"
                 alt="navbar brand"
                 class="navbar-brand"
                 height="20"
@@ -110,7 +110,7 @@
               </li>
               <li class="nav-item {% if current_path in [url_for('ventas.catalogo'), url_for('ventas.historial'), url_for('ventas.reporte')] %}active{% endif %}">
                 <a data-bs-toggle="collapse" href="#base">
-                  <i class="fas fa-layer-group"></i>
+                  <i class="fas fa-shopping-cart"></i>
                   <p>Ventas</p>
                   <span class="caret"></span>
                 </a>
@@ -136,13 +136,13 @@
               </li>
               <li class="nav-item {% if current_path == url_for('inventario.mostrar_stock') %}active{% endif %}">
                 <a href="{{ url_for('inventario.mostrar_stock') }}">
-                  <i class="fas fa-th-list"></i>
+                  <i class="fas fa-boxes"></i>
                   <p>Inventario</p>
                 </a>
               </li>
               <li class="nav-item {% if current_path in [url_for('compras.realizar_compras'), url_for('compras.historial_compras')] %}active{% endif %}">
                 <a data-bs-toggle="collapse" href="#forms">
-                  <i class="fas fa-pen-square"></i>
+                  <i class="fas fa-truck"></i>
                   <p>Compras</p>
                   <span class="caret"></span>
                 </a>
@@ -163,13 +163,13 @@
               </li>
               <li class="nav-item">
                 <a href="#tables">
-                  <i class="icon-user-follow"></i>
+                  <i class="fas fa-users"></i>
                   <p>Clientes</p>
                 </a>
               </li>
               <li class="nav-item {% if current_path == url_for('admin.employees') %}active{% endif %}">
                 <a href="{{ url_for('admin.employees') }}">
-                  <i class="icon-people"></i>
+                  <i class="fas fa-user-tie"></i>
                   <p>Empleados</p>
                 </a>
               </li>
