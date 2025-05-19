@@ -12,11 +12,11 @@
                     <!-- Columna de imagen -->
                     <div class="col-md-5">
                         <div class="bg-light rounded-3 p-3 d-flex align-items-center justify-content-center" style="height: 280px;">
-                            <img src="{{ producto[3] }}" 
+                            <img src="{{ producto[3] or url_for('static', filename='img/no-image.jpg') }}" 
                                  class="img-fluid rounded" 
                                  style="max-height: 250px; object-fit: contain;" 
                                  alt="{{ producto[1] }}"
-                                 onerror="this.src='https://via.placeholder.com/300x400?text=Imagen+no+disponible'">
+                                 onerror="this.src='{{ url_for('static', filename='img/no-image.jpg') }}';">
                         </div>
                     </div>
                     
@@ -40,12 +40,12 @@
                             <div class="flex-grow-1">
                                 <div class="mb-3">
                                     <h6 class="text-muted mb-2"><i class="bi bi-tag me-2"></i>Categoría</h6>
-                                    <p class="mb-0">{{ producto[5] }}</p>
+                                    <p class="mb-0">{{ producto[4] }}</p>
                                 </div>
                                 
                                 <div class="mb-3">
                                     <h6 class="text-muted mb-2"><i class="bi bi-card-text me-2"></i>Descripción</h6>
-                                    <p class="mb-0">{{ producto[7] or 'No hay descripción disponible' }}</p>
+                                    <p class="mb-0">{{ producto["Descripcion"] or 'No hay descripción disponible' }}</p>
                                 </div>
                             </div>
                             

@@ -1,6 +1,6 @@
 <div class="modal fade" id="modalRegistrar" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg ">
-      <form method="POST" action="/registrar-producto" enctype="multipart/form-data" class="needs-validation" novalidate>
+      <form method="POST" action="{{ url_for('inventario.registrar_producto') }}" enctype="multipart/form-data" class="needs-validation" novalidate>
           <div class="modal-content border-0 shadow-lg">
               <!-- Encabezado del modal -->
               <div class="modal-header bg-primary text-white">
@@ -62,7 +62,7 @@
                               <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*">
                               <div class="form-text">Formatos aceptados: JPG, PNG, GIF (Max. 2MB)</div>
                               <div class="mt-2 text-center">
-                                  <img id="imagenPrevisualizacion" src="https://via.placeholder.com/200x200?text=Previsualización" 
+                                  <img id="imagenPrevisualizacion" src="{{ url_for('static', filename='img/agregar-archivo.png') }}" 
                                        class="img-thumbnail d-none" style="max-height: 150px;">
                               </div>
                           </div>

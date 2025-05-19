@@ -108,7 +108,25 @@
 <div class="container-fluid">
     <div class="page-header">
         <h4 class="page-title">Administración de Empleados</h4>
-        
+        <ul class="breadcrumbs">
+            <li class="nav-home">
+                <a href="{{ url_for('dashboard.index') }}">
+                    <i class="fas fa-home"></i>
+                </a>
+            </li>
+            <li class="separator">
+                <i class="fas fa-angle-right"></i>
+            </li>
+            <li class="nav-item">
+                <a href="#">Administración</a>
+            </li>
+            <li class="separator">
+                <i class="fas fa-angle-right"></i>
+            </li>
+            <li class="nav-item">
+                <a href="#">Empleados</a>
+            </li>
+        </ul>
     </div>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -141,7 +159,7 @@
                                     <label for="filterStatus">Estado</label>
                                     <select class="form-control" id="filterStatus">
                                         <option value="">Todos</option>
-                                        <option value="activo">Activos</option>
+                                        <option value="active">Activos</option>
                                         <option value="inactive">Inactivos</option>
                                         <option value="locked">Bloqueados</option>
                                     </select>
@@ -192,7 +210,7 @@
                                     <th>Nombre</th>
                                     <th>Usuario</th>
                                     <th>Email</th>
-
+                                    <th>Cargo</th>
                                     <th>Rol</th>
                                     <th>Estado</th>
                                     <th>Último Acceso</th>
@@ -206,6 +224,7 @@
                                     <td>{{ employee.NombreCompleto }}</td>
                                     <td>{{ employee.user }}</td>
                                     <td>{{ employee.email }}</td>
+                                    <td>{{ employee.cargo_nombre }}</td>
                                     <td>{{ employee.role|capitalize }}</td>
                                     <td>
                                         {% if employee.account_locked %}
@@ -615,7 +634,7 @@
             }
             
             if (roleFilter) {
-                table.column(5).search($('#filterRole option:selected').text()).draw()
+                table.column(5).search(roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1)).draw();
             }
             
             if (cargoFilter) {

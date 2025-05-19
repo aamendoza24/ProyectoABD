@@ -1,263 +1,162 @@
 {% extends "layout.html" %}
 {% block title %}Gestión de Compras{% endblock %}
 {% block main %}
-<div class="page-header">
-    <h4 class="page-title">Gestión de Compras</h4>
-    <ul class="breadcrumbs">
-        <li class="nav-home">
-            <a href="{{ url_for('dashboard.index') }}">
-                <i class="fas fa-home"></i>
-            </a>
-        </li>
-        <li class="separator">
-            <i class="fas fa-angle-right"></i>
-        </li>
-        <li class="nav-item">
-            <a href="#">Compras</a>
-        </li>
-        <li class="separator">
-            <i class="fas fa-angle-right"></i>
-        </li>
-        <li class="nav-item">
-            <a href="#">Gestión de Compras</a>
-        </li>
-    </ul>
-    <div class="btn-group">
-        <a href="{{ url_for('compras.reporte') }}" class="btn btn-info">
-            <i class="fas fa-chart-bar"></i> Reportes
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <h2 class="m-0 d-flex align-items-center">
+            <i class="fas fa-shopping-cart text-primary me-3"></i>
+            Registro de Compras
+        </h2>
+        <a href="{{ url_for('compras.historial') }}" class="btn btn-outline-primary">
+            <i class="fas fa-history me-2"></i>
+            Ver Historial
         </a>
     </div>
-</div>
 
-<!-- Mensajes flash -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-{% for category, message in messages %}
-<div class="alert alert-{{ category }} alert-dismissible fade show">
-    {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endfor %}
-{% endif %}
-{% endwith %}
-
-<!-- Tabs para separar formulario e historial -->
-<div class="card">
-    <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs" id="comprasTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="nueva-compra-tab" data-bs-toggle="tab" data-bs-target="#nueva-compra" type="button" role="tab" aria-controls="nueva-compra" aria-selected="true">
-                    <i class="fas fa-shopping-cart"></i> Nueva Compra
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab" aria-controls="historial" aria-selected="false">
-                    <i class="fas fa-history"></i> Historial de Compras
-                </button>
-            </li>
-        </ul>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <div class="card-body">
-        <div class="tab-content" id="comprasTabsContent">
-            <!-- Tab de Nueva Compra -->
-            <div class="tab-pane fade show active" id="nueva-compra" role="tabpanel" aria-labelledby="nueva-compra-tab">
-                <div class="row">
-                    <!-- Columna izquierda: Formulario de compra -->
-                    <div class="col-md-5">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="mb-0">Datos de la Compra</h5>
-                            </div>
-                            <div class="card-body">
-                                <form id="compraForm" method="POST">
-                                    <div class="form-group mb-3">
-                                        <label for="proveedor" class="form-label">Proveedor:</label>
-                                        <select name="proveedor" id="proveedor" class="form-control" required>
-                                            <option value="">Seleccione un proveedor</option>
-                                            {% for proveedor in proveedores %}
-                                            <option value="{{ proveedor.IDProveedor }}">{{ proveedor.Nombre }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
 
-                                    <div class="form-group mb-3">
-                                        <label for="sucursal" class="form-label">Sucursal:</label>
-                                        <select name="sucursal" id="sucursal" class="form-control" required>
-                                            <option value="">Seleccione una sucursal</option>
-                                            {% for sucursal in sucursales %}
-                                            <option value="{{ sucursal.IDSucursal }}">{{ sucursal.Nombre }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-
-                                    <hr>
-
-                                    <div class="form-group mb-3">
-                                        <label for="buscarProducto" class="form-label">Buscar Producto:</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                            <input type="text" id="buscarProducto" class="form-control" placeholder="Nombre del producto..." />
-                                        </div>
-                                        <div id="sugerencias" class="list-group mt-1 position-absolute z-index-1000 w-75"></div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label for="categoria" class="form-label">Categoría:</label>
-                                                <input type="text" id="categoria" class="form-control" readonly />
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label for="stockActual" class="form-label">Stock Actual:</label>
-                                                <input type="text" id="stockActual" class="form-control" readonly />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label for="precio" class="form-label">Precio:</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">$</span>
-                                                    <input type="text" id="precio" class="form-control" readonly />
-                                                    <button type="button" class="btn btn-warning" id="btnCambiarPrecio" disabled>
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label for="cantidad" class="form-label">Cantidad:</label>
-                                                <input type="number" id="cantidad" class="form-control" min="1" value="1" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <button type="button" id="agregarProducto" class="btn btn-success w-100 mt-2">
-                                        <i class="fas fa-plus-circle"></i> Agregar a la compra
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Columna derecha: Productos agregados y total -->
-                    <div class="col-md-7">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0">Productos a Comprar</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                                    <table class="table table-hover table-striped">
-                                        <thead class="table-light sticky-top">
-                                            <tr>
-                                                <th>Producto</th>
-                                                <th>Precio</th>
-                                                <th>Cantidad</th>
-                                                <th>Subtotal</th>
-                                                <th>Acción</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="tablaProductos"></tbody>
-                                    </table>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <div>
-                                        <h5>Total: $<span id="totalCompra">0.00</span></h5>
-                                        <small class="text-muted">Productos: <span id="cantidadProductos">0</span></small>
-                                    </div>
-                                    <button type="button" id="registrarCompra" class="btn btn-primary btn-lg" disabled>
-                                        <i class="fas fa-save"></i> Registrar Compra
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <!-- Nueva estructura con dos columnas -->
+    <div class="row g-4"> <!-- g-4 añade espacio entre columnas -->
+        <!-- Columna izquierda: Datos de la Compra -->
+        <div class="col-md-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Datos de la Compra</h5>
                 </div>
-            </div>
-
-            <!-- Tab de Historial de Compras -->
-            <div class="tab-pane fade" id="historial" role="tabpanel" aria-labelledby="historial-tab">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0">Historial de Compras</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="tabla-historial">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Fecha</th>
-                                        <th>Proveedor</th>
-                                        <th>Sucursal</th>
-                                        <th>Productos</th>
-                                        <th>Total</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% if compras_realizadas %}
-                                        {% for compra in compras_realizadas %}
-                                        <tr>
-                                            <td>{{ compra.IDCompra }}</td>
-                                            <td>{{ compra.Fecha }}</td>
-                                            <td>{{ compra.Proveedor }}</td>
-                                            <td>{{ compra.Sucursal }}</td>
-                                            <td>{{ compra.NumProductos }}</td>
-                                            <td>${{ "%.2f"|format(compra.Total) }}</td>
-                                            <td>
-                                                <a href="{{ url_for('compras.detalle', compra_id=compra.IDCompra) }}" class="btn btn-sm btn-info">
-                                                    <i class="fas fa-eye"></i> Ver
-                                                </a>
-                                            </td>
-                                        </tr>
+                <div class="card-body">
+                    <form id="compraForm" class="needs-validation" novalidate>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <select name="proveedor" id="proveedor" class="form-select" required>
+                                        <option value="" selected disabled>Seleccione un proveedor</option>
+                                        {% for proveedor in proveedores %}
+                                        <option value="{{ proveedor.IDProveedor }}">{{ proveedor.Nombre }}</option>
                                         {% endfor %}
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="7" class="text-center">No hay compras registradas</td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
+                                    </select>
+                                    <label for="proveedor">Proveedor</label>
+                                    <div class="invalid-feedback">
+                                        Por favor seleccione un proveedor.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <select name="sucursal" id="sucursal" class="form-select" required>
+                                        <option value="" selected disabled>Seleccione una sucursal</option>
+                                        {% for sucursal in sucursales %}
+                                        <option value="{{ sucursal.IDSucursal }}">{{ sucursal.Nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="sucursal">Sucursal</label>
+                                    <div class="invalid-feedback">
+                                        Por favor seleccione una sucursal.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Paginación -->
-                        {% if total_pages > 1 %}
-                        <nav aria-label="Paginación de compras">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                                    <a class="page-link" href="{{ url_for('compras.index', page=page-1) }}" tabindex="-1">Anterior</a>
-                                </li>
-                                
-                                {% for i in range(1, total_pages + 1) %}
-                                    {% if i == page %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ i }}</span>
-                                    </li>
-                                    {% elif i <= 3 or i >= total_pages - 2 or (i >= page - 1 and i <= page + 1) %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('compras.index', page=i) }}">{{ i }}</a>
-                                    </li>
-                                    {% elif i == 4 and page > 5 or i == total_pages - 3 and page < total_pages - 4 %}
-                                    <li class="page-item disabled">
-                                        <span class="page-link">...</span>
-                                    </li>
-                                    {% endif %}
-                                {% endfor %}
-                                
-                                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                                    <a class="page-link" href="{{ url_for('compras.index', page=page+1) }}">Siguiente</a>
-                                </li>
-                            </ul>
-                        </nav>
-                        {% endif %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="date" id="fecha_compra" name="fecha_compra" class="form-control"
+                                        value="{{ today_date }}" required>
+                                    <label for="fecha_compra">Fecha de Compra</label>
+                                    <div class="invalid-feedback">
+                                        Por favor seleccione una fecha válida.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" id="referencia" name="referencia" class="form-control"
+                                        placeholder="Número de factura o referencia">
+                                    <label for="referencia">Referencia (Opcional)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Columna derecha: Agregar Productos -->
+        <div class="col-md-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Agregar Productos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <div class="form-floating">
+                                <input type="text" id="buscarProducto" class="form-control" placeholder="Buscar producto"
+                                    autocomplete="off">
+                                <label for="buscarProducto">Buscar Producto</label>
+                            </div>
+                            <div id="sugerencias" class="list-group position-absolute z-3" style="width: calc(100% - 1.5rem);">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-floating">
+                                <input type="number" id="cantidad" class="form-control" min="1" value="1" step="0.01">
+                                <label for="cantidad">Cantidad</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <input type="number" id="precio_compra" class="form-control" min="0.01" step="0.01"
+                                    placeholder="Precio compra">
+                                <label for="precio_compra">Precio de compra</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center">
+                            <button type="button" id="agregarProducto" class="btn btn-success w-100 py-3">
+                                <i class="fas fa-plus me-2"></i>Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Compra</th>
+                                    <th>Subtotal</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaProductos">
+                                <!-- Aquí se agregarán los productos -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Total:</td>
+                                    <td id="totalCompra" class="fw-bold">$0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" id="limpiarCompra" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-trash me-2"></i>Limpiar
+                        </button>
+                        <button type="button" id="registrarCompra" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Registrar Compra
+                        </button>
                     </div>
                 </div>
             </div>
@@ -265,498 +164,255 @@
     </div>
 </div>
 
-<!-- Modal para cambiar precio -->
-<div class="modal fade" id="modalPrecio" tabindex="-1" role="dialog" aria-labelledby="modalPrecioLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">Cambiar Precio del Producto</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> Esta acción actualizará el precio del producto en todo el sistema.
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label"><strong>Producto:</strong></label>
-                    <p id="modalNombreProducto" class="form-control-plaintext"></p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label"><strong>Categoría:</strong></label>
-                    <p id="modalCategoriaProducto" class="form-control-plaintext"></p>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Precio Actual:</strong></label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="text" class="form-control" id="precioActual" readonly>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="nuevoPrecio" class="form-label"><strong>Nuevo Precio:</strong></label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="nuevoPrecio" step="0.01" min="0.01">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" id="guardarNuevoPrecio" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Guardar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmación de compra -->
-<div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="modalConfirmacionLabel">Confirmar Compra</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="confirmModalLabel">Confirmar Compra</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>¿Está seguro que desea registrar esta compra?</p>
-                
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <p><strong>Proveedor:</strong> <span id="confirmProveedor"></span></p>
-                        <p><strong>Sucursal:</strong> <span id="confirmSucursal"></span></p>
-                        <p><strong>Total:</strong> $<span id="confirmTotal"></span></p>
-                        <p><strong>Productos:</strong> <span id="confirmCantidadProductos"></span></p>
-                    </div>
+                <div class="alert alert-info">
+                    <strong>Proveedor:</strong> <span id="modal-proveedor"></span><br>
+                    <strong>Sucursal:</strong> <span id="modal-sucursal"></span><br>
+                    <strong>Total:</strong> <span id="modal-total"></span><br>
+                    <strong>Productos:</strong> <span id="modal-productos"></span>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" id="confirmarCompra" class="btn btn-primary">
-                    <i class="fas fa-check"></i> Confirmar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de éxito -->
-<div class="modal fade" id="modalExito" tabindex="-1" aria-labelledby="modalExitoLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="modalExitoLabel">¡Compra Registrada!</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
-                <h4 class="mt-3">Compra registrada con éxito</h4>
-                <p>La compra ha sido registrada correctamente en el sistema.</p>
-                <p><strong>Número de compra:</strong> <span id="exitoCompraId"></span></p>
-                <p><strong>Total:</strong> $<span id="exitoTotal"></span></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <a id="verDetalleBtn" href="#" class="btn btn-primary">
-                    <i class="fas fa-eye"></i> Ver Detalle
-                </a>
+                <button type="button" class="btn btn-primary" id="confirmarCompra">Confirmar</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    let productoSeleccionado = null;
-    let productos = [];
-    let totalCompra = 0;
-
     document.addEventListener("DOMContentLoaded", function () {
-        // Inicializar DataTables para la tabla de historial
-        if ($.fn.dataTable) {
-            $('#tabla-historial').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
-                },
-                responsive: true,
-                order: [[0, 'desc']]
-            });
+        // Variables globales
+        let productos = [];
+        let confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+
+        // Inicializar validación de formularios
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+
+        // Función para formatear números como moneda
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-MX', {
+                style: 'currency',
+                currency: 'MXN'
+            }).format(value);
         }
 
-        // Buscar productos
+        // Función para calcular el total de la compra
+        function calcularTotal() {
+            let total = productos.reduce((sum, producto) => sum + (producto.Cantidad * producto.PrecioCompra), 0);
+            document.getElementById("totalCompra").textContent = formatCurrency(total);
+            return total;
+        }
+
+        // Buscar productos mientras se escribe
         document.getElementById("buscarProducto").addEventListener("input", function () {
             let query = this.value.trim();
             if (query.length >= 1) {
-                fetch(`{{ url_for('compras.buscar_productos') }}?q=${query}`)
-                    .then(res => res.json())
+                fetch(`/compras/buscar_productos?q=${query}`)
+                    .then(response => response.json())
                     .then(data => {
                         let sugerencias = document.getElementById("sugerencias");
                         sugerencias.innerHTML = "";
-                        
-                        if (data.error) {
-                            let item = document.createElement("div");
-                            item.classList.add("list-group-item", "text-danger");
-                            item.textContent = "Error al buscar productos: " + data.error;
-                            sugerencias.appendChild(item);
-                            return;
-                        }
-                        
-                        if (data.length === 0) {
-                            let item = document.createElement("div");
-                            item.classList.add("list-group-item", "text-muted");
-                            item.textContent = "No se encontraron productos";
-                            sugerencias.appendChild(item);
-                            return;
-                        }
-                        
                         data.forEach(producto => {
                             let item = document.createElement("a");
                             item.href = "#";
                             item.classList.add("list-group-item", "list-group-item-action");
-                            
-                            // Crear contenido con formato
-                            let nombreElement = document.createElement("div");
-                            nombreElement.textContent = producto.Nombre;
-                            nombreElement.classList.add("fw-bold");
-                            
-                            let detallesElement = document.createElement("div");
-                            detallesElement.classList.add("small");
-                            detallesElement.innerHTML = `
-                                <span class="badge bg-secondary">${producto.Categoria}</span>
-                                <span class="ms-2">$${producto.Precio}</span>
-                                <span class="ms-2">Stock: ${producto.StockTotal}</span>
-                            `;
-                            
-                            item.appendChild(nombreElement);
-                            item.appendChild(detallesElement);
-                            
+                            item.textContent = producto.Nombre;
+                            item.dataset.id = producto.IDProducto;
                             item.onclick = function (e) {
                                 e.preventDefault();
-                                productoSeleccionado = {
-                                    IDProducto: producto.IDProducto,
-                                    Nombre: producto.Nombre,
-                                    Precio: producto.Precio,
-                                    Categoria: producto.Categoria || "Sin categoría",
-                                    StockTotal: producto.StockTotal || 0
-                                };
                                 document.getElementById("buscarProducto").value = producto.Nombre;
                                 document.getElementById("buscarProducto").dataset.id = producto.IDProducto;
-                                document.getElementById("precio").value = producto.Precio;
-                                document.getElementById("categoria").value = producto.Categoria;
-                                document.getElementById("stockActual").value = producto.StockTotal;
-                                document.getElementById("btnCambiarPrecio").disabled = false;
+                                document.getElementById("precio_compra").value = producto.Precio || "";
                                 sugerencias.innerHTML = "";
                             };
                             sugerencias.appendChild(item);
                         });
-                    })
-                    .catch(error => {
-                        console.error("Error:", error);
-                        let sugerencias = document.getElementById("sugerencias");
-                        sugerencias.innerHTML = "";
-                        let item = document.createElement("div");
-                        item.classList.add("list-group-item", "text-danger");
-                        item.textContent = "Error al buscar productos";
-                        sugerencias.appendChild(item);
                     });
             } else {
                 document.getElementById("sugerencias").innerHTML = "";
             }
         });
 
-        // Cerrar sugerencias al hacer clic fuera
-        document.addEventListener("click", function (e) {
-            if (!e.target.closest("#buscarProducto") && !e.target.closest("#sugerencias")) {
-                document.getElementById("sugerencias").innerHTML = "";
+        // Ocultar sugerencias al hacer clic fuera
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('buscarProducto').contains(e.target) &&
+                !document.getElementById('sugerencias').contains(e.target)) {
+                document.getElementById('sugerencias').innerHTML = '';
             }
         });
 
-        // Mostrar modal para cambiar precio
-        document.getElementById("btnCambiarPrecio").addEventListener("click", function () {
-            if (!productoSeleccionado) return;
-            
-            document.getElementById("modalNombreProducto").textContent = productoSeleccionado.Nombre;
-            document.getElementById("modalCategoriaProducto").textContent = productoSeleccionado.Categoria;
-            document.getElementById("precioActual").value = productoSeleccionado.Precio;
-            document.getElementById("nuevoPrecio").value = productoSeleccionado.Precio;
-            
-            let modal = new bootstrap.Modal(document.getElementById("modalPrecio"));
-            modal.show();
-        });
-
-        // Guardar nuevo precio desde modal
-        document.getElementById("guardarNuevoPrecio").addEventListener("click", function () {
-            const nuevoPrecio = parseFloat(document.getElementById("nuevoPrecio").value);
-            if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: '¡Error!',
-                    text: 'Ingrese un precio válido mayor que cero.',
-                });
-                return;
-            }
-
-            // Guardar en base de datos
-            fetch("{{ url_for('compras.actualizar_precio') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    id_producto: productoSeleccionado.IDProducto,
-                    nuevo_precio: nuevoPrecio
-                })
-            }).then(res => res.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    
-                    // Actualizar precio en el frontend
-                    productoSeleccionado.Precio = nuevoPrecio;
-                    document.getElementById("precio").value = nuevoPrecio;
-                    
-                    // Actualizar precio en productos ya agregados
-                    let productosActualizados = productos.map(p => {
-                        if (p.IDProducto == productoSeleccionado.IDProducto) {
-                            p.Precio = nuevoPrecio;
-                            p.Subtotal = nuevoPrecio * p.Cantidad;
-                        }
-                        return p;
-                    });
-                    
-                    productos = productosActualizados;
-                    actualizarTablaProductos();
-                    calcularTotal();
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Precio actualizado!',
-                        text: `El precio ha sido actualizado de $${data.precio_anterior} a $${data.precio_nuevo}`,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: '¡Error!',
-                        text: 'Algo salió mal al actualizar el precio: ' + error.message,
-                    });
-                });
-
-            bootstrap.Modal.getInstance(document.getElementById("modalPrecio")).hide();
-        });
-
-        // Agregar producto
+        // Agregar producto a la tabla temporal
         document.getElementById("agregarProducto").addEventListener("click", function () {
-            const productoNombre = document.getElementById("buscarProducto").value;
-            const productoID = document.getElementById("buscarProducto").dataset.id;
-            const precio = parseFloat(document.getElementById("precio").value);
-            const cantidad = parseInt(document.getElementById("cantidad").value);
+            let productoNombre = document.getElementById("buscarProducto").value;
+            let productoID = document.getElementById("buscarProducto").dataset.id;
+            let cantidad = parseFloat(document.getElementById("cantidad").value);
+            let precioCompra = parseFloat(document.getElementById("precio_compra").value);
 
             if (!productoID) {
-                Swal.fire({
-                    icon: 'error',
-                    title: '¡Error!',
-                    text: 'Selecciona un producto de la lista.',
-                });
+                alert("Selecciona un producto de la lista.");
                 return;
             }
-            
+
             if (isNaN(cantidad) || cantidad <= 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: '¡Error!',
-                    text: 'Ingrese una cantidad válida mayor que cero.',
-                });
+                alert("Ingresa una cantidad válida.");
+                return;
+            }
+
+            if (isNaN(precioCompra) || precioCompra <= 0) {
+                alert("Ingresa un precio Compra válido.");
                 return;
             }
 
             // Verificar si el producto ya está en la lista
-            const productoExistente = productos.find(p => p.IDProducto == productoID);
-            
+            let productoExistente = productos.find(p => p.IDProducto == productoID);
             if (productoExistente) {
-                // Actualizar cantidad
-                productoExistente.Cantidad = parseInt(productoExistente.Cantidad) + parseInt(cantidad);
-                productoExistente.Subtotal = productoExistente.Precio * productoExistente.Cantidad;
+                productoExistente.Cantidad += cantidad;
+                productoExistente.PrecioCompra = precioCompra;
             } else {
-                // Agregar nuevo producto
                 productos.push({
                     IDProducto: productoID,
                     Nombre: productoNombre,
-                    Precio: precio,
                     Cantidad: cantidad,
-                    Subtotal: precio * cantidad
+                    PrecioCompra: precioCompra
                 });
             }
 
             actualizarTablaProductos();
-            calcularTotal();
 
-            // Limpiar campos
+            // Reset input
             document.getElementById("buscarProducto").value = "";
             document.getElementById("buscarProducto").dataset.id = "";
-            document.getElementById("precio").value = "";
-            document.getElementById("categoria").value = "";
-            document.getElementById("stockActual").value = "";
             document.getElementById("cantidad").value = 1;
-            productoSeleccionado = null;
-            document.getElementById("btnCambiarPrecio").disabled = true;
-            
-            // Habilitar botón de registrar compra
-            document.getElementById("registrarCompra").disabled = false;
+            document.getElementById("precio_compra").value = "";
         });
 
         // Función para actualizar la tabla de productos
-        window.actualizarTablaProductos = function() {
-            const tabla = document.getElementById("tablaProductos");
+        function actualizarTablaProductos() {
+            let tabla = document.getElementById("tablaProductos");
             tabla.innerHTML = "";
-            
+
             productos.forEach((p, index) => {
+                let subtotal = p.Cantidad * p.PrecioCompra;
                 let fila = document.createElement("tr");
-                
-                let celdaNombre = document.createElement("td");
-                celdaNombre.textContent = p.Nombre;
-                
-                let celdaPrecio = document.createElement("td");
-                celdaPrecio.textContent = `$${parseFloat(p.Precio).toFixed(2)}`;
-                
-                let celdaCantidad = document.createElement("td");
-                let inputCantidad = document.createElement("input");
-                inputCantidad.type = "number";
-                inputCantidad.className = "form-control form-control-sm";
-                inputCantidad.value = p.Cantidad;
-                inputCantidad.min = 1;
-                inputCantidad.style.width = "70px";
-                inputCantidad.addEventListener("change", function() {
-                    const nuevaCantidad = parseInt(this.value);
-                    if (isNaN(nuevaCantidad) || nuevaCantidad <= 0) {
-                        this.value = p.Cantidad;
-                        return;
-                    }
-                    
-                    p.Cantidad = nuevaCantidad;
-                    p.Subtotal = p.Precio * nuevaCantidad;
-                    actualizarTablaProductos();
-                    calcularTotal();
-                });
-                celdaCantidad.appendChild(inputCantidad);
-                
-                let celdaSubtotal = document.createElement("td");
-                celdaSubtotal.textContent = `$${parseFloat(p.Subtotal).toFixed(2)}`;
-                
-                let celdaAcciones = document.createElement("td");
-                let botonEliminar = document.createElement("button");
-                botonEliminar.className = "btn btn-danger btn-sm";
-                botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
-                botonEliminar.onclick = function() {
-                    eliminarProducto(index);
-                };
-                celdaAcciones.appendChild(botonEliminar);
-                
-                fila.appendChild(celdaNombre);
-                fila.appendChild(celdaPrecio);
-                fila.appendChild(celdaCantidad);
-                fila.appendChild(celdaSubtotal);
-                fila.appendChild(celdaAcciones);
-                
+                fila.innerHTML = `
+                <td>${p.Nombre}</td>
+                <td>${p.Cantidad}</td>
+                <td>${formatCurrency(p.PrecioCompra)}</td>
+                <td>${formatCurrency(subtotal)}</td>
+                <td>
+                    <button class="btn btn-warning btn-sm me-1 btn-editar" data-index="${index}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-eliminar" data-index="${index}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
                 tabla.appendChild(fila);
             });
-            
-            // Actualizar contador de productos
-            document.getElementById("cantidadProductos").textContent = productos.length;
-        };
 
-        // Función para calcular el total
-        window.calcularTotal = function() {
-            totalCompra = productos.reduce((total, producto) => total + producto.Subtotal, 0);
-            document.getElementById("totalCompra").textContent = totalCompra.toFixed(2);
-        };
+            // Agregar event listeners a los botones de editar y eliminar
+            document.querySelectorAll('.btn-editar').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    let index = this.dataset.index;
+                    let producto = productos[index];
 
-        // Eliminar producto
-        window.eliminarProducto = function(index) {
-            productos.splice(index, 1);
-            actualizarTablaProductos();
-            calcularTotal();
-            
-            // Deshabilitar botón de registrar si no hay productos
-            if (productos.length === 0) {
-                document.getElementById("registrarCompra").disabled = true;
-            }
-        };
+                    document.getElementById("buscarProducto").value = producto.Nombre;
+                    document.getElementById("buscarProducto").dataset.id = producto.IDProducto;
+                    document.getElementById("cantidad").value = producto.Cantidad;
+                    document.getElementById("precio_compra").value = producto.PrecioCompra;
 
-        // Mostrar modal de confirmación
-        document.getElementById("registrarCompra").addEventListener("click", function() {
-            const proveedorSelect = document.getElementById("proveedor");
-            const sucursalSelect = document.getElementById("sucursal");
-            
-            if (!proveedorSelect.value) {
-                Swal.fire({
-                    icon: 'error',
-                    title: '¡Error!',
-                    text: 'Seleccione un proveedor.',
+                    // Eliminar el producto de la lista
+                    productos.splice(index, 1);
+                    actualizarTablaProductos();
                 });
-                return;
-            }
-            
-            if (!sucursalSelect.value) {
-                Swal.fire({
-                    icon: 'error',
-                    title: '¡Error!',
-                    text: 'Seleccione una sucursal.',
-                });
-                return;
-            }
-            
-            if (productos.length === 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: '¡Error!',
-                    text: 'Agregue al menos un producto a la compra.',
-                });
-                return;
-            }
-            
-            // Llenar datos de confirmación
-            document.getElementById("confirmProveedor").textContent = proveedorSelect.options[proveedorSelect.selectedIndex].text;
-            document.getElementById("confirmSucursal").textContent = sucursalSelect.options[sucursalSelect.selectedIndex].text;
-            document.getElementById("confirmTotal").textContent = totalCompra.toFixed(2);
-            document.getElementById("confirmCantidadProductos").textContent = productos.length;
-            
-            // Mostrar modal
-            const modalConfirmacion = new bootstrap.Modal(document.getElementById("modalConfirmacion"));
-            modalConfirmacion.show();
-        });
-
-        // Registrar compra
-        document.getElementById("confirmarCompra").addEventListener("click", function() {
-            const proveedorID = document.getElementById("proveedor").value;
-            const sucursalID = document.getElementById("sucursal").value;
-            
-            // Cerrar modal de confirmación
-            bootstrap.Modal.getInstance(document.getElementById("modalConfirmacion")).hide();
-            
-            // Mostrar indicador de carga
-            Swal.fire({
-                title: 'Procesando...',
-                html: 'Registrando la compra, por favor espere.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
             });
 
-            fetch("{{ url_for('compras.index') }}", {
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    let index = this.dataset.index;
+                    productos.splice(index, 1);
+                    actualizarTablaProductos();
+                });
+            });
+
+            calcularTotal();
+        }
+
+        // Limpiar la compra
+        document.getElementById("limpiarCompra").addEventListener("click", function () {
+            if (confirm("¿Está seguro que desea limpiar todos los productos?")) {
+                productos = [];
+                actualizarTablaProductos();
+                document.getElementById("compraForm").reset();
+                document.getElementById("compraForm").classList.remove('was-validated');
+            }
+        });
+
+        // Mostrar modal de confirmación
+        document.getElementById("registrarCompra").addEventListener("click", function () {
+            let proveedorSelect = document.getElementById("proveedor");
+            let sucursalSelect = document.getElementById("sucursal");
+            let fechaCompra = document.getElementById("fecha_compra");
+
+            // Validar formulario
+            if (!proveedorSelect.value) {
+                alert("Selecciona un proveedor.");
+                return;
+            }
+
+            if (!sucursalSelect.value) {
+                alert("Selecciona una sucursal.");
+                return;
+            }
+
+            if (!fechaCompra.value) {
+                alert("Selecciona una fecha de compra.");
+                return;
+            }
+
+            if (productos.length === 0) {
+                alert("Agrega productos a la compra.");
+                return;
+            }
+
+            // Mostrar información en el modal
+            document.getElementById("modal-proveedor").textContent = proveedorSelect.options[proveedorSelect.selectedIndex].text;
+            document.getElementById("modal-sucursal").textContent = sucursalSelect.options[sucursalSelect.selectedIndex].text;
+            document.getElementById("modal-total").textContent = document.getElementById("totalCompra").textContent;
+            document.getElementById("modal-productos").textContent = productos.length + " productos";
+
+            confirmModal.show();
+        });
+
+        // Enviar la compra al backend
+        document.getElementById("confirmarCompra").addEventListener("click", function () {
+            let proveedorID = document.getElementById("proveedor").value;
+            let sucursalID = document.getElementById("sucursal").value;
+            let fechaCompra = document.getElementById("fecha_compra").value;
+            let referencia = document.getElementById("referencia").value;
+
+            fetch("/compras", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -765,51 +421,33 @@
                     proveedor: proveedorID,
                     productos: productos,
                     sucursal: sucursalID,
+                    fecha: fechaCompra,
+                    referencia: referencia
                 }),
             })
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(data => {
-                        throw new Error(data.message || "Error al registrar la compra");
-                    });
-                }
-                return res.json();
-            })
-            .then(data => {
-                // Cerrar indicador de carga
-                Swal.close();
-                
-                // Mostrar modal de éxito
-                document.getElementById("exitoCompraId").textContent = data.compra_id;
-                document.getElementById("exitoTotal").textContent = data.total.toFixed(2);
-                document.getElementById("verDetalleBtn").href = "{{ url_for('compras.detalle', compra_id=0) }}".replace('0', data.compra_id);
-                
-                const modalExito = new bootstrap.Modal(document.getElementById("modalExito"));
-                modalExito.show();
-                
-                // Limpiar formulario
-                document.getElementById("tablaProductos").innerHTML = "";
-                document.getElementById("proveedor").value = "";
-                document.getElementById("sucursal").value = "";
-                document.getElementById("totalCompra").textContent = "0.00";
-                document.getElementById("cantidadProductos").textContent = "0";
-                productos = [];
-                document.getElementById("registrarCompra").disabled = true;
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                Swal.fire({
-                    icon: 'error',
-                    title: '¡Error!',
-                    text: error.message || 'Algo salió mal, por favor intenta nuevamente.',
+                .then(response => response.json())
+                .then(data => {
+                    confirmModal.hide();
+
+                    if (data.success) {
+                        alert(data.message);
+
+                        // Limpiar formulario
+                        productos = [];
+                        actualizarTablaProductos();
+                        document.getElementById("compraForm").reset();
+                        document.getElementById("compraForm").classList.remove('was-validated');
+
+                    } else {
+                        alert(data.message || 'Ocurrió un error al registrar la compra.');
+                    }
+                })
+                .catch(error => {
+                    confirmModal.hide();
+                    console.error('Error:', error);
+                    alert('Ocurrió un error al procesar la solicitud.');
                 });
-            });
         });
-        
-        // Cambiar a la pestaña de historial si hay un parámetro en la URL
-        if (window.location.hash === "#historial") {
-            document.getElementById("historial-tab").click();
-        }
     });
 </script>
 {% endblock %}

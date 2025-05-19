@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, jsonify
 from datetime import datetime, timedelta
 from app.utils.db import get_db_connection
-from app.utils import login_required
+from app.utils import login_required, role_required
 from app.blueprints.dashboard import dashboard_bp
 
 #dashboard_bp = Blueprint('dashboard', __name__, url_prefix='')

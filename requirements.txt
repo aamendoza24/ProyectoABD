@@ -2,7 +2,9 @@ bcrypt==4.3.0
 blinker==1.9.0
 Brotli==1.1.0
 cachelib==0.13.0
+certifi==2025.4.26
 cffi==1.17.1
+charset-normalizer==3.4.2
 click==8.1.8
 colorama==0.4.6
 cssselect2==0.8.0
@@ -10,6 +12,7 @@ Flask==3.1.0
 Flask-Mail==0.10.0
 Flask-Session==0.8.0
 fonttools==4.57.0
+idna==3.10
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.2
@@ -18,8 +21,10 @@ pillow==11.2.1
 pycparser==2.22
 pydyf==0.11.0
 pyphen==0.17.2
+requests==2.32.3
 tinycss2==1.4.0
 tinyhtml5==2.0.0
+urllib3==2.4.0
 weasyprint==65.1
 webencodings==0.5.1
 Werkzeug==3.1.3

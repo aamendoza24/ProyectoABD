@@ -1,578 +1,732 @@
-from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for, session
+from flask import Blueprint, render_template, request, flash, jsonify, send_file,redirect, url_for
 from datetime import datetime, timedelta, date
 from app.utils.db import get_db_connection
-from app.utils import login_required
+from app.utils import login_required, role_required
 from app.blueprints.compras import compras_bp
-
+import sqlite3
+import pandas as pd
+import io
+import matplotlib.pyplot as plt
+import seaborn as sns
+import base64
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from app.utils import role_required
 
 #compras_bp = Blueprint('compras', __name__, url_prefix='')
 
 
-@compras_bp.route("/", methods=["GET", "POST"])
+# Ruta para finalizar compra y agregar toda la información necesaria a la base de datos
+@compras_bp.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
-    # Este es el código que antes estaba en la función compras()
-    db = get_db_connection()
-
-    # Si la solicitud es de tipo POST (cuando se registra una compra)
-    if request.method == "POST":
-        data = request.get_json()
-        proveedor_id = data.get("proveedor")
-        productos = data.get("productos")
-        sucursal_id = data.get("sucursal")
-        
-        if not productos:
-            return jsonify({"message": "No se han agregado productos a la compra."}), 400
-        
+    if request.method == 'POST':
         try:
-            # Empezar la transacción
-            db.execute('BEGIN')
+            # Obtener datos del JSON
+            data = request.get_json()
             
-            # Insertar la compra en la tabla Compra
-            fecha_actual = datetime.now().strftime("%Y-%m-%d")
-            total_compra = 0
+            proveedor_id = data.get('proveedor')
+            sucursal_id = data.get('sucursal')
+            productos = data.get('productos', [])
+            fecha = data.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+            referencia = data.get('referencia', '')
             
-            # Calcular el total de la compra sumando los subtotales
+            
+            # Validar datos
+            if not proveedor_id or not sucursal_id or not productos:
+                return jsonify({'success': False, 'message': 'Faltan datos requeridos'})
+            
+            # Calcular total
+            total = sum(float(producto['Cantidad']) * float(producto['PrecioCompra']) for producto in productos)
+            
+            # Insertar en la base de datos
+            conn = get_db_connection()
+            
+            # Insertar compra
+            cursor = conn.execute(
+                'INSERT INTO Compra (Fecha, Total) VALUES (?, ?)',
+                (fecha, total)
+            )
+            
+            # Obtener ID de la compra insertada
+            compra_id = cursor.lastrowid
+            
+            # Insertar detalles de compra
             for producto in productos:
-                cursor = db.cursor()
-                cursor.execute("SELECT Precio FROM Producto WHERE IDProducto = ?", (producto['IDProducto'],))
-                producto_data = cursor.fetchone()
-
-                if not producto_data:
-                    db.execute('ROLLBACK')
-                    return jsonify({"message": f"Producto con ID {producto['IDProducto']} no encontrado."}), 404
-
-                precio = float(producto['Precio'])  # Usar el precio enviado desde el frontend
-                cantidad = int(producto['Cantidad'])
-                subtotal = precio * cantidad
-                total_compra += subtotal
-                
-                # Guardar el subtotal en el producto para usarlo después
-                producto['subtotal'] = subtotal
-            
-            # Insertar en la tabla Compra
-            cursor = db.cursor()
-            cursor.execute("INSERT INTO Compra (Fecha, Total) VALUES (?, ?)", 
-                          (fecha_actual, total_compra))
-            
-            # Obtener el ID de la compra recién insertada
-            cursor.execute("SELECT last_insert_rowid()")
-            compra_id = cursor.fetchone()[0]
-
-            # Insertar en Detalle_Compra y actualizar stock
-            for producto in productos:
-                # Insertar detalle de compra con el subtotal calculado previamente
-                cursor.execute(
-                    "INSERT INTO Detalle_Compra (IDCompra, IDProducto, IDProveedor, IDSucursal, Cantidad, Subtotal) VALUES (?, ?, ?, ?, ?, ?)",
-                    (compra_id, producto['IDProducto'], proveedor_id, sucursal_id, producto['Cantidad'], producto['subtotal'])
+                conn.execute(
+                    'INSERT INTO Detalle_Compra (IDCompra, IDProducto, IDProveedor, IDSucursal, Cantidad, Subtotal, PrecioCompra, Detalle) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    (
+                        compra_id,
+                        producto['IDProducto'],
+                        proveedor_id,
+                        sucursal_id,
+                        producto['Cantidad'],
+                        float(producto['Cantidad']) * float(producto['PrecioCompra']),
+                        producto['PrecioCompra'],
+                        referencia
+                    )
                 )
                 
-                # Verificar si ya hay stock del producto en la sucursal
-                cursor.execute("SELECT Cantidad FROM Stock_Sucursal WHERE IDProducto = ? AND IDSucursal = ?", 
-                              (producto['IDProducto'], sucursal_id))
-                stock_existente = cursor.fetchone()
+                # Actualizar stock en la sucursal - SOLUCIÓN AL ERROR ON CONFLICT
+                # Verificar si ya existe un registro de stock para este producto en esta sucursal
+                stock_existente = conn.execute(
+                    'SELECT Cantidad FROM Stock_Sucursal WHERE IDSucursal = ? AND IDProducto = ?',
+                    (sucursal_id, producto['IDProducto'])
+                ).fetchone()
 
                 if stock_existente:
-                    # Si existe, actualizar la cantidad
-                    cursor.execute("UPDATE Stock_Sucursal SET Cantidad = Cantidad + ? WHERE IDProducto = ? AND IDSucursal = ?", 
-                                  (producto['Cantidad'], producto['IDProducto'], sucursal_id))
+                    # Actualizar stock existente
+                    conn.execute(
+                        'UPDATE Stock_Sucursal SET Cantidad = Cantidad + ? WHERE IDSucursal = ? AND IDProducto = ?',
+                        (producto['Cantidad'], sucursal_id, producto['IDProducto'])
+                    )
                 else:
-                    # Si no existe, insertar nueva entrada en stock
-                    cursor.execute("INSERT INTO Stock_Sucursal (IDSucursal, IDProducto, Cantidad) VALUES (?, ?, ?)", 
-                                  (sucursal_id, producto['IDProducto'], producto['Cantidad']))
-
-            # Confirmar los cambios en la base de datos
-            db.commit()
-
+                    # Insertar nuevo registro de stock
+                    conn.execute(
+                        'INSERT INTO Stock_Sucursal (IDSucursal, IDProducto, Cantidad) VALUES (?, ?, ?)',
+                        (sucursal_id, producto['IDProducto'], producto['Cantidad'])
+                    )
+            
+            conn.commit()
+            conn.close()
+            
             return jsonify({
-                "message": "Compra registrada con éxito.",
-                "compra_id": compra_id,
-                "total": total_compra
-            }), 200
-
+                'success': True,
+                'message': 'Compra registrada correctamente',
+                'compra_id': compra_id
+            })
+            
         except Exception as e:
-            # Si ocurre un error, revertir la transacción
-            db.execute('ROLLBACK')
-            return jsonify({"message": f"Error al registrar la compra: {str(e)}"}), 500
-        finally:
-            db.close()
-
-    # Si la solicitud es de tipo GET (cuando se carga la página de compras)
-    else:
-        try:
-            # Obtener datos para el formulario
-            proveedores = db.execute("SELECT * FROM Proveedor ORDER BY Nombre").fetchall()
-            productos = db.execute("SELECT * FROM Producto ORDER BY Nombre").fetchall()
-            sucursales = db.execute("SELECT IDSucursal, Nombre FROM Sucursal ORDER BY Nombre").fetchall()
-            
-            # Consultar las compras realizadas con paginación
-            page = request.args.get('page', 1, type=int)
-            per_page = 10
-            offset = (page - 1) * per_page
-            
-            # Obtener el total de compras para la paginación
-            total_compras = db.execute("SELECT COUNT(DISTINCT c.IDCompra) FROM Compra c").fetchone()[0]
-            
-            # Consultar las compras con JOIN a las tablas relacionadas
-            compras_realizadas = db.execute("""
-                SELECT 
-                    c.IDCompra, 
-                    c.Fecha, 
-                    c.Total, 
-                    p.Nombre AS Proveedor,
-                    s.Nombre AS Sucursal,
-                    COUNT(DISTINCT d.IDProducto) AS NumProductos
-                FROM Compra c
-                JOIN Detalle_Compra d ON c.IDCompra = d.IDCompra
-                JOIN Proveedor p ON d.IDProveedor = p.IDProveedor
-                JOIN Sucursal s ON d.IDSucursal = s.IDSucursal
-                GROUP BY c.IDCompra
-                ORDER BY c.Fecha DESC, c.IDCompra DESC
-                LIMIT ? OFFSET ?
-            """, (per_page, offset)).fetchall()
-            
-            # Calcular el número total de páginas
-            total_pages = (total_compras + per_page - 1) // per_page
-            
-            return render_template(
-                "compras/compras.html", 
-                proveedores=proveedores, 
-                productos=productos, 
-                sucursales=sucursales, 
-                compras_realizadas=compras_realizadas,
-                page=page,
-                total_pages=total_pages,
-                total_compras=total_compras
-            )
-        except Exception as e:
-            flash(f"Error al cargar la página: {str(e)}", "danger")
-            return render_template("error.html", error=str(e))
-        finally:
-            db.close()
-
-@compras_bp.route("/actualizar_precio", methods=["POST"])
-def actualizar_precio():
-    data = request.get_json()
-    id_producto = data["id_producto"]
-    nuevo_precio = float(data["nuevo_precio"])
-
-    try:
-        conexion = get_db_connection()
-        cursor = conexion.cursor()
-        
-        # Obtener el precio actual para registrar el cambio
-        cursor.execute("SELECT Precio FROM Producto WHERE IDProducto = ?", (id_producto,))
-        precio_anterior = cursor.fetchone()[0]
-        
-        # Actualizar el precio
-        cursor.execute("UPDATE Producto SET Precio = ? WHERE IDProducto = ?", (nuevo_precio, id_producto))
-        
-        conexion.commit()
-        conexion.close()
-        
-        return jsonify({
-            "message": "Precio actualizado correctamente.",
-            "precio_anterior": precio_anterior,
-            "precio_nuevo": nuevo_precio
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@compras_bp.route("/buscar_productos")
-def buscar_productos():
-    query = request.args.get("q", "")
+            return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+    
+    # Método GET - Mostrar formulario
     conn = get_db_connection()
-    cursor = conn.cursor()
+    proveedores = conn.execute('SELECT * FROM Proveedor ORDER BY Nombre').fetchall()
+    sucursales = conn.execute('SELECT * FROM Sucursal ORDER BY Nombre').fetchall()
+    conn.close()
+    
+    today_date = datetime.now().strftime('%Y-%m-%d')
+    
+    return render_template(
+        'compras/compras.html',
+        proveedores=proveedores,
+        sucursales=sucursales,
+        today_date=today_date
+    )
 
+
+#Buscar productos
+@compras_bp.route('/buscar_productos')
+@login_required
+def buscar_productos():
+    query = request.args.get('q', '')
+    
+    if not query:
+        return jsonify([])
+    
+    conn = get_db_connection()
+    productos = conn.execute('''
+        SELECT p.IDProducto, p.Nombre, p.Precio
+        FROM Producto p
+        WHERE p.Nombre LIKE ?
+        ORDER BY p.Nombre
+        LIMIT 10
+    ''', (f'%{query}%',)).fetchall()
+    
+    conn.close()
+    
+    # Convertir a lista de diccionarios
+    resultado = []
+    for producto in productos:
+        resultado.append({
+            'IDProducto': producto['IDProducto'],
+            'Nombre': producto['Nombre'],
+            'Precio': producto['Precio']
+        })
+    
+    return jsonify(resultado)
+
+
+#exportar compras
+@compras_bp.route('/exportar_pdf/<int:compra_id>')
+@login_required
+def exportar_pdf(compra_id):
+    # Esta ruta sería para generar un PDF en el servidor
+    # Pero como estamos generando el PDF en el cliente con jsPDF,
+    # esta ruta no es necesaria por ahora
+    return jsonify({'success': True, 'message': 'Función no implementada'})
+
+
+#Historial de compras
+@compras_bp.route('/historial')
+@login_required
+def historial():
+    # Obtener parámetros de filtro
+    fecha_inicio = request.args.get('fecha_inicio', '')
+    fecha_fin = request.args.get('fecha_fin', '')
+    proveedor_id = request.args.get('proveedor', '')
+    sucursal_id = request.args.get('sucursal', '')
+    
+    # Construir consulta SQL base
+    query = '''
+    SELECT c.IDCompra, c.Fecha, c.Total, p.Nombre as Proveedor, s.Nombre as Sucursal
+    FROM Compra c
+    JOIN Detalle_Compra dc ON c.IDCompra = dc.IDCompra
+    JOIN Proveedor p ON dc.IDProveedor = p.IDProveedor
+    JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+    '''
+    
+    # Añadir condiciones de filtro
+    conditions = []
+    params = []
+    
+    if fecha_inicio:
+        conditions.append('c.Fecha >= ?')
+        params.append(fecha_inicio)
+    
+    if fecha_fin:
+        conditions.append('c.Fecha <= ?')
+        params.append(fecha_fin)
+    
+    if proveedor_id:
+        conditions.append('dc.IDProveedor = ?')
+        params.append(proveedor_id)
+    
+    if sucursal_id:
+        conditions.append('dc.IDSucursal = ?')
+        params.append(sucursal_id)
+    
+    # Añadir WHERE si hay condiciones
+    if conditions:
+        query += ' WHERE ' + ' AND '.join(conditions)
+    
+    # Agrupar por compra y ordenar por fecha descendente
+    query += ' GROUP BY c.IDCompra ORDER BY c.Fecha DESC'
+    
+    # Ejecutar consulta
+    conn = get_db_connection()
+    compras = conn.execute(query, params).fetchall()
+    
+    # Obtener listas para filtros
+    proveedores = conn.execute('SELECT * FROM Proveedor ORDER BY Nombre').fetchall()
+    sucursales = conn.execute('SELECT * FROM Sucursal ORDER BY Nombre').fetchall()
+    
+    conn.close()
+    
+    return render_template(
+        'compras/historial_compras.html',
+        compras=compras,
+        proveedores=proveedores,
+        sucursales=sucursales,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        proveedor_id=proveedor_id,
+        sucursal_id=sucursal_id
+    )
+
+
+
+
+
+
+@compras_bp.route('/detalles_json/<int:compra_id>')
+@login_required
+def detalles_json(compra_id):
+    conn = get_db_connection()
+    
+    # Obtener información de la compra
+    compra = conn.execute('''
+        SELECT c.IDCompra, c.Fecha, c.Total, p.Nombre as Proveedor, s.Nombre as Sucursal, dc.Detalle as Detalle
+        FROM Compra c
+        JOIN Detalle_Compra dc ON c.IDCompra = dc.IDCompra
+        JOIN Proveedor p ON dc.IDProveedor = p.IDProveedor
+        JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+        WHERE c.IDCompra = ?
+        GROUP BY c.IDCompra
+    ''', (compra_id,)).fetchone()
+    
+    if not compra:
+        return jsonify({'error': 'Compra no encontrada'})
+    
+    # Obtener detalles de la compra
+    detalles = conn.execute('''
+        SELECT dc.IDDetalleCompra, dc.Cantidad, dc.Subtotal, 
+               p.Nombre as Producto, p.IDProducto,
+               (dc.Subtotal / dc.Cantidad) as PrecioCompra
+        FROM Detalle_Compra dc
+        JOIN Producto p ON dc.IDProducto = p.IDProducto
+        WHERE dc.IDCompra = ?
+    ''', (compra_id,)).fetchall()
+    
+    conn.close()
+    
+    # Preparar datos para JSON
+    compra_data = {
+        'id': compra['IDCompra'],
+        'fecha': compra['Fecha'],
+        'total': compra['Total'],
+        'proveedor': compra['Proveedor'],
+        'sucursal': compra['Sucursal'],
+        'referencia': compra['Detalle']
+    }
+    
+    detalles_data = []
+    for detalle in detalles:
+        detalles_data.append({
+            'id': detalle['IDDetalleCompra'],
+            'producto': detalle['Producto'],
+            'producto_id': detalle['IDProducto'],
+            'cantidad': detalle['Cantidad'],
+            'precio_unitario': detalle['PrecioCompra'],
+            'subtotal': detalle['Subtotal']
+        })
+    
+    return jsonify({
+        'compra': compra_data,
+        'detalles': detalles_data
+    })
+
+
+#endpoint sobre reportes de compras
+@compras_bp.route('/compras')
+@role_required(['admin', 'gerente'])
+def compras():
+    """Página principal de reportes de compras"""
     try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Obtener todas las sucursales para el filtro
+        cursor.execute("SELECT IDSucursal, Nombre FROM Sucursal ORDER BY Nombre")
+        sucursales = cursor.fetchall()
+        
+        # Obtener todos los proveedores para el filtro
+        cursor.execute("SELECT IDProveedor, Nombre FROM Proveedor ORDER BY Nombre")
+        proveedores = cursor.fetchall()
+        
+        # Obtener estadísticas generales de compras
         cursor.execute("""
             SELECT 
-                p.IDProducto, 
-                p.Nombre AS Producto, 
-                p.Precio, 
-                c.Nombre AS Categoria,
-                COALESCE(SUM(ss.Cantidad), 0) AS StockTotal
-            FROM Producto AS p
-            JOIN Categoria AS c ON p.IDCategoria = c.IDCategoria 
-            LEFT JOIN Stock_Sucursal AS ss ON p.IDProducto = ss.IDProducto
-            WHERE p.Nombre LIKE ?
-            GROUP BY p.IDProducto
-            ORDER BY p.Nombre
-        """, (f"%{query}%",))
-        
-        productos = [{
-            "IDProducto": row["IDProducto"], 
-            "Nombre": row["Producto"], 
-            "Precio": row["Precio"], 
-            "Categoria": row["Categoria"],
-            "StockTotal": row["StockTotal"]
-        } for row in cursor.fetchall()]
-        
-        return jsonify(productos)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        conn.close()
-
-@compras_bp.route("/detalle/<int:compra_id>")
-def detalle(compra_id):
-    try:
-        db = get_db_connection()
-        
-        # Obtener información general de la compra
-        compra = db.execute("""
-            SELECT 
-                c.IDCompra, 
-                c.Fecha, 
-                c.Total, 
-                p.Nombre AS Proveedor,
-                p.Telefono AS ProveedorTelefono,
-                p.Email AS ProveedorEmail,
-                s.Nombre AS Sucursal
+                COUNT(DISTINCT c.IDCompra) as total_compras,
+                COALESCE(SUM(c.Total), 0) as monto_total,
+                COALESCE(AVG(c.Total), 0) as promedio_compra,
+                COALESCE(MAX(c.Total), 0) as compra_maxima,
+                COALESCE(MIN(c.Total), 0) as compra_minima,
+                COUNT(DISTINCT dc.IDProveedor) as total_proveedores,
+                COALESCE(SUM(dc.Cantidad), 0) as total_items
             FROM Compra c
-            JOIN Detalle_Compra d ON c.IDCompra = d.IDCompra
-            JOIN Proveedor p ON d.IDProveedor = p.IDProveedor
-            JOIN Sucursal s ON d.IDSucursal = s.IDSucursal
-            WHERE c.IDCompra = ?
-            LIMIT 1
-        """, (compra_id,)).fetchone()
+            LEFT JOIN Detalle_Compra dc ON c.IDCompra = dc.IDCompra
+            WHERE strftime('%Y-%m', c.Fecha) = strftime('%Y-%m', 'now')
+        """)
+        estadisticas = cursor.fetchone()
         
-        if not compra:
-            flash("Compra no encontrada", "danger")
-            return redirect(url_for('compras.index'))
-        
-        # Obtener detalles de los productos
-        detalles = db.execute("""
+        # Obtener compras recientes (últimos 30 días)
+        fecha_limite = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        cursor.execute("""
             SELECT 
-                d.IDProducto,
-                p.Nombre AS Producto,
-                d.Cantidad,
-                d.Subtotal,
-                (d.Subtotal / d.Cantidad) AS PrecioUnitario,
-                c.Nombre AS Categoria
-            FROM Detalle_Compra d
-            JOIN Producto p ON d.IDProducto = p.IDProducto
-            JOIN Categoria c ON p.IDCategoria = c.IDCategoria
-            WHERE d.IDCompra = ?
-            ORDER BY p.Nombre
-        """, (compra_id,)).fetchall()
+                c.IDCompra,
+                c.Fecha,
+                c.Total,
+                COUNT(DISTINCT dc.IDProducto) as num_productos,
+                GROUP_CONCAT(DISTINCT p.Nombre) as proveedores,
+                s.Nombre as sucursal
+            FROM Compra c
+            LEFT JOIN Detalle_Compra dc ON c.IDCompra = dc.IDCompra
+            LEFT JOIN Proveedor p ON dc.IDProveedor = p.IDProveedor
+            LEFT JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+            WHERE c.Fecha >= ?
+            GROUP BY c.IDCompra
+            ORDER BY c.Fecha DESC
+            LIMIT 10
+        """, (fecha_limite,))
+        compras_recientes = cursor.fetchall()
         
-        return render_template(
-            "compras/detalle_compra.html",
-            compra=compra,
-            detalles=detalles
-        )
+        # Obtener datos para gráfico de compras por mes (últimos 6 meses)
+        seis_meses_atras = (datetime.now() - timedelta(days=180)).strftime('%Y-%m-%d')
+        cursor.execute("""
+            SELECT 
+                strftime('%Y-%m', c.Fecha) as mes,
+                SUM(c.Total) as total
+            FROM Compra c
+            WHERE c.Fecha >= ?
+            GROUP BY strftime('%Y-%m', c.Fecha)
+            ORDER BY mes
+        """, (seis_meses_atras,))
+        datos_grafico_meses = cursor.fetchall()
+        print(dict(datos_grafico_meses))
+        
+        # Obtener datos para gráfico de compras por proveedor (top 5)
+        cursor.execute("""
+            SELECT 
+                p.Nombre as proveedor,
+                SUM(dc.Subtotal) as total
+            FROM Detalle_Compra dc
+            JOIN Proveedor p ON dc.IDProveedor = p.IDProveedor
+            JOIN Compra c ON dc.IDCompra = c.IDCompra
+            WHERE c.Fecha >= ?
+            GROUP BY p.IDProveedor
+            ORDER BY total DESC
+            LIMIT 5
+        """, (seis_meses_atras,))
+        datos_grafico_proveedores = cursor.fetchall()
+        
+        # Obtener datos para gráfico de compras por sucursal
+        cursor.execute("""
+            SELECT 
+                s.Nombre as sucursal,
+                SUM(dc.Subtotal) as total
+            FROM Detalle_Compra dc
+            JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+            JOIN Compra c ON dc.IDCompra = c.IDCompra
+            WHERE c.Fecha >= ?
+            GROUP BY s.IDSucursal
+            ORDER BY total DESC
+        """, (seis_meses_atras,))
+        datos_grafico_sucursales = cursor.fetchall()
+        
+        # Obtener productos más comprados (top 10)
+        cursor.execute("""
+            SELECT 
+                p.Nombre as producto,
+                SUM(dc.Cantidad) as cantidad,
+                SUM(dc.Subtotal) as total
+            FROM Detalle_Compra dc
+            JOIN Producto p ON dc.IDProducto = p.IDProducto
+            JOIN Compra c ON dc.IDCompra = c.IDCompra
+            WHERE c.Fecha >= ?
+            GROUP BY p.IDProducto
+            ORDER BY cantidad DESC
+            LIMIT 10
+        """, (seis_meses_atras,))
+        productos_mas_comprados = cursor.fetchall()
+        
+        return render_template('compras/reporte_compras.html', 
+                              sucursales=sucursales,
+                              proveedores=proveedores,
+                              estadisticas=estadisticas,
+                              compras_recientes=compras_recientes,
+                              datos_grafico_meses=datos_grafico_meses,
+                              datos_grafico_proveedores=datos_grafico_proveedores,
+                              datos_grafico_sucursales=datos_grafico_sucursales,
+                              productos_mas_comprados=productos_mas_comprados)
+    
     except Exception as e:
-        flash(f"Error al cargar los detalles: {str(e)}", "danger")
-        return redirect(url_for('compras.index'))
+        return render_template('error.html', error=str(e))
     finally:
-        db.close()
+        if conn:
+            conn.close()
 
-@compras_bp.route("/reporte")
-def reporte():
+@compras_bp.route('/api/compras/filtrar', methods=['GET'])
+@role_required(['admin', 'gerente'])
+def filtrar_compras():
+    """API para filtrar compras según criterios"""
     try:
-        db = get_db_connection()
-        
-        # Filtros
-        fecha_inicio = request.args.get('fecha_inicio', (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'))
-        fecha_fin = request.args.get('fecha_fin', datetime.now().strftime('%Y-%m-%d'))
+        # Obtener parámetros de filtro
+        fecha_inicio = request.args.get('fecha_inicio', '')
+        fecha_fin = request.args.get('fecha_fin', '')
         proveedor_id = request.args.get('proveedor_id', '')
         sucursal_id = request.args.get('sucursal_id', '')
         
-        # Construir la consulta base para compras
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Construir la consulta base
         query = """
             SELECT 
-                c.IDCompra, 
-                c.Fecha, 
-                c.Total, 
-                p.Nombre AS Proveedor,
-                s.Nombre AS Sucursal
+                c.IDCompra,
+                c.Fecha,
+                c.Total,
+                GROUP_CONCAT(DISTINCT p.Nombre) as proveedores,
+                s.Nombre as sucursal,
+                COUNT(DISTINCT dc.IDProducto) as num_productos
             FROM Compra c
-            JOIN Detalle_Compra d ON c.IDCompra = d.IDCompra
-            JOIN Proveedor p ON d.IDProveedor = p.IDProveedor
-            JOIN Sucursal s ON d.IDSucursal = s.IDSucursal
-            WHERE c.Fecha BETWEEN ? AND ?
+            LEFT JOIN Detalle_Compra dc ON c.IDCompra = dc.IDCompra
+            LEFT JOIN Proveedor p ON dc.IDProveedor = p.IDProveedor
+            LEFT JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+            WHERE 1=1
         """
-        params = [fecha_inicio, fecha_fin]
+        params = []
         
-        # Agregar filtros adicionales si se proporcionan
+        # Añadir filtros si se proporcionan
+        if fecha_inicio:
+            query += " AND c.Fecha >= ?"
+            params.append(fecha_inicio)
+        
+        if fecha_fin:
+            query += " AND c.Fecha <= ?"
+            params.append(fecha_fin)
+        
         if proveedor_id:
-            query += " AND d.IDProveedor = ?"
+            query += " AND dc.IDProveedor = ?"
             params.append(proveedor_id)
         
         if sucursal_id:
-            query += " AND d.IDSucursal = ?"
+            query += " AND dc.IDSucursal = ?"
             params.append(sucursal_id)
         
-        query += " GROUP BY c.IDCompra ORDER BY c.Fecha DESC, c.IDCompra DESC"
+        # Agrupar y ordenar
+        query += " GROUP BY c.IDCompra ORDER BY c.Fecha DESC"
         
         # Ejecutar la consulta
-        compras = db.execute(query, params).fetchall()
+        cursor.execute(query, params)
+        compras = [dict(row) for row in cursor.fetchall()]
         
-        # Obtener estadísticas
-        total_gastado = sum(compra['Total'] for compra in compras)
-        num_compras = len(compras)
-        promedio_compra = total_gastado / num_compras if num_compras > 0 else 0
+        # Calcular totales
+        total_compras = len(compras)
+        monto_total = sum(compra['Total'] for compra in compras)
         
-        # Obtener proveedores y sucursales para los filtros
-        proveedores = db.execute("SELECT IDProveedor, Nombre FROM Proveedor ORDER BY Nombre").fetchall()
-        sucursales = db.execute("SELECT IDSucursal, Nombre FROM Sucursal ORDER BY Nombre").fetchall()
-        categorias = db.execute("SELECT IDCategoria, Nombre FROM Categoria ORDER BY Nombre").fetchall()
+        return jsonify({
+            'compras': compras,
+            'total_compras': total_compras,
+            'monto_total': monto_total
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+# @compras_bp.route('/api/compras/detalle/<int:compra_id>', methods=['GET'])
+# @role_required(['admin', 'gerente'])
+# def detalle_compra(compra_id):
+#     """API para obtener el detalle de una compra específica"""
+#     try:
+#         conn = get_db_connection()
+#         conn.row_factory = sqlite3.Row
+#         cursor = conn.cursor()
         
-        # Obtener datos para gráficos
-        datos_por_proveedor = db.execute("""
+#         # Obtener información general de la compra
+#         cursor.execute("""
+#             SELECT 
+#                 c.IDCompra,
+#                 c.Fecha,
+#                 c.Total
+#             FROM Compra c
+#             WHERE c.IDCompra = ?
+#         """, (compra_id,))
+#         compra = dict(cursor.fetchone() or {})
+        
+#         if not compra:
+#             return jsonify({'error': 'Compra no encontrada'}), 404
+        
+#         # Obtener detalles de la compra
+#         cursor.execute("""
+#             SELECT 
+#                 dc.IDDetalleCompra,
+#                 p.Nombre as producto,
+#                 pr.Nombre as proveedor,
+#                 s.Nombre as sucursal,
+#                 dc.Cantidad,
+#                 dc.Subtotal,
+#                 (dc.Subtotal / dc.Cantidad) as precio_unitario
+#             FROM Detalle_Compra dc
+#             JOIN Producto p ON dc.IDProducto = p.IDProducto
+#             JOIN Proveedor pr ON dc.IDProveedor = pr.IDProveedor
+#             JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+#             WHERE dc.IDCompra = ?
+#             ORDER BY p.Nombre
+#         """, (compra_id,))
+#         detalles = [dict(row) for row in cursor.fetchall()]
+        
+#         compra['detalles'] = detalles
+        
+#         return jsonify(compra)
+    
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
+#     finally:
+#         if conn:
+#             conn.close()
+
+@compras_bp.route('/exportar/compras', methods=['GET'])
+@role_required(['admin', 'gerente'])
+def exportar_compras():
+    """Exportar reporte de compras a Excel (optimizado)"""
+    try:
+        # Obtener parámetros de filtro
+        fecha_inicio = request.args.get('fecha_inicio', '')
+        fecha_fin = request.args.get('fecha_fin', '')
+        proveedor_id = request.args.get('proveedor_id', '')
+        sucursal_id = request.args.get('sucursal_id', '')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Construir la consulta base para compras
+        query_compras = """
             SELECT 
-                p.Nombre AS Proveedor,
-                SUM(c.Total) AS TotalGastado,
-                COUNT(DISTINCT c.IDCompra) AS NumCompras
+                c.IDCompra,
+                c.Fecha,
+                c.Total,
+                GROUP_CONCAT(DISTINCT p.Nombre) as Proveedores,
+                GROUP_CONCAT(DISTINCT s.Nombre) as Sucursales
             FROM Compra c
-            JOIN Detalle_Compra d ON c.IDCompra = d.IDCompra
-            JOIN Proveedor p ON d.IDProveedor = p.IDProveedor
-            WHERE c.Fecha BETWEEN ? AND ?
-            GROUP BY p.IDProveedor
-            ORDER BY TotalGastado DESC
-        """, (fecha_inicio, fecha_fin)).fetchall()
-        
-        # Calcular compra promedio y porcentaje del total por proveedor
-        for i, dato in enumerate(datos_por_proveedor):
-            compra_promedio = dato['TotalGastado'] / dato['NumCompras'] if dato['NumCompras'] > 0 else 0
-            porcentaje_total = (dato['TotalGastado'] / total_gastado * 100) if total_gastado > 0 else 0
-            
-            # SQLite no permite modificar directamente los resultados, así que creamos un nuevo diccionario
-            datos_por_proveedor[i] = dict(dato)
-            datos_por_proveedor[i]['CompraPromedio'] = compra_promedio
-            datos_por_proveedor[i]['PorcentajeTotal'] = porcentaje_total
-            datos_por_proveedor[i]['Tendencia'] = 0  # Valor por defecto, se calcularía con datos históricos
-        
-        datos_por_sucursal = db.execute("""
-            SELECT 
-                s.Nombre AS Sucursal,
-                SUM(c.Total) AS TotalGastado
-            FROM Compra c
-            JOIN Detalle_Compra d ON c.IDCompra = d.IDCompra
-            JOIN Sucursal s ON d.IDSucursal = s.IDSucursal
-            WHERE c.Fecha BETWEEN ? AND ?
-            GROUP BY s.IDSucursal
-            ORDER BY TotalGastado DESC
-        """, (fecha_inicio, fecha_fin)).fetchall()
-        
-        # Obtener top productos comprados
-        top_productos = db.execute("""
-            SELECT 
-                p.Nombre AS Producto,
-                SUM(d.Cantidad) AS TotalComprado,
-                SUM(d.Subtotal) AS TotalGastado
-            FROM Detalle_Compra d
-            JOIN Producto p ON d.IDProducto = p.IDProducto
-            JOIN Compra c ON d.IDCompra = c.IDCompra
-            WHERE c.Fecha BETWEEN ? AND ?
-            GROUP BY p.Nombre
-            ORDER BY TotalGastado DESC
-            LIMIT 5
-        """, (fecha_inicio, fecha_fin)).fetchall()
-        
-        # Obtener análisis de productos
-        productos_analisis = db.execute("""
-            SELECT 
-                p.Nombre AS Producto,
-                cat.Nombre AS Categoria,
-                SUM(d.Cantidad) AS UnidadesCompradas,
-                (SUM(d.Subtotal) / SUM(d.Cantidad)) AS PrecioPromedio,
-                SUM(d.Subtotal) AS TotalGastado
-            FROM Detalle_Compra d
-            JOIN Producto p ON d.IDProducto = p.IDProducto
-            JOIN Compra c ON d.IDCompra = c.IDCompra
-            JOIN Categoria cat ON p.IDCategoria = cat.IDCategoria
-            WHERE c.Fecha BETWEEN ? AND ?
-            GROUP BY p.Nombre, cat.Nombre
-            ORDER BY TotalGastado DESC
-        """, (fecha_inicio, fecha_fin)).fetchall()
-        
-        # Calcular porcentaje del total para cada producto
-        for i, producto in enumerate(productos_analisis):
-            porcentaje_total = (producto['TotalGastado'] / total_gastado * 100) if total_gastado > 0 else 0
-            productos_analisis[i] = dict(producto)
-            productos_analisis[i]['PorcentajeTotal'] = porcentaje_total
-        
-        # Obtener compras por día para gráfico de tendencia
-        compras_por_dia = db.execute("""
-            SELECT 
-                date(c.Fecha) AS Fecha,
-                SUM(c.Total) AS TotalCompras
-            FROM Compra c
-            WHERE c.Fecha BETWEEN ? AND ?
-            GROUP BY date(c.Fecha)
-            ORDER BY date(c.Fecha)
-        """, (fecha_inicio, fecha_fin)).fetchall()
-        
-        # Calcular variación día a día
-        compras_por_dia_con_variacion = []
-        for i, dia in enumerate(compras_por_dia):
-            variacion = 0
-            if i > 0:
-                variacion = dia['TotalCompras'] - compras_por_dia[i-1]['TotalCompras']
-            compras_por_dia_con_variacion.append({
-                'Fecha': dia['Fecha'],
-                'TotalCompras': dia['TotalCompras'],
-                'Variacion': variacion
-            })
-        
-        # Obtener datos para gráficos de categorías
-        categorias_query = db.execute("""
-            SELECT 
-                cat.Nombre AS Categoria,
-                SUM(d.Subtotal) AS TotalGastado
-            FROM Detalle_Compra d
-            JOIN Producto p ON d.IDProducto = p.IDProducto
-            JOIN Compra c ON d.IDCompra = c.IDCompra
-            JOIN Categoria cat ON p.IDCategoria = cat.IDCategoria
-            WHERE c.Fecha BETWEEN ? AND ?
-            GROUP BY cat.Nombre
-            ORDER BY TotalGastado DESC
-        """, (fecha_inicio, fecha_fin)).fetchall()
-        
-        # Compras recientes
-        compras_recientes = db.execute("""
-            SELECT 
-                c.IDCompra, 
-                c.Fecha, 
-                c.Total, 
-                p.Nombre AS Proveedor
-            FROM Compra c
-            JOIN Detalle_Compra d ON c.IDCompra = d.IDCompra
-            JOIN Proveedor p ON d.IDProveedor = p.IDProveedor
-            GROUP BY c.IDCompra
-            ORDER BY c.Fecha DESC, c.IDCompra DESC
-            LIMIT 5
-        """).fetchall()
-        
-        # Calcular total de productos comprados
-        total_productos_comprados = db.execute("""
-            SELECT SUM(d.Cantidad) 
-            FROM Detalle_Compra d
-            JOIN Compra c ON d.IDCompra = c.IDCompra
-            WHERE c.Fecha BETWEEN ? AND ?
-        """, (fecha_inicio, fecha_fin)).fetchone()[0] or 0
-        
-        # Calcular datos para comparación con período anterior
-        fecha_inicio_dt = datetime.strptime(fecha_inicio, '%Y-%m-%d')
-        fecha_fin_dt = datetime.strptime(fecha_fin, '%Y-%m-%d')
-        dias_periodo = (fecha_fin_dt - fecha_inicio_dt).days + 1
-        fecha_inicio_anterior = (fecha_inicio_dt - timedelta(days=dias_periodo)).strftime('%Y-%m-%d')
-        fecha_fin_anterior = (fecha_fin_dt - timedelta(days=dias_periodo)).strftime('%Y-%m-%d')
-        
-        # Consulta para el período anterior
-        query_anterior = """
-            SELECT 
-                SUM(c.Total) AS TotalGastado,
-                COUNT(DISTINCT c.IDCompra) AS NumCompras
-            FROM Compra c
-            JOIN Detalle_Compra d ON c.IDCompra = d.IDCompra
-            WHERE c.Fecha BETWEEN ? AND ?
+            LEFT JOIN Detalle_Compra dc ON c.IDCompra = dc.IDCompra
+            LEFT JOIN Proveedor p ON dc.IDProveedor = p.IDProveedor
+            LEFT JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+            WHERE 1=1
         """
-        params_anterior = [fecha_inicio_anterior, fecha_fin_anterior]
+        params = []
+        
+        # Añadir filtros si se proporcionan
+        if fecha_inicio:
+            query_compras += " AND c.Fecha >= ?"
+            params.append(fecha_inicio)
+        
+        if fecha_fin:
+            query_compras += " AND c.Fecha <= ?"
+            params.append(fecha_fin)
         
         if proveedor_id:
-            query_anterior += " AND d.IDProveedor = ?"
-            params_anterior.append(proveedor_id)
+            query_compras += " AND dc.IDProveedor = ?"
+            params.append(proveedor_id)
         
         if sucursal_id:
-            query_anterior += " AND d.IDSucursal = ?"
-            params_anterior.append(sucursal_id)
+            query_compras += " AND dc.IDSucursal = ?"
+            params.append(sucursal_id)
         
-        datos_anterior = db.execute(query_anterior, params_anterior).fetchone()
-        total_gastado_anterior = datos_anterior['TotalGastado'] if datos_anterior['TotalGastado'] else 0
-        num_compras_anterior = datos_anterior['NumCompras'] if datos_anterior['NumCompras'] else 0
-        promedio_compra_anterior = total_gastado_anterior / num_compras_anterior if num_compras_anterior > 0 else 0
+        # Agrupar y ordenar
+        query_compras += " GROUP BY c.IDCompra ORDER BY c.Fecha DESC"
         
-        # Calcular porcentajes de crecimiento
-        porcentaje_crecimiento_compras = ((total_gastado - total_gastado_anterior) / total_gastado_anterior * 100) if total_gastado_anterior > 0 else 0
-        porcentaje_crecimiento_num_compras = ((num_compras - num_compras_anterior) / num_compras_anterior * 100) if num_compras_anterior > 0 else 0
-        porcentaje_crecimiento_promedio = ((promedio_compra - promedio_compra_anterior) / promedio_compra_anterior * 100) if promedio_compra_anterior > 0 else 0
+        # Ejecutar la consulta de compras
+        cursor.execute(query_compras, params)
+        compras = cursor.fetchall()
         
-        # Calcular total de productos comprados en período anterior
-        total_productos_anterior = db.execute("""
-            SELECT SUM(d.Cantidad) 
-            FROM Detalle_Compra d
-            JOIN Compra c ON d.IDCompra = c.IDCompra
-            WHERE c.Fecha BETWEEN ? AND ?
-        """, (fecha_inicio_anterior, fecha_fin_anterior)).fetchone()[0] or 0
+        # Si no hay compras, devolver un mensaje
+        if not compras:
+            return "No hay datos para exportar con los filtros seleccionados", 404
         
-        porcentaje_crecimiento_productos = ((total_productos_comprados - total_productos_anterior) / total_productos_anterior * 100) if total_productos_anterior > 0 else 0
+        # Obtener IDs de compras para la consulta de detalles
+        compra_ids = [str(compra[0]) for compra in compras]
+        compra_ids_str = ','.join(compra_ids)
         
-        # Preparar datos para gráficos en JavaScript
-        fechas_compras = [dia['Fecha'] for dia in compras_por_dia]
-        totales_compras = [float(dia['TotalCompras']) for dia in compras_por_dia]
+        # Consulta para detalles de compras
+        query_detalles = f"""
+            SELECT 
+                dc.IDCompra,
+                p.Nombre as Producto,
+                pr.Nombre as Proveedor,
+                s.Nombre as Sucursal,
+                dc.Cantidad,
+                dc.Subtotal,
+                (dc.Subtotal / dc.Cantidad) as PrecioCompra
+            FROM Detalle_Compra dc
+            JOIN Producto p ON dc.IDProducto = p.IDProducto
+            JOIN Proveedor pr ON dc.IDProveedor = pr.IDProveedor
+            JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+            WHERE dc.IDCompra IN ({compra_ids_str})
+            ORDER BY dc.IDCompra, p.Nombre
+        """
         
-        proveedores_labels = [dato['Proveedor'] for dato in datos_por_proveedor]
-        proveedores_data = [float(dato['TotalGastado']) for dato in datos_por_proveedor]
+        # Ejecutar la consulta de detalles
+        cursor.execute(query_detalles)
+        detalles = cursor.fetchall()
         
-        sucursales_labels = [dato['Sucursal'] for dato in datos_por_sucursal]
-        sucursales_data = [float(dato['TotalGastado']) for dato in datos_por_sucursal]
+        # Crear DataFrames de pandas
+        df_compras = pd.DataFrame(compras, columns=['ID Compra', 'Fecha', 'Total', 'Proveedores', 'Sucursales'])
+        df_detalles = pd.DataFrame(detalles, columns=['ID Compra', 'Producto', 'Proveedor', 'Sucursal', 'Cantidad', 'Subtotal', 'Precio Compra'])
         
-        categorias_labels = [cat['Categoria'] for cat in categorias_query]
-        categorias_data = [float(cat['TotalGastado']) for cat in categorias_query]
+        # Crear un archivo Excel en memoria
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df_compras.to_excel(writer, sheet_name='Compras', index=False)
+            df_detalles.to_excel(writer, sheet_name='Detalles', index=False)
+            
+            # Obtener el objeto workbook y las hojas
+            workbook = writer.book
+            worksheet_compras = writer.sheets['Compras']
+            worksheet_detalles = writer.sheets['Detalles']
+            
+            # Formato para moneda
+            formato_moneda = workbook.add_format({'num_format': '$#,##0.00'})
+            
+            # Aplicar formato a columnas de moneda
+            worksheet_compras.set_column('C:C', 12, formato_moneda)  # Total
+            worksheet_detalles.set_column('F:G', 12, formato_moneda)  # Subtotal y Precio Compra
+            
+            # Ajustar anchos de columna
+            for worksheet in [worksheet_compras, worksheet_detalles]:
+                for i, col in enumerate(worksheet.columns):
+                    worksheet.set_column(i, i, 15)
         
-        top_productos_labels = [prod['Producto'] for prod in top_productos]
-        top_productos_data = [float(prod['TotalGastado']) for prod in top_productos]
+        # Preparar el archivo para descarga
+        output.seek(0)
         
-        return render_template(
-            "compras/reporte_compras.html",
-            compras=compras,
-            total_gastado=total_gastado,
-            num_compras=num_compras,
-            promedio_compra=promedio_compra,
-            proveedores=proveedores,
-            sucursales=sucursales,
-            categorias=categorias,
-            proveedor_id=proveedor_id,
-            sucursal_id=sucursal_id,
-            fecha_inicio=fecha_inicio,
-            fecha_fin=fecha_fin,
-            datos_por_proveedor=datos_por_proveedor,
-            datos_por_sucursal=datos_por_sucursal,
-            top_productos=top_productos,
-            productos_analisis=productos_analisis,
-            compras_por_dia=compras_por_dia_con_variacion,
-            compras_recientes=compras_recientes,
-            total_productos_comprados=total_productos_comprados,
-            porcentaje_crecimiento_compras=porcentaje_crecimiento_compras,
-            porcentaje_crecimiento_num_compras=porcentaje_crecimiento_num_compras,
-            porcentaje_crecimiento_promedio=porcentaje_crecimiento_promedio,
-            porcentaje_crecimiento_productos=porcentaje_crecimiento_productos,
-            fechas_compras=fechas_compras,
-            totales_compras=totales_compras,
-            proveedores_labels=proveedores_labels,
-            proveedores_data=proveedores_data,
-            sucursales_labels=sucursales_labels,
-            sucursales_data=sucursales_data,
-            categorias_labels=categorias_labels,
-            categorias_data=categorias_data,
-            top_productos_labels=top_productos_labels,
-            top_productos_data=top_productos_data
+        # Generar nombre de archivo con fecha actual
+        fecha_actual = datetime.now().strftime('%Y%m%d')
+        nombre_archivo = f"Reporte_Compras_{fecha_actual}.xlsx"
+        
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=nombre_archivo,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
+    
     except Exception as e:
-        flash(f"Error al generar el reporte: {str(e)}", "danger")
-        return redirect(url_for('compras.index'))
+        return str(e), 500
     finally:
-        db.close()
+        if conn:
+            conn.close()
 
-# Ruta para exportar datos (opcional)
-@compras_bp.route("/reporte/exportar", methods=['POST'])
-def exportar_reporte():
+@compras_bp.route('/api/compras/detalle/<int:compra_id>', methods=['GET'])
+@role_required(['admin', 'gerente'])
+def detalle_compra(compra_id):
+    """API para obtener el detalle de una compra específica"""
     try:
-        formato = request.form.get('formato', 'excel')
-        tipo = request.form.get('tipo', 'completo')
-        fecha_inicio = request.form.get('fecha_inicio')
-        fecha_fin = request.form.get('fecha_fin')
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
         
-        # Aquí implementarías la lógica para generar y devolver el archivo exportado
-        # Por ahora, solo devolvemos un mensaje
-        return jsonify({
-            'success': True,
-            'message': f'Exportación en formato {formato} del reporte {tipo} generada correctamente.'
-        })
+        # Obtener información general de la compra
+        cursor.execute("""
+            SELECT 
+                c.IDCompra,
+                c.Fecha,
+                c.Total
+            FROM Compra c
+            WHERE c.IDCompra = ?
+        """, (compra_id,))
+        compra = dict(cursor.fetchone() or {})
+        
+        if not compra:
+            return jsonify({'error': 'Compra no encontrada'}), 404
+        
+        # Obtener detalles de la compra
+        cursor.execute("""
+            SELECT 
+                dc.IDDetalleCompra,
+                p.Nombre as producto,
+                p.IDProducto as codigo_producto,
+                pr.Nombre as proveedor,
+                pr.Telefono as telefono_proveedor,
+                pr.DireccionCompleta as direccion_proveedor,
+                s.Nombre as sucursal,
+                s.Direccion as direccion_sucursal,
+                dc.Cantidad,
+                dc.Subtotal,
+                (dc.Subtotal / dc.Cantidad) as precio_unitario
+            FROM Detalle_Compra dc
+            JOIN Producto p ON dc.IDProducto = p.IDProducto
+            JOIN Proveedor pr ON dc.IDProveedor = pr.IDProveedor
+            JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+            WHERE dc.IDCompra = ?
+            ORDER BY p.Nombre
+        """, (compra_id,))
+        detalles = [dict(row) for row in cursor.fetchall()]
+        
+        compra['detalles'] = detalles
+        
+        return jsonify(compra)
+    
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error al exportar: {str(e)}'
-        }), 500
+        import traceback
+        print(f"Error al obtener detalle de compra: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    
+    finally:
+        if conn:
+            conn.close()

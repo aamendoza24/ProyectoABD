@@ -331,6 +331,8 @@
         padding: 0.375rem 0.75rem;
         font-size: 0.875rem;
     }
+
+    
 </style>
 {% endblock %}
 
@@ -343,7 +345,7 @@
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="white-space: pre-line;">
                         {{ message }}
-                        <button type="button" class="close" data-bs-dismiss="alert" aria-label="Cerrar">
+                        <button type="button" class="close btn-info" data-bs-dismiss="alert" aria-label="Cerrar">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
