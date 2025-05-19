@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, jsonify, send_file
+from flask import Blueprint, render_template, request, flash, jsonify, send_file, redirect,url_for
 from datetime import datetime, timedelta, date
 from app.utils.db import get_db_connection
 from app.utils import login_required, role_required
@@ -16,19 +16,198 @@ from app.utils import role_required
 
 
 #historial de compras
-@compras_bp.route("/historial_compras")
+@compras_bp.route('/historial-compras', methods=['GET'])
+@role_required(['admin', 'gerente', 'empleado'])
 def historial_compras():
-    conexion = get_db_connection()
-    cursor = conexion.cursor()
+    """Página de historial de compras"""
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Obtener todas las compras
+        cursor.execute("""
+            SELECT 
+                c.IDCompra,
+                c.Fecha,
+                c.Total,
+                (SELECT GROUP_CONCAT(DISTINCT p.Nombre) 
+                 FROM Detalle_Compra dc 
+                 JOIN Proveedor p ON dc.IDProveedor = p.IDProveedor 
+                 WHERE dc.IDCompra = c.IDCompra) as proveedores,
+                (SELECT GROUP_CONCAT(DISTINCT s.Nombre) 
+                 FROM Detalle_Compra dc 
+                 JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal 
+                 WHERE dc.IDCompra = c.IDCompra) as sucursal,
+                (SELECT COUNT(*) FROM Detalle_Compra WHERE IDCompra = c.IDCompra) as num_productos
+            FROM Compra c
+            ORDER BY c.Fecha DESC
+        """)
+        compras = cursor.fetchall()
+        
+        # Obtener proveedores para el filtro
+        cursor.execute("SELECT IDProveedor, Nombre FROM Proveedor ORDER BY Nombre")
+        proveedores = cursor.fetchall()
+        
+        # Obtener sucursales para el filtro
+        cursor.execute("SELECT IDSucursal, Nombre FROM Sucursal ORDER BY Nombre")
+        sucursales = cursor.fetchall()
+        
+        return render_template('compras/historial_compras.html', 
+                               compras=compras, 
+                               proveedores=proveedores, 
+                               sucursales=sucursales)
+    
+    except Exception as e:
+        flash(f"Error al cargar el historial de compras: {str(e)}", "error")
+        return redirect(url_for('dashboard.index'))
+    
+    finally:
+        if conn:
+            conn.close()
 
-    cursor.execute("SELECT IDCompra, Fecha, Total FROM Compra")
-    compras = [
-        {"id": row[0], "fecha": row[1], "total": row[2]}
-        for row in cursor.fetchall()
-    ]
+@compras_bp.route('/historial-compras/filtrar', methods=['GET'])
+@role_required(['admin', 'gerente', 'empleado'])
+def filtrar_historial_compras():
+    """API para filtrar compras"""
+    try:
+        # Obtener parámetros de filtro
+        fecha_inicio = request.args.get('fecha_inicio', '')
+        fecha_fin = request.args.get('fecha_fin', '')
+        proveedor_id = request.args.get('proveedor_id', '')
+        sucursal_id = request.args.get('sucursal_id', '')
+        
+        # Construir consulta SQL base
+        sql_query = """
+            SELECT 
+                c.IDCompra,
+                c.Fecha,
+                c.Total,
+                (SELECT GROUP_CONCAT(DISTINCT p.Nombre) 
+                 FROM Detalle_Compra dc 
+                 JOIN Proveedor p ON dc.IDProveedor = p.IDProveedor 
+                 WHERE dc.IDCompra = c.IDCompra) as proveedores,
+                (SELECT GROUP_CONCAT(DISTINCT s.Nombre) 
+                 FROM Detalle_Compra dc 
+                 JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal 
+                 WHERE dc.IDCompra = c.IDCompra) as sucursal,
+                (SELECT COUNT(*) FROM Detalle_Compra WHERE IDCompra = c.IDCompra) as num_productos
+            FROM Compra c
+        """
+        
+        # Construir condiciones WHERE
+        conditions = []
+        params = []
+        
+        if fecha_inicio:
+            conditions.append("c.Fecha >= ?")
+            params.append(fecha_inicio)
+        
+        if fecha_fin:
+            conditions.append("c.Fecha <= ?")
+            params.append(fecha_fin)
+        
+        if proveedor_id:
+            conditions.append("c.IDCompra IN (SELECT DISTINCT IDCompra FROM Detalle_Compra WHERE IDProveedor = ?)")
+            params.append(proveedor_id)
+        
+        if sucursal_id:
+            conditions.append("c.IDCompra IN (SELECT DISTINCT IDCompra FROM Detalle_Compra WHERE IDSucursal = ?)")
+            params.append(sucursal_id)
+        
+        # Añadir condiciones a la consulta
+        if conditions:
+            sql_query += " WHERE " + " AND ".join(conditions)
+        
+        # Añadir orden
+        sql_query += " ORDER BY c.Fecha DESC"
+        
+        # Ejecutar consulta
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(sql_query, params)
+        compras = [dict(row) for row in cursor.fetchall()]
+        
+        # Calcular totales
+        total_compras = len(compras)
+        monto_total = sum(compra['Total'] for compra in compras)
+        
+        return jsonify({
+            'compras': compras,
+            'total_compras': total_compras,
+            'monto_total': monto_total
+        })
+    
+    except Exception as e:
+        import traceback
+        print(f"Error al filtrar compras: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    
+    finally:
+        if conn:
+            conn.close()
 
-    conexion.close()
-    return render_template("compras/historial_compras.html", compras=compras)
+@compras_bp.route('/historial-compras/detalle/<int:compra_id>', methods=['GET'])
+@role_required(['admin', 'gerente', 'empleado'])
+def detalle_historial_compra(compra_id):
+    """API para obtener el detalle de una compra específica"""
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Obtener información general de la compra
+        cursor.execute("""
+            SELECT 
+                c.IDCompra,
+                c.Fecha,
+                c.Total
+                FROM Compra c
+            WHERE c.IDCompra = ?
+        """, (compra_id,))
+        compra = dict(cursor.fetchone() or {})
+        
+        if not compra:
+            return jsonify({'error': 'Compra no encontrada'}), 404
+        
+        # Obtener detalles de la compra
+        cursor.execute("""
+            SELECT 
+                dc.IDDetalleCompra,
+                p.Nombre as producto,
+                p.IDProducto as codigo_producto,
+                pr.Nombre as proveedor,
+                pr.Telefono as telefono_proveedor,
+                pr.DireccionCompleta as direccion_proveedor,
+                s.Nombre as sucursal,
+                s.Direccion as direccion_sucursal,
+                dc.Cantidad,
+                dc.Subtotal,
+                (dc.Subtotal / dc.Cantidad) as precio_unitario
+            FROM Detalle_Compra dc
+            JOIN Producto p ON dc.IDProducto = p.IDProducto
+            JOIN Proveedor pr ON dc.IDProveedor = pr.IDProveedor
+            JOIN Sucursal s ON dc.IDSucursal = s.IDSucursal
+            WHERE dc.IDCompra = ?
+            ORDER BY p.Nombre
+        """, (compra_id,))
+        detalles = [dict(row) for row in cursor.fetchall()]
+        
+        compra['detalles'] = detalles
+        
+        return jsonify(compra)
+    
+    except Exception as e:
+        import traceback
+        print(f"Error al obtener detalle de compra: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    
+    finally:
+        if conn:
+            conn.close()
 
 
 # #Detalle de las compras

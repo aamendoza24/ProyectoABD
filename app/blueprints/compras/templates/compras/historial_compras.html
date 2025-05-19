@@ -1,73 +1,343 @@
 {% extends "layout.html" %}
 
-{% block title %}
-Historial de Ventas
+{% block title %}Historial de Compras{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+
+<style>
+    /* Estilos generales */
+    body {
+        color: #333333;
+        background-color: #f9fafb;
+    }
+
+    .container-fluid {
+        padding: 1.5rem;
+    }
+
+    /* Filtros */
+    .filter-card {
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background-color: white;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-card .card-header {
+        background-color: white;
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+    }
+
+    .filter-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-color: #e9ecef;
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        box-shadow: none;
+        transition: all 0.3s ease;
+    }
+
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15);
+    }
+
+    /* Tabla de datos */
+    .data-card {
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background-color: white;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .data-card .card-header {
+        background-color: white;
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .data-card .card-body {
+        padding: 0;
+    }
+
+    .table-responsive {
+        padding: 0;
+    }
+
+    table.dataTable {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+
+    table.dataTable thead th {
+        border-bottom: 1px solid #e9ecef;
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+    }
+
+    table.dataTable tbody td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+    }
+
+    table.dataTable tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Botones */
+    .btn-primary {
+        background-color: #4361ee;
+        border-color: #4361ee;
+    }
+
+    .btn-primary:hover {
+        background-color: #3a56d4;
+        border-color: #3a56d4;
+    }
+
+    .btn-outline-primary {
+        color: #4361ee;
+        border-color: #4361ee;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #4361ee;
+        border-color: #4361ee;
+    }
+
+    /* Badges */
+    .badge {
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+        border-radius: 30px;
+    }
+
+    /* Modal */
+    .modal-content {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+    }
+
+    /* Loader */
+    .loader {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+    }
+
+    .loader-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: #4361ee;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 1rem;
+        }
+        
+        .filter-card .card-body,
+        .data-card .card-body {
+            padding: 1rem;
+        }
+    }
+    
+    /* Estilos para notificaciones toast */
+    .notification-toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+        min-width: 250px;
+    }
+</style>
 {% endblock %}
 
 {% block main %}
-<h2 class="text-center">📊 Historial de Compras</h2>
-
-<div class="row mb-3">
-    <div class="col-md-4">
-        <label for="filtro-compras">Filtrar por:</label>
-        <select id="filtro-compras" class="form-control">
-            <option value="todas">Todas las Compras</option>
-            <option value="semana">Última semana</option>
-            <option value="mes">Último mes</option>
-        </select>
+<div class="container-fluid">
+    <!-- Encabezado de página -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <h2 class="m-0 d-flex align-items-center">
+            <i class="fas fa-history text-primary me-3"></i>
+            Historial de Compras
+        </h2>
+        <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">
+            <i class="fas fa-file-invoice me-1"></i>
+            {{ compras|length }} compras
+        </span>
     </div>
-</div>
-
-<div class="table-responsive">
-    <table class="table table-striped table-head-bg-primary mt-4">
-        <thead>
-            <tr>
-                <th>ID Compra</th>
-                <th>Fecha</th>
-                <th>Total</th>
-                <th>Detalles</th>
-            </tr>
-        </thead>
-        <tbody id="tabla-compra">
-            {% for compra in compras %}
-            <tr>
-                <td>{{ compra.id }}</td>
-                <td>{{ compra.fecha }}</td>
-                <td>C$ {{ compra.total | round(2) }}</td>
-                <td>
-                    <button class="btn btn-info ver-detalle" data-id="{{ compra.id }}">
-                        📄 Ver Detalles
+    
+    <!-- Filtros -->
+    <div class="card filter-card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2 text-primary"></i>
+                Filtros
+            </h5>
+        </div>
+        <div class="card-body">
+            <form id="filtroForm" class="row g-3">
+                <div class="col-md-3">
+                    <label for="fechaInicio" class="form-label fw-bold">Fecha Inicio:</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-calendar-alt text-primary"></i>
+                        </span>
+                        <input type="text" class="form-control datepicker" id="fechaInicio" placeholder="Seleccionar fecha">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="fechaFin" class="form-label fw-bold">Fecha Fin:</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-calendar-alt text-primary"></i>
+                        </span>
+                        <input type="text" class="form-control datepicker" id="fechaFin" placeholder="Seleccionar fecha">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="proveedor" class="form-label fw-bold">Proveedor:</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-store text-primary"></i>
+                        </span>
+                        <select class="form-select" id="proveedor">
+                            <option value="">Todos los proveedores</option>
+                            {% for proveedor in proveedores %}
+                            <option value="{{ proveedor.IDProveedor }}">{{ proveedor.Nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="sucursal" class="form-label fw-bold">Sucursal:</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-building text-primary"></i>
+                        </span>
+                        <select class="form-select" id="sucursal">
+                            <option value="">Todas las sucursales</option>
+                            {% for sucursal in sucursales %}
+                            <option value="{{ sucursal.IDSucursal }}">{{ sucursal.Nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="button" id="btnLimpiarFiltros" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-times-circle me-1"></i>Limpiar Filtros
                     </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- MODAL PARA VER DETALLES DE LA Compra -->
-<div class="modal fade" id="modalDetalles" tabindex="-1" aria-labelledby="modalDetallesLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalDetallesLabel">Detalles de la Compra</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <i class="mdi mdi-close-circle "></i>
-                </button>
+                    <button type="button" id="btnFiltrar" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Tabla de compras -->
+    <div class="card data-card shadow">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-table me-2"></i>
+                Listado de Compras
+            </h5>
+            <div id="resultadosFiltro" class="d-none">
+                <span class="badge bg-light text-primary me-2">
+                    <span id="totalCompras">0</span> compras
+                </span>
+                <span class="badge bg-light text-success">
+                    Total: C$ <span id="montoTotal">0.00</span>
+                </span>
             </div>
-            <div class="modal-body">
-                <table class="table">
-                    <thead>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tablaCompras">
+                    <thead class="table-light">
                         <tr>
-                            <th>Fecha</th>
-                            <th>Proveedor</th>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Sucursal</th> <!-- Nueva columna para la sucursal -->
-                            <th>Total</th>
+                            <th class="fw-bold text-primary border-bottom">ID</th>
+                            <th class="fw-bold text-primary border-bottom">Fecha</th>
+                            <th class="fw-bold text-primary border-bottom">Proveedores</th>
+                            <th class="fw-bold text-primary border-bottom">Sucursal</th>
+                            <th class="fw-bold text-primary border-bottom text-center">Productos</th>
+                            <th class="fw-bold text-primary border-bottom text-end">Total</th>
+                            <th class="fw-bold text-primary border-bottom text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-detalles">
+                    <tbody>
+                        {% for compra in compras %}
+                        <tr>
+                            <td class="align-middle">
+                                <span class="badge bg-secondary">{{ compra.IDCompra }}</span>
+                            </td>
+                            <td class="align-middle">
+                                <i class="far fa-calendar-alt me-1 text-muted"></i>
+                                {{ compra.Fecha }}
+                            </td>
+                            <td class="align-middle">{{ compra.proveedores }}</td>
+                            <td class="align-middle">{{ compra.sucursal }}</td>
+                            <td class="text-center align-middle">{{ compra.num_productos }}</td>
+                            <td class="text-end align-middle">
+                                <span class="badge bg-success px-2 py-1">
+                                    C$ {{ "{:,.2f}".format(compra.Total) }}
+                                </span>
+                            </td>
+                            <td class="text-center align-middle">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button class="btn btn-primary btn-sm ver-detalle" data-id="{{ compra.IDCompra }}">
+                                        <i class="fas fa-eye me-1"></i>
+                                        Ver
+                                    </button>
+                                    <button class="btn btn-danger btn-sm exportar-pdf" data-id="{{ compra.IDCompra }}">
+                                        <i class="fas fa-file-pdf me-1"></i>
+                                        PDF
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -75,64 +345,808 @@ Historial de Ventas
     </div>
 </div>
 
+<!-- Modal para ver detalles de la compra -->
+<div class="modal fade" id="modalDetalles" tabindex="-1" aria-labelledby="modalDetallesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalDetallesLabel">
+                    <i class="fas fa-receipt me-2"></i>
+                    Detalles de la Compra
+                </h5>
+                <!-- Botón de cierre compatible con Bootstrap 4 y 5 -->
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Información de la compra -->
+                <div class="bg-light p-3 rounded mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Información de la Compra
+                            </h6>
+                            <div id="compra-info">
+                                <!-- Esta información se llenará dinámicamente -->
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-dollar-sign me-2"></i>
+                                Resumen
+                            </h6>
+                            <div id="compra-resumen">
+                                <!-- Esta información se llenará dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tabla de productos -->
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    Productos
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Proveedor</th>
+                                <th>Sucursal</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">Precio Unit.</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-detalles">
+                            <!-- Los detalles se cargarán dinámicamente -->
+                        </tbody>
+                        <tfoot class="table-light" id="tabla-totales">
+                            <!-- El total se calculará dinámicamente -->
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Cerrar
+                </button>
+                <button type="button" class="btn btn-danger" id="btn-pdf-detalle">
+                    <i class="fas fa-file-pdf me-1"></i>
+                    Exportar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para previsualizar PDF -->
+<div class="modal fade" id="modalPDF" tabindex="-1" aria-labelledby="modalPDFLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalPDFLabel">
+                    <i class="fas fa-file-pdf me-2"></i>
+                    Previsualización de Recibo de Compra
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="pdf-preview" id="pdf-preview">
+                    <!-- Aquí se mostrará la previsualización del PDF -->
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-descargar-pdf">
+                    <i class="fas fa-download me-1"></i>
+                    Descargar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incluir bibliotecas necesarias para PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
-    $(document).ready(function () {
-        // Filtro de ventas
-        $("#filtro-compras").change(function () {
-            let filtro = $(this).val();
-            $.ajax({
-                url: "/historial_compras",
-                method: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({ filtro: filtro }),
-                success: function (response) {
-                    let tbody = $("#tabla-compras");
-                    tbody.empty();
-                    response.compras.forEach(compra => {
-                        let fila = `<tr>
-                            <td>${compra.id}</td>
-                            <td>${compra.fecha}</td>
-                            <td>C$ ${compra.total.toFixed(2)}</td>
-                            <td>
-                                <button class="btn btn-info ver-detalle" data-id="${compra.id}">
-                                    📄 Ver Detalles
-                                </button>
-                            </td>
-                        </tr>`;
-                        tbody.append(fila);
-                    });
+    $(document).ready(function() {
+        // Variables globales
+        let compraActual = null;
+        let modalDetalles = null;
+        let modalPDF = null;
+        
+        // Inicializar modales
+        try {
+            // Intentar inicializar con Bootstrap 5
+            if (typeof bootstrap !== 'undefined') {
+                modalDetalles = new bootstrap.Modal(document.getElementById('modalDetalles'));
+                modalPDF = new bootstrap.Modal(document.getElementById('modalPDF'));
+                console.log("Modales inicializados con Bootstrap 5");
+            } 
+            // Fallback a Bootstrap 4
+            else {
+                modalDetalles = $('#modalDetalles');
+                modalPDF = $('#modalPDF');
+                console.log("Modales inicializados con Bootstrap 4");
+            }
+        } catch (e) {
+            console.error("Error al inicializar modales:", e);
+        }
+        
+        // Función para mostrar modal (compatible con Bootstrap 4 y 5)
+        function mostrarModal(modal) {
+            try {
+                if (typeof modal.show === 'function') {
+                    // Bootstrap 5
+                    modal.show();
+                } else if (typeof modal.modal === 'function') {
+                    // Bootstrap 4
+                    modal.modal('show');
+                } else {
+                    console.warn("No se pudo determinar cómo mostrar el modal");
                 }
+            } catch (e) {
+                console.error("Error al mostrar modal:", e);
+            }
+        }
+        
+        // Configuración de idioma español para DataTables (en lugar de cargar archivo externo)
+        const dataTableEspanol = {
+            "decimal": ",",
+            "thousands": ".",
+            "sProcessing": "Procesando...",
+            "sLengthMenu": "Mostrar _MENU_ registros",
+            "sZeroRecords": "No se encontraron resultados",
+            "sEmptyTable": "Ningún dato disponible en esta tabla",
+            "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "sInfoPostFix": "",
+            "sSearch": "Buscar:",
+            "sUrl": "",
+            "sInfoThousands": ",",
+            "sLoadingRecords": "Cargando...",
+            "oPaginate": {
+                "sFirst": "Primero",
+                "sLast": "Último",
+                "sNext": "Siguiente",
+                "sPrevious": "Anterior"
+            },
+            "oAria": {
+                "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+            },
+            "buttons": {
+                "copy": "Copiar",
+                "colvis": "Visibilidad"
+            }
+        };
+        
+        // Inicializar selectores de fecha
+        flatpickr(".datepicker", {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+        
+        // Inicializar DataTable
+        const tablaCompras = $('#tablaCompras').DataTable({
+            language: dataTableEspanol,
+            order: [[1, 'desc']],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+            columnDefs: [
+                { className: "text-end", targets: [5] },
+                { className: "text-center", targets: [4, 6] }
+            ]
+        });
+        
+        // Evento para filtrar compras
+        $('#btnFiltrar').click(function() {
+            filtrarCompras();
+        });
+        
+        // Evento para limpiar filtros
+        $('#btnLimpiarFiltros').click(function() {
+            $('#fechaInicio').val('');
+            $('#fechaFin').val('');
+            $('#proveedor').val('');
+            $('#sucursal').val('');
+            filtrarCompras();
+        });
+        
+        // Evento para ver detalle de compra
+        $(document).on('click', '.ver-detalle', function() {
+            const compraId = $(this).data('id');
+            console.log("Ver detalles de compra ID:", compraId);
+            
+            // Mostrar indicador de carga
+            $("#tabla-detalles").html(`
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <div class="spinner-border text-primary me-2" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <span>Cargando detalles...</span>
+                        </div>
+                    </td>
+                </tr>
+            `);
+            
+            // Limpiar información anterior
+            $("#compra-info").html(`
+                <p class="mb-1"><strong>ID Compra:</strong> ${compraId}</p>
+                <p class="mb-1"><strong>Cargando información...</strong></p>
+            `);
+            
+            $("#compra-resumen").html(`
+                <p class="mb-1"><strong>Cargando...</strong></p>
+            `);
+            
+            $("#tabla-totales").empty();
+            
+            // Mostrar el modal
+            mostrarModal(modalDetalles);
+            
+            // Cargar detalles de la compra
+            cargarDetallesCompra(compraId);
+        });
+        
+        // Evento para exportar a PDF (botón en la tabla)
+        $(document).on("click", ".exportar-pdf", function() {
+            const compraId = $(this).data("id");
+            console.log("Exportar PDF de compra ID:", compraId);
+            
+            // Mostrar indicador de carga
+            $("#pdf-preview").html(`
+                <div class="d-flex justify-content-center align-items-center py-5">
+                    <div class="spinner-border text-danger me-2" role="status">
+                        <span class="visually-hidden">Generando PDF...</span>
+                    </div>
+                    <span>Generando previsualización del PDF...</span>
+                </div>
+            `);
+            
+            // Mostrar modal de previsualización
+            mostrarModal(modalPDF);
+            
+            // Cargar detalles y generar PDF
+            cargarDetallesCompra(compraId, function() {
+                // Generar PDF con previsualización
+                generarPDF(compraActual, true);
             });
         });
-
-        // Ver detalles de la compra
-        $(document).on("click", ".ver-detalle", function () {
-            let idCompra = $(this).data("id");
-
+        
+        // Exportar PDF (botón en el modal de detalles)
+        $("#btn-pdf-detalle").click(function() {
+            if (!compraActual) {
+                mostrarNotificacion("No hay datos de compra para generar PDF", "error");
+                return;
+            }
+            
+            // Mostrar indicador de carga
+            $("#pdf-preview").html(`
+                <div class="d-flex justify-content-center align-items-center py-5">
+                    <div class="spinner-border text-danger me-2" role="status">
+                        <span class="visually-hidden">Generando PDF...</span>
+                    </div>
+                    <span>Generando previsualización del PDF...</span>
+                </div>
+            `);
+            
+            // Mostrar modal de previsualización
+            mostrarModal(modalPDF);
+            
+            // Generar PDF con previsualización
+            generarPDF(compraActual, true);
+        });
+        
+        // Descargar PDF
+        $("#btn-descargar-pdf").click(function() {
+            if (!compraActual) {
+                mostrarNotificacion("No hay datos de compra para generar PDF", "error");
+                return;
+            }
+            
+            // Generar PDF para descarga
+            generarPDF(compraActual, false);
+        });
+        
+        // Función para filtrar compras
+        function filtrarCompras() {
+            const fechaInicio = $('#fechaInicio').val();
+            const fechaFin = $('#fechaFin').val();
+            const proveedor = $('#proveedor').val();
+            const sucursal = $('#sucursal').val();
+            
+            // Mostrar indicador de carga
+            tablaCompras.clear().draw();
+            $('#resultadosFiltro').addClass('d-none');
+            
+            // Mostrar notificación de proceso
+            mostrarNotificacion('Aplicando filtros...', 'info');
+            
+            // Construir objeto de datos para enviar
+            const filtroData = {
+                fecha_inicio: fechaInicio || '',
+                fecha_fin: fechaFin || '',
+                proveedor_id: proveedor || '',
+                sucursal_id: sucursal || ''
+            };
+            
+            // Realizar petición AJAX con mejor manejo de errores
             $.ajax({
-                url: `/detalles_compra/${idCompra}`,
+                url: '/compras/historial-compras/filtrar',
+                type: 'GET',
+                data: filtroData,
+                dataType: 'json',
+                success: function(response) {
+                    // Verificar si la respuesta contiene un error
+                    if (response.error) {
+                        console.error('Error en la respuesta del servidor:', response.error);
+                        mostrarNotificacion('Error al filtrar: ' + response.error, 'error');
+                        return;
+                    }
+                    
+                    // Actualizar tabla
+                    tablaCompras.clear();
+                    
+                    if (response.compras && response.compras.length > 0) {
+                        response.compras.forEach(function(compra) {
+                            tablaCompras.row.add([
+                                `<span class="badge bg-secondary">${compra.IDCompra}</span>`,
+                                `<i class="far fa-calendar-alt me-1 text-muted"></i> ${compra.Fecha}`,
+                                compra.proveedores || 'N/A',
+                                compra.sucursal || 'N/A',
+                                compra.num_productos || 0,
+                                `<span class="badge bg-success px-2 py-1">C$ ${new Intl.NumberFormat('es-NI').format(compra.Total || 0)}</span>`,
+                                `<div class="d-flex gap-2 justify-content-center">
+                                    <button class="btn btn-primary btn-sm ver-detalle" data-id="${compra.IDCompra}">
+                                        <i class="fas fa-eye me-1"></i>
+                                        Ver
+                                    </button>
+                                    <button class="btn btn-danger btn-sm exportar-pdf" data-id="${compra.IDCompra}">
+                                        <i class="fas fa-file-pdf me-1"></i>
+                                        PDF
+                                    </button>
+                                </div>`
+                            ]);
+                        });
+                        
+                        // Actualizar contadores
+                        $('#totalCompras').text(response.total_compras || 0);
+                        $('#montoTotal').text(new Intl.NumberFormat('es-NI').format(response.monto_total || 0));
+                        $('#resultadosFiltro').removeClass('d-none');
+                        
+                        // Mostrar mensaje de éxito
+                        mostrarNotificacion('Filtros aplicados correctamente. Se encontraron ' + response.compras.length + ' registros.', 'success');
+                    } else {
+                        // Mostrar mensaje cuando no hay resultados
+                        mostrarNotificacion('No se encontraron compras con los filtros aplicados.', 'warning');
+                    }
+                    
+                    tablaCompras.draw();
+                },
+                error: function(xhr, status, error) {
+                    // Manejo detallado del error
+                    console.error('Error al filtrar compras:');
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    console.error('Respuesta:', xhr.responseText);
+                    
+                    let mensajeError = 'Error al filtrar compras.';
+                    
+                    // Intentar obtener más detalles del error
+                    try {
+                        const respuesta = JSON.parse(xhr.responseText);
+                        if (respuesta && respuesta.error) {
+                            mensajeError += ' ' + respuesta.error;
+                        }
+                    } catch (e) {
+                        if (xhr.status === 404) {
+                            mensajeError = 'La ruta de filtrado no existe. Verifique la configuración del servidor.';
+                        } else if (xhr.status === 500) {
+                            mensajeError = 'Error interno del servidor al procesar los filtros.';
+                        }
+                    }
+                    
+                    mostrarNotificacion(mensajeError, 'error');
+                }
+            });
+        }
+        
+        // Cargar detalles de compra
+        function cargarDetallesCompra(compraId, callback) {
+            $.ajax({
+                url: `/compras/historial-compras/detalle/${compraId}`,
                 method: "GET",
-                success: function (response) {
+                success: function(response) {
+                    console.log("Detalles recibidos:", response);
+                    
+                    // Guardar datos de la compra actual
+                    compraActual = response;
+                    
+                    // Actualizar información de la compra
+                    const compra = response || {};
+                    const fecha = compra.Fecha || 'Fecha no disponible';
+                    const detalles = compra.detalles || [];
+                    
+                    if (detalles.length === 0) {
+                        $("#tabla-detalles").html(`
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                        <p class="mb-0">No hay productos en esta compra</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        `);
+                        return;
+                    }
+                    
+                    // Información del proveedor y sucursal
+                    const proveedor = detalles[0].proveedor || 'No especificado';
+                    const sucursal = detalles[0].sucursal || 'No especificada';
+                    
+                    $("#compra-info").html(`
+                        <p class="mb-1"><strong>ID Compra:</strong> ${compra.IDCompra}</p>
+                        <p class="mb-1"><strong>Fecha:</strong> ${fecha}</p>
+                        <p class="mb-0"><strong>Proveedor:</strong> ${proveedor}</p>
+                        <p class="mb-0"><strong>Sucursal:</strong> ${sucursal}</p>
+                        ${compra.Observaciones ? `<p class="mb-0"><strong>Observaciones:</strong> ${compra.Observaciones}</p>` : ''}
+                    `);
+                    
+                    // Mostrar detalles
                     let tbody = $("#tabla-detalles");
                     tbody.empty();
-                    response.detalles.forEach(detalle => {
-                        let fila = `<tr>
-                            <td>${detalle.Fecha}</td>
-                            <td>${detalle.Proveedor}</td>
-                            <td>${detalle.Producto}</td>
-                            <td>${detalle.Cantidad}</td>
-                            <td>${detalle.Sucursal}</td>
-                            <td>${detalle.Total}</td>
-                        </tr>`;
+                    
+                    // Calcular total
+                    let total = 0;
+                    
+                    detalles.forEach(detalle => {
+                        total += detalle.Subtotal;
+                        
+                        let fila = `
+                            <tr>
+                                <td>${detalle.producto}</td>
+                                <td>${detalle.proveedor}</td>
+                                <td>${detalle.sucursal}</td>
+                                <td class="text-center">${detalle.Cantidad}</td>
+                                <td class="text-end">C$ ${parseFloat(detalle.precio_unitario).toFixed(2)}</td>
+                                <td class="text-end">C$ ${parseFloat(detalle.Subtotal).toFixed(2)}</td>
+                            </tr>
+                        `;
                         tbody.append(fila);
                     });
-
-                    // Mostrar modal
-                    $("#modalDetalles").modal("show");
+                    
+                    // Mostrar resumen
+                    $("#compra-resumen").html(`
+                        <p class="mb-0 fs-5 text-success"><strong>Total:</strong> C$ ${parseFloat(compra.Total).toFixed(2)}</p>
+                    `);
+                    
+                    // Mostrar totales en el pie de tabla
+                    $("#tabla-totales").html(`
+                        <tr>
+                            <td colspan="5" class="text-end"><strong>Total:</strong></td>
+                            <td class="text-end"><strong>C$ ${parseFloat(compra.Total).toFixed(2)}</strong></td>
+                        </tr>
+                    `);
+                    
+                    // Ejecutar callback si existe
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al cargar detalles:", error);
+                    
+                    $("#tabla-detalles").html(`
+                        <tr>
+                            <td colspan="6" class="text-center text-danger py-4">
+                                <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                                <p class="mb-0">Error al cargar los detalles. Intente nuevamente.</p>
+                            </td>
+                        </tr>
+                    `);
+                    
+                    mostrarNotificacion(`Error al cargar los detalles: ${error}`, 'error');
                 }
             });
-        });
+        }
+        
+        // Mostrar notificación
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            // Verificar si ya existe una notificación
+            let notificacion = document.querySelector('.notification-toast');
+            if (notificacion) {
+                notificacion.remove();
+            }
+            
+            // Crear nueva notificación
+            notificacion = document.createElement('div');
+            notificacion.className = `notification-toast toast align-items-center text-white bg-${tipo === 'success' ? 'success' : tipo === 'error' ? 'danger' : tipo === 'warning' ? 'warning' : 'primary'}`;
+            notificacion.setAttribute('role', 'alert');
+            notificacion.setAttribute('aria-live', 'assertive');
+            notificacion.setAttribute('aria-atomic', 'true');
+            notificacion.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : tipo === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                        ${mensaje}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Añadir estilos
+            notificacion.style.position = 'fixed';
+            notificacion.style.bottom = '20px';
+            notificacion.style.right = '20px';
+            notificacion.style.zIndex = '1050';
+            notificacion.style.minWidth = '250px';
+            
+            // Añadir al DOM
+            document.body.appendChild(notificacion);
+            
+            // Mostrar y ocultar automáticamente
+            try {
+                // Bootstrap 5
+                if (typeof bootstrap !== 'undefined') {
+                    const toast = new bootstrap.Toast(notificacion, {
+                        autohide: true,
+                        delay: 3000
+                    });
+                    toast.show();
+                } 
+                // Bootstrap 4
+                else if (typeof $ !== 'undefined') {
+                    $(notificacion).toast({
+                        autohide: true,
+                        delay: 3000
+                    }).toast('show');
+                }
+                // Fallback
+                else {
+                    setTimeout(() => {
+                        notificacion.remove();
+                    }, 3000);
+                }
+            } catch (e) {
+                console.error("Error al mostrar notificación:", e);
+                // Fallback
+                setTimeout(() => {
+                    notificacion.remove();
+                }, 3000);
+            }
+        }
+        
+        // Generar PDF
+        function generarPDF(data, mostrarPreview = false) {
+            // Verificar que jsPDF esté disponible
+            if (typeof window.jspdf === 'undefined') {
+                console.error("jsPDF no está disponible");
+                $("#pdf-preview").html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Error: La biblioteca jsPDF no está disponible.
+                    </div>
+                `);
+                return;
+            }
+            
+            try {
+                // Importar jsPDF
+                const { jsPDF } = window.jspdf;
+                
+                // Crear nuevo documento PDF
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                // Extraer datos de la compra
+                const compra = data || {};
+                const detalles = compra.detalles || [];
+                
+                // Valores predeterminados para datos que podrían faltar
+                const id = compra.IDCompra || 'N/A';
+                const fecha = compra.Fecha || 'Fecha no disponible';
+                
+                // Calcular total
+                const total = parseFloat(compra.Total || 0);
+                
+                // Configurar fuentes y estilos
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                
+                // Añadir encabezado
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text('RECIBO DE COMPRA', 105, 20, { align: 'center' });
+                
+                doc.setFontSize(12);
+                doc.text(`Nº ${id}`, 105, 27, { align: 'center' });
+                
+                // Añadir marca de agua
+                doc.setFontSize(60);
+                doc.setTextColor(240, 240, 240);
+                doc.text('COMPRA', 105, 140, { align: 'center', angle: 45 });
+                doc.setTextColor(0, 0, 0);
+                
+                // Información de la empresa
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Tu Empresa, S.A.', 20, 40);
+                doc.text('Dirección: Calle Principal #123', 20, 45);
+                doc.text('Teléfono: (123) 456-7890', 20, 50);
+                doc.text('Email: info@tuempresa.com', 20, 55);
+                
+                // Información de la compra
+                doc.setFont('helvetica', 'bold');
+                doc.text('INFORMACIÓN DE COMPRA:', 140, 40);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Fecha: ${fecha}`, 140, 45);
+                
+                // Información del proveedor y sucursal
+                if (detalles.length > 0) {
+                    const proveedor = detalles[0].proveedor || 'No especificado';
+                    const sucursal = detalles[0].sucursal || 'No especificada';
+                    
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('PROVEEDOR:', 20, 65);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Nombre: ${proveedor}`, 20, 70);
+                    
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('SUCURSAL:', 140, 65);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Nombre: ${sucursal}`, 140, 70);
+                }
+                
+                // Observaciones (si existen)
+                if (compra.Observaciones) {
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('OBSERVACIONES:', 20, 80);
+                    doc.setFont('helvetica', 'normal');
+                    
+                    // Dividir observaciones largas en múltiples líneas
+                    const observaciones = doc.splitTextToSize(compra.Observaciones, 170);
+                    doc.text(observaciones, 20, 85);
+                    
+                    // Ajustar la posición Y para la línea separadora
+                    const lineY = 85 + (observaciones.length * 5);
+                    doc.setDrawColor(100, 100, 100);
+                    doc.line(20, lineY, 190, lineY);
+                    
+                    // Ajustar la posición Y para la tabla
+                    var startY = lineY + 5;
+                } else {
+                    // Línea separadora en posición estándar
+                    doc.setDrawColor(100, 100, 100);
+                    doc.line(20, 80, 190, 80);
+                    
+                    // Posición Y estándar para la tabla
+                    var startY = 85;
+                }
+                
+                // Verificar que autotable esté disponible
+                if (typeof doc.autoTable !== 'function') {
+                    console.error("jsPDF AutoTable no está disponible");
+                    if (mostrarPreview) {
+                        $("#pdf-preview").html(`
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Error: La biblioteca jsPDF AutoTable no está disponible.
+                            </div>
+                        `);
+                    }
+                    return;
+                }
+                
+                // Tabla de productos
+                const headers = [['Producto', 'Proveedor', 'Cantidad', 'Precio Unit.', 'Subtotal']];
+                
+                const tableData = detalles.map(detalle => {
+                    return [
+                        detalle.producto,
+                        detalle.proveedor,
+                        detalle.Cantidad.toString(),
+                        `C$ ${parseFloat(detalle.precio_unitario).toFixed(2)}`,
+                        `C$ ${parseFloat(detalle.Subtotal).toFixed(2)}`
+                    ];
+                });
+                
+                doc.autoTable({
+                    head: headers,
+                    body: tableData,
+                    startY: startY,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [67, 97, 238],
+                        textColor: 255,
+                        fontStyle: 'bold'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 60 },
+                        1: { cellWidth: 50 },
+                        2: { cellWidth: 20, halign: 'center' },
+                        3: { cellWidth: 30, halign: 'right' },
+                        4: { cellWidth: 30, halign: 'right' }
+                    },
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3
+                    }
+                });
+                
+                // Calcular posición Y después de la tabla
+                const finalY = doc.lastAutoTable.finalY + 10;
+                
+                // Totales
+                doc.setFont('helvetica', 'bold');
+                doc.text(`TOTAL:`, 150, finalY + 5);
+                doc.text(`C$ ${total.toFixed(2)}`, 190, finalY + 5, { align: 'right' });
+                
+                // Línea para el total
+                doc.setDrawColor(67, 97, 238);
+                doc.line(150, finalY, 190, finalY);
+                
+                // Pie de página
+                const pageHeight = doc.internal.pageSize.height;
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(8);
+                doc.text('Documento generado el ' + new Date().toLocaleString(), 105, pageHeight - 20, { align: 'center' });
+                
+                // Si se solicita previsualización, mostrar en el modal
+                if (mostrarPreview) {
+                    // Generar vista previa como base64
+                    const pdfData = doc.output('datauristring');
+                    
+                    // Mostrar en el modal
+                    $("#pdf-preview").html(`
+                        <iframe src="${pdfData}" width="100%" height="500px" style="border: 1px solid #dee2e6; border-radius: 0.25rem;"></iframe>
+                    `);
+                } else {
+                    // Descargar directamente
+                    doc.save(`Compra_${id}.pdf`);
+                    mostrarNotificacion("PDF descargado correctamente", "success");
+                }
+            } catch (error) {
+                console.error("Error al generar PDF:", error);
+                if (mostrarPreview) {
+                    $("#pdf-preview").html(`
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Error al generar el PDF: ${error.message}
+                        </div>
+                    `);
+                } else {
+                    mostrarNotificacion(`Error al generar el PDF: ${error.message}`, "error");
+                }
+            }
+        }
     });
 </script>
-
 {% endblock %}

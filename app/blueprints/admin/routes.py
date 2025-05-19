@@ -11,10 +11,11 @@ import sqlite3
 @role_required(['admin', 'gerente'])
 def employees():
     """Página principal de administración de empleados"""
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
     try:
-        conn = get_db_connection()
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        
         
         # Obtener todos los empleados con información de usuario
         cursor.execute("""
@@ -171,9 +172,9 @@ def add_employee():
         
         # Insertar usuario
         cursor.execute("""
-            INSERT INTO usuarios (user, email, contrasena, role, is_active, IDEmpleado, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (username, email, hashed_password, role, is_active, employee_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            INSERT INTO usuarios (user, email, contrasena, role, is_active, IDEmpleado)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (username, email, hashed_password, role, is_active, employee_id))
         
         # Registrar actividad
         user_id = cursor.lastrowid
