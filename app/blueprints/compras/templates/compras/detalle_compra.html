@@ -1,0 +1,271 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Detalle de Compra #{{ compra.IDCompra }}
+{% endblock %}
+
+{% block main %}
+<div class="container py-4">
+    <!-- Encabezado de página -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <h2 class="m-0 d-flex align-items-center">
+            <i class="fas fa-file-invoice text-primary me-3"></i>
+            Detalle de Compra #{{ compra.IDCompra }}
+        </h2>
+        <div>
+            <a href="{{ url_for('compras.historial') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i>
+                Volver al Historial
+            </a>
+            <button class="btn btn-danger exportar-pdf" data-id="{{ compra.IDCompra }}">
+                <i class="fas fa-file-pdf me-1"></i>
+                Exportar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Información de la compra -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        Información General
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">ID Compra:</div>
+                        <div class="col-md-8">{{ compra.IDCompra }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Fecha:</div>
+                        <div class="col-md-8">{{ compra.Fecha }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Proveedor:</div>
+                        <div class="col-md-8">{{ compra.Proveedor }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Sucursal:</div>
+                        <div class="col-md-8">{{ compra.Sucursal }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-dollar-sign text-primary me-2"></i>
+                        Resumen Financiero
+                    </h5>
+                </div>
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <div class="text-center">
+                        <h3 class="text-success mb-3">Total de la Compra</h3>
+                        <h2 class="display-4 fw-bold">${{ compra.Total | round(2) }}</h2>
+                        <p class="text-muted mt-2">{{ detalles|length }} productos en esta compra</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-boxes me-2"></i>
+                Productos Comprados
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="fw-bold text-primary">Producto</th>
+                            <th class="fw-bold text-primary text-center">Cantidad</th>
+                            <th class="fw-bold text-primary text-end">Precio compra</th>
+                            <th class="fw-bold text-primary text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if detalles|length > 0 %}
+                            {% for detalle in detalles %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-2">
+                                            <h6 class="mb-0">{{ detalle.Producto }}</h6>
+                                            <small class="text-muted">ID: {{ detalle.IDProducto }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">{{ detalle.Cantidad }}</td>
+                                <td class="text-end">${{ detalle.PrecioUnitario | round(2) }}</td>
+                                <td class="text-end">${{ detalle.Subtotal | round(2) }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                        <p class="mb-0">No hay productos en esta compra</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold">Total:</td>
+                            <td class="text-end fw-bold">${{ compra.Total | round(2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incluir bibliotecas necesarias para PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Exportar PDF
+        $(".exportar-pdf").click(function() {
+            const compraId = $(this).data("id");
+            
+            // Verificar que jsPDF esté disponible
+            if (typeof window.jspdf === 'undefined') {
+                alert("Error: La biblioteca jsPDF no está disponible.");
+                return;
+            }
+            
+            try {
+                // Importar jsPDF
+                const { jsPDF } = window.jspdf;
+                
+                // Crear nuevo documento PDF
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                // Configurar fuentes y estilos
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                
+                // Añadir encabezado
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text('DETALLE DE COMPRA', 105, 20, { align: 'center' });
+                
+                doc.setFontSize(12);
+                doc.text(`Nº {{ compra.IDCompra }}`, 105, 27, { align: 'center' });
+                
+                // Añadir marca de agua
+                doc.setFontSize(60);
+                doc.setTextColor(240, 240, 240);
+                doc.text('COMPRA', 105, 140, { align: 'center', angle: 45 });
+                doc.setTextColor(0, 0, 0);
+                
+                // Información de la empresa
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Tu Empresa, S.A.', 20, 40);
+                doc.text('Dirección: Calle Principal #123', 20, 45);
+                doc.text('Teléfono: (123) 456-7890', 20, 50);
+                doc.text('Email: info@tuempresa.com', 20, 55);
+                
+                // Información de la compra
+                doc.setFont('helvetica', 'bold');
+                doc.text('INFORMACIÓN DE COMPRA:', 140, 40);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Fecha: {{ compra.Fecha }}`, 140, 45);
+                doc.text(`Sucursal: {{ compra.Sucursal }}`, 140, 50);
+                
+                // Información del proveedor
+                doc.setFont('helvetica', 'bold');
+                doc.text('PROVEEDOR:', 20, 65);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Nombre: {{ compra.Proveedor }}`, 20, 70);
+                
+                // Línea separadora
+                doc.setDrawColor(100, 100, 100);
+                doc.line(20, 80, 190, 80);
+                
+                // Verificar que autotable esté disponible
+                if (typeof doc.autoTable !== 'function') {
+                    alert("Error: La biblioteca jsPDF AutoTable no está disponible.");
+                    return;
+                }
+                
+                // Tabla de productos
+                const headers = [['Producto', 'Cantidad', 'Precio', 'Subtotal']];
+                
+                const tableData = [
+                    {% for detalle in detalles %}
+                    [
+                        '{{ detalle.Producto }}',
+                        '{{ detalle.Cantidad }}',
+                        '$ {{ detalle.PrecioUnitario | round(2) }}',
+                        '$ {{ detalle.Subtotal | round(2) }}'
+                    ],
+                    {% endfor %}
+                ];
+                
+                doc.autoTable({
+                    head: headers,
+                    body: tableData,
+                    startY: 85,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [78, 115, 223],
+                        textColor: 255,
+                        fontStyle: 'bold'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 80 },
+                        1: { cellWidth: 25, halign: 'center' },
+                        2: { cellWidth: 35, halign: 'right' },
+                        3: { cellWidth: 35, halign: 'right' }
+                    },
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3
+                    }
+                });
+                
+                // Calcular posición Y después de la tabla
+                const finalY = doc.lastAutoTable.finalY + 10;
+                
+                // Totales
+                doc.setFont('helvetica', 'bold');
+                doc.text(`TOTAL:`, 150, finalY + 5);
+                doc.text(`$ {{ compra.Total | round(2) }}`, 190, finalY + 5, { align: 'right' });
+                
+                // Pie de página
+                const pageHeight = doc.internal.pageSize.height;
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(8);
+                doc.text('Documento generado automáticamente', 105, pageHeight - 20, { align: 'center' });
+                
+                // Descargar PDF
+                doc.save(`Compra_{{ compra.IDCompra }}.pdf`);
+                
+            } catch (error) {
+                console.error("Error al generar PDF:", error);
+                alert(`Error al generar el PDF: ${error.message}`);
+            }
+        });
+    });
+</script>
+{% endblock %}
