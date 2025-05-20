@@ -316,7 +316,9 @@
                                 <i class="far fa-calendar-alt me-1 text-muted"></i>
                                 {{ compra.Fecha }}
                             </td>
-                            <td class="align-middle">{{ compra.proveedores }}</td>
+                            <td class="align-middle">
+                                <i class="fas fa-truck me-1 text-muted"></i>
+                                {{ compra.proveedores }}</td>
                             <td class="align-middle">{{ compra.sucursal }}</td>
                             <td class="text-center align-middle">{{ compra.num_productos }}</td>
                             <td class="text-end align-middle">
@@ -345,6 +347,7 @@
     </div>
 </div>
 
+<!-- Modal para ver detalles de la compra -->
 <!-- Modal para ver detalles de la compra -->
 <div class="modal fade" id="modalDetalles" tabindex="-1" aria-labelledby="modalDetallesLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -998,9 +1001,9 @@
                 // Información de la empresa
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
-                doc.text('Tu Empresa, S.A.', 20, 40);
-                doc.text('Dirección: Calle Principal #123', 20, 45);
-                doc.text('Teléfono: (123) 456-7890', 20, 50);
+                doc.text('Librería Indiana.', 20, 40);
+                doc.text('Dirección: Vanegas, Esquipulas. Del colegio Pablo Antonio Cuadras 500 mts al oeste', 20, 45);
+                doc.text('Teléfono: (505) 7756-5332', 20, 50);
                 doc.text('Email: info@tuempresa.com', 20, 55);
                 
                 // Información de la compra

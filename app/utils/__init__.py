@@ -8,7 +8,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get("user_id") is None:
-            flash("Debes iniciar sesión para acceder a esta página.", "danger")
+            #flash("Debes iniciar sesión para acceder a esta página.", "danger")
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -22,7 +22,7 @@ def role_required(roles):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if session.get("user_id") is None:
-                flash("Debes iniciar sesión para acceder a esta página.", "danger")
+                #flash("Debes iniciar sesión para acceder a esta página.", "danger")
                 return redirect(url_for('auth.login'))
             
             user_role = session.get("role")

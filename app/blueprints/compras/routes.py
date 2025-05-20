@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 from flask import Blueprint, render_template, request, flash, jsonify, send_file, redirect,url_for
-=======
-from flask import Blueprint, render_template, request, flash, jsonify, send_file,redirect, url_for
->>>>>>> origin/master
 from datetime import datetime, timedelta, date
 from app.utils.db import get_db_connection
 from app.utils import login_required, role_required
@@ -19,7 +15,7 @@ from app.utils import role_required
 #compras_bp = Blueprint('compras', __name__, url_prefix='')
 
 
-<<<<<<< HEAD
+
 #historial de compras
 @compras_bp.route('/historial-compras', methods=['GET'])
 @role_required(['admin', 'gerente', 'empleado'])
@@ -239,8 +235,7 @@ def detalle_historial_compra(compra_id):
 #     conexion.close()
 #     return jsonify({"detalles": detalles})
 
-=======
->>>>>>> origin/master
+
 # Ruta para finalizar compra y agregar toda la información necesaria a la base de datos
 @compras_bp.route('/', methods=['GET', 'POST'])
 @login_required
@@ -513,9 +508,9 @@ def detalles_json(compra_id):
 
 
 #endpoint sobre reportes de compras
-@compras_bp.route('/compras')
+@compras_bp.route('/reporte')
 @role_required(['admin', 'gerente'])
-def compras():
+def reporte():
     """Página principal de reportes de compras"""
     try:
         conn = get_db_connection()

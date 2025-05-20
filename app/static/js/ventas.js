@@ -39,23 +39,34 @@ document.addEventListener("DOMContentLoaded", function () {
             const id = botonAgregar.dataset.id;
             const nombre = botonAgregar.dataset.nombre;
             const precio = parseFloat(botonAgregar.dataset.precio);
-            const productoExistente = carrito.find(p => p.id === id);
+            const stock = parseInt(botonAgregar.dataset.stock);
             
+            const productoExistente = carrito.find(p => p.id === id);
+
             // Efecto visual en el botón
             botonAgregar.classList.add("shake");
             setTimeout(() => botonAgregar.classList.remove("shake"), 500);
 
             if (productoExistente) {
-                productoExistente.cantidad++;
-                mostrarNotificacion(`Cantidad de "${nombre}" actualizada (${productoExistente.cantidad})`, "success");
+                if (productoExistente.cantidad < stock) {
+                    productoExistente.cantidad++;
+                    mostrarNotificacion(`Cantidad de "${nombre}" actualizada (${productoExistente.cantidad})`, "success");
+                } else {
+                    mostrarNotificacion(`No hay suficiente stock para "${nombre}"`, "warning");
+                }
             } else {
-                carrito.push({ id, nombre, precio, cantidad: 1 });
-                mostrarNotificacion(`"${nombre}" agregado al carrito`, "success");
+                if (stock > 0) {
+                    carrito.push({ id, nombre, precio, cantidad: 1 , stock});
+                    mostrarNotificacion(`"${nombre}" agregado al carrito`, "success");
+                } else {
+                    mostrarNotificacion(`"${nombre}" está agotado`, "warning");
+                }
             }
-            
+
             actualizarCarrito();
         }
     });
+
 
     // Actualizar carrito
     function actualizarCarrito() {
@@ -93,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <td class="small text-truncate" style="max-width: 120px;" title="${producto.nombre}">${producto.nombre}</td>
                     <td class="text-center">
                         <input type="number" class="form-control form-control-sm cantidad-input" 
-                               data-id="${producto.id}" value="${producto.cantidad}" min="1">
+                               data-id="${producto.id}" value="${producto.cantidad}" min="1" max="${producto.stock}">
                     </td>
                     <td class="text-center small">C$ ${producto.precio.toFixed(2)}</td>
                     <td class="text-center">
@@ -129,23 +140,28 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Cambiar cantidad de productos
-    carritoTable.addEventListener("input", function (e) {
+    carritoTable.addEventListener("change", function (e) {
         if (e.target.classList.contains("cantidad-input")) {
             const id = e.target.dataset.id;
             let nuevaCantidad = parseInt(e.target.value);
             const producto = carrito.find(p => p.id === id);
-            
+
             if (producto) {
-                if (nuevaCantidad < 1) {
+                if (isNaN(nuevaCantidad) || nuevaCantidad < 1) {
                     nuevaCantidad = 1;
                     e.target.value = 1;
+                } else if (nuevaCantidad > producto.stock) {
+                    nuevaCantidad = producto.stock;
+                    e.target.value = producto.stock;
+                    mostrarNotificacion(`Solo hay ${producto.stock} unidades disponibles de "${producto.nombre}"`, "warning");
                 }
-                
+
                 producto.cantidad = nuevaCantidad;
                 actualizarCarrito();
             }
         }
     });
+
 
     // Eliminar producto del carrito
     carritoTable.addEventListener("click", function (e) {
@@ -232,6 +248,80 @@ document.addEventListener("DOMContentLoaded", function () {
     buscarInput.addEventListener("input", filtrarProductos);
     filtroCategoria.addEventListener("change", filtrarProductos);
 
+
+    function buscarClientes() {
+        const termino = document.getElementById('buscarCliente').value.trim();
+        if (termino.length < 2) {
+            alert('Ingrese al menos 2 caracteres para buscar');
+            return;
+        }
+
+        fetch('/buscar-clientes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ termino: termino })
+        })
+        .then(async response => {
+            if (!response.ok) {
+                let errorMsg = 'Error al buscar clientes';
+                try {
+                    const data = await response.json();
+                    errorMsg = data.error || errorMsg;
+                } catch {
+                    errorMsg = await response.text();
+                }
+                throw new Error(errorMsg);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const $lista = $('#listaClientes');
+            $lista.empty();
+
+            if (data.clientes && data.clientes.length > 0) {
+                data.clientes.forEach(cliente => {
+                    $lista.append(`<option value="${cliente.IDCliente}" 
+                                    data-nombre="${cliente.NombreCompleto}" 
+                                    data-telefono="${cliente.Telefono}">
+                        ${cliente.NombreCompleto} - ${cliente.Telefono}
+                    </option>`);
+                });
+                $('#resultadosCliente').show();
+            } else {
+                $('#resultadosCliente').hide();
+                alert('No se encontraron clientes');
+            }
+        })
+        .catch(error => {
+            alert(error.message);
+        });
+    }
+
+    // Toggle entre cliente existente y nuevo
+    $('#clienteExistenteCheck').change(function() {
+        if ($(this).is(':checked')) {
+            $('#clienteExistenteSection').show();
+            $('#nuevoClienteSection').hide();
+            $('#clienteNombre, #clienteTelefono').val('');
+        } else {
+            $('#clienteExistenteSection').hide();
+            $('#nuevoClienteSection').show();
+            $('#buscarCliente').val('');
+            $('#resultadosCliente').hide();
+        }
+    });
+
+    // Buscar cliente
+    $('#btnBuscarCliente').click(buscarClientes);
+    $('#buscarCliente').keyup(function(e) {
+        if (e.keyCode === 13) {
+            buscarClientes();
+        }
+    });
+
+    
     // Mostrar modal de pago
     btnPagar.addEventListener("click", function () {
         if (carrito.length === 0) {
@@ -296,62 +386,46 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
+    // variable para almacenar el cliente seleccionado
+    let clienteSeleccionadoId = null;
+    let clienteSeleccionadoNombre = '';
+    let clienteSeleccionadoTelefono = '';
+
+    $('#listaClientes').on('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        clienteSeleccionadoId = selectedOption.value;
+        clienteSeleccionadoNombre = selectedOption.getAttribute('data-nombre');
+        clienteSeleccionadoTelefono = selectedOption.getAttribute('data-telefono');
+    });
 
     // Finalizar pago
     finalizarPagoBtn.addEventListener("click", function () {
-        // Validar formulario
-        if (!validarFormularioPago()) {
-            return;
-        }
-        
+        if (!validarFormularioPago()) return;
+
         // Recopilar datos
         const clienteNombre = document.getElementById('clienteNombre').value;
-        const clienteId = document.getElementById('clienteId').value;
+        const clienteTelefono = document.getElementById('clienteTelefono').value;
         const tipoPago = tipoPagoSelect.value;
         const dineroRecibido = parseFloat(dineroRecibidoInput.value) || 0;
         const cambio = parseFloat(cambioInput.value) || 0;
         const notaVenta = document.getElementById('notaVenta').value;
         const descuento = parseFloat(document.getElementById("descuento").value) || 0;
         const total = calcularTotalFinal();
-        const subtotal = carrito.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
-        
-        // Generar número de factura único
-        const numeroFactura = generarNumeroFactura();
-        
-        // Fecha actual formateada
-        const fechaActual = new Date();
-        const fechaFormateada = fechaActual.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-        const horaFormateada = fechaActual.toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        // Guardar datos de la venta actual para la factura
-        ventaActual = {
-            numeroFactura,
-            fecha: fechaFormateada,
-            hora: horaFormateada,
-            cliente: {
-                nombre: clienteNombre || 'Cliente General',
-                id: clienteId || 'N/A'
-            },
-            productos: [...carrito],
-            subtotal,
-            descuento,
-            total,
-            tipoPago,
-            dineroRecibido,
-            cambio,
-            nota: notaVenta
-        };
 
-        // Mostrar indicador de carga
-        finalizarPagoBtn.disabled = true;
-        finalizarPagoBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Procesando...';
+        // Detectar si es cliente existente
+        const esClienteExistente = $('#clienteExistenteCheck').is(':checked');
+        let datosCliente = {};
+
+        if (esClienteExistente && clienteSeleccionadoId) {
+            datosCliente = {
+                cliente_id: clienteSeleccionadoId
+            };
+        } else if (!esClienteExistente && (clienteNombre || clienteTelefono)) {
+            datosCliente = {
+                cliente_nombre: clienteNombre || null,
+                cliente_telefono: clienteTelefono || null
+            };
+        } // Si no hay datos, se enviará venta general (sin cliente)
 
         // Enviar datos al servidor
         fetch('/guardar_venta', {
@@ -364,34 +438,39 @@ document.addEventListener("DOMContentLoaded", function () {
                 total,
                 descuento,
                 tipo_pago: tipoPago,
-                cliente_id: clienteId || null,
-                cliente_nombre: clienteNombre || null,
                 dinero_recibido: dineroRecibido,
                 cambio,
                 nota: notaVenta || '',
-                numero_factura: numeroFactura
+                ...datosCliente // Aquí se agregan los datos del cliente según el caso
             })
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            finalizarPagoBtn.disabled = false;
-            finalizarPagoBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Finalizar Venta';
-            
-            if (data.success) {
+                    finalizarPagoBtn.disabled = false;
+                    finalizarPagoBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Finalizar Venta';
+                    if (data.success) {
+                                ventaActual = {
+                    numeroFactura: generarNumeroFactura(),
+                    subtotal: carrito.reduce((acc, p) => acc + p.precio * p.cantidad, 0),
+                    descuento: descuento,
+                    total: total,
+                    productos: carrito.map(p => ({
+                        nombre: p.nombre,
+                        cantidad: p.cantidad,
+                        precio: p.precio
+                    })),
+                    cliente: {
+                        nombre: clienteSeleccionadoNombre || clienteNombre || 'Cliente General',
+                        telefono: clienteSeleccionadoTelefono || clienteTelefono || ''
+                    },
+                    fecha: new Date().toLocaleDateString(),
+                    hora: new Date().toLocaleTimeString(),
+                    tipoPago: tipoPago,
+                    nota: notaVenta
+                };
                 modalPago.hide();
-                
-                // Mostrar modal con previsualización de factura
                 mostrarModalFactura(ventaActual);
-                
-                // Si el servidor devuelve un ID de venta, guardarlo
-                if (data.ventaId) {
-                    ventaActual.id = data.ventaId;
-                }
+                if (data.ventaId) ventaActual.id = data.ventaId;
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -402,14 +481,12 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             finalizarPagoBtn.disabled = false;
             finalizarPagoBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Finalizar Venta';
-            
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Ocurrió un error al procesar la venta. Intente nuevamente.',
+                text: error.message || 'Ocurrió un error al procesar la venta. Intente nuevamente.',
                 confirmButtonColor: '#e74a3b'
             });
         });
@@ -493,7 +570,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="invoice-info-section">
                     <div class="invoice-info-title">DATOS DEL CLIENTE</div>
                     <div class="invoice-info-item"><strong>Cliente:</strong> ${venta.cliente.nombre}</div>
-                    <div class="invoice-info-item"><strong>ID/NIT:</strong> ${venta.cliente.id}</div>
+                    <div class="invoice-info-item"><strong>Telefono:</strong> ${venta.cliente.telefono}</div>
                 </div>
                 
                 <div class="invoice-info-section text-end">
@@ -599,7 +676,7 @@ document.addEventListener("DOMContentLoaded", function () {
         doc.text('CLIENTE:', 20, 65);
         doc.setFont('helvetica', 'normal');
         doc.text(`Nombre: ${venta.cliente.nombre}`, 20, 70);
-        doc.text(`ID/NIT: ${venta.cliente.id}`, 20, 75);
+        doc.text(`Telefono: ${venta.cliente.telefono}`, 20, 75);
         
         // Línea separadora
         doc.setDrawColor(100, 100, 100);

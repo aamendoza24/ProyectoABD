@@ -369,15 +369,7 @@
                 <i class="fas fa-calendar-day me-1"></i> Ventas Diarias
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="productos-tab" data-bs-toggle="tab" data-bs-target="#productos" type="button" role="tab" aria-controls="productos" aria-selected="false">
-                <i class="fas fa-box me-1"></i> Análisis de Productos
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tendencias-tab" data-bs-toggle="tab" data-bs-target="#tendencias" type="button" role="tab" aria-controls="tendencias" aria-selected="false">
-                <i class="fas fa-chart-line me-1"></i> Tendencias
-            </button>
+
         </li>
     </ul>
     
@@ -473,8 +465,7 @@
                             <h5><i class="fas fa-chart-line card-header-icon me-2"></i> Tendencia de Ventas</h5>
                             <div class="comparison-toggle">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="comparePeriodToggle" onchange="toggleComparePeriod()">
-                                    <label class="form-check-label" for="comparePeriodToggle">Comparar con período anterior</label>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -909,8 +900,8 @@
         document.getElementById('fechaInicio').valueAsDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1); // Primer día del mes actual
         document.getElementById('fechaFin').valueAsDate = hoy;
         
-        document.getElementById('dashboardFechaInicio').valueAsDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-        document.getElementById('dashboardFechaFin').valueAsDate = hoy;
+        //document.getElementById('dashboardFechaInicio').valueAsDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        //document.getElementById('dashboardFechaFin').valueAsDate = hoy;
         
         document.getElementById('productosFechaInicio').valueAsDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
         document.getElementById('productosFechaFin').valueAsDate = hoy;
@@ -1501,7 +1492,7 @@
         const hasta = document.getElementById('tendenciasFechaFin').value;
         const periodo = document.getElementById('tendenciasPeriodo').value;
         
-        alert(`Tendencias filtradas para el período ${periodo}: ${desde} a ${hasta}`);
+        //alert(`Tendencias filtradas para el período ${periodo}: ${desde} a ${hasta}`);
     }
     
     // Función para filtrar productos

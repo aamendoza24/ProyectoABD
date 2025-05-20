@@ -616,7 +616,9 @@
                                                 <button class="btn btn-primary btn-sm agregar-carrito" 
                                                         data-id="{{ producto.IDProducto }}"
                                                         data-nombre="{{ producto.Nombre }}"
-                                                        data-precio="{{ producto.Precio }}">
+                                                        data-precio="{{ producto.Precio }}"
+                                                        data-stock="{{ producto.Cantidad }}">
+                                                        
                                                     <i class="fas fa-cart-plus me-1"></i>Agregar
                                                 </button>
                                             </div>
@@ -654,19 +656,43 @@
                     <!-- Información del Cliente -->
                     <div class="payment-section">
                         <h6 class="payment-section-title">
-                            <i class="fas fa-user me-2"></i>Información del Cliente (Opcional)
+                            <i class="fas fa-user me-2"></i>Información del Cliente
                         </h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="clienteNombre" class="form-label">Nombre</label>
-                                    <input type="text" class="form-control" id="clienteNombre">
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="clienteExistenteCheck">
+                            <label class="form-check-label" for="clienteExistenteCheck">Cliente existente</label>
+                        </div>
+                        
+                        <!-- Sección para cliente existente -->
+                        <div id="clienteExistenteSection" style="display: none;">
+                            <div class="mb-3">
+                                <label for="buscarCliente" class="form-label">Buscar cliente (nombre o teléfono)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="buscarCliente" placeholder="Nombre o teléfono">
+                                    <button class="btn btn-outline-secondary" type="button" id="btnBuscarCliente">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2" id="resultadosCliente" style="display: none;">
+                                    <select class="form-select" id="listaClientes" size="3"></select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="clienteId" class="form-label">ID/NIT</label>
-                                    <input type="text" class="form-control" id="clienteId">
+                        </div>
+                        
+                        <!-- Sección para nuevo cliente -->
+                        <div id="nuevoClienteSection">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="clienteNombre" class="form-label">Nombre</label>
+                                        <input type="text" class="form-control" id="clienteNombre">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="clienteTelefono" class="form-label">Teléfono</label>
+                                        <input type="text" class="form-control" id="clienteTelefono">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -699,7 +725,6 @@
                                         <option value="efectivo">Efectivo</option>
                                         <option value="tarjeta">Tarjeta</option>
                                         <option value="transferencia">Transferencia</option>
-                                        <option value="mixto">Mixto</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">

@@ -1,0 +1,475 @@
+{% extends "layout.html" %}
+
+{% block title %}Administración de Proveedores{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
+
+<style>
+    .action-btn {
+        margin: 0 2px;
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .modal-header {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+    
+    .filter-section {
+        background-color: #f8f9fc;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #e3e6f0;
+    }
+    
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .card {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        border: none;
+        border-radius: 0.35rem;
+    }
+    
+    .purchase-item {
+        padding: 10px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .purchase-item:last-child {
+        border-bottom: none;
+    }
+    
+    .purchase-date {
+        font-size: 0.8rem;
+        color: #858796;
+    }
+    
+    .purchase-amount {
+        font-weight: 600;
+    }
+    
+    .contact-info {
+        margin-top: 15px;
+    }
+    
+    .contact-info i {
+        margin-right: 8px;
+        color: #4e73df;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid">
+    <div class="page-header">
+
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Listado de Proveedores</h4>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProveedorModal">
+                            <i class="fas fa-plus"></i> Nuevo Proveedor
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="filter-section mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="filterNombre">Nombre</label>
+                                    <input type="text" class="form-control" id="filterNombre" placeholder="Buscar por nombre">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="filterEmail">Email</label>
+                                    <input type="text" class="form-control" id="filterEmail" placeholder="Buscar por email">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="proveedoresTable" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Teléfono</th>
+                                    <th>Email</th>
+                                    <th>Dirección</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proveedor in proveedores %}
+                                <tr>
+                                    <td>{{ proveedor.IDProveedor }}</td>
+                                    <td>{{ proveedor.Nombre }}</td>
+                                    <td>{{ proveedor.Telefono }}</td>
+                                    <td>{{ proveedor.Email }}</td>
+                                    <td>{{ proveedor.DireccionCompleta|truncate(30) }}</td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm action-btn" onclick="viewProveedor({{ proveedor.IDProveedor }})" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-primary btn-sm action-btn" onclick="editProveedor({{ proveedor.IDProveedor }})" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm action-btn" onclick="confirmDelete({{ proveedor.IDProveedor }})" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Añadir Proveedor -->
+<div class="modal fade" id="addProveedorModal" tabindex="-1" aria-labelledby="addProveedorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProveedorModalLabel">Nuevo Proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProveedorForm" action="{{ url_for('admin.add_proveedor') }}" method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="nombre" class="required-field">Nombre</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="telefono">Teléfono</label>
+                                <input type="text" class="form-control" id="telefono" name="telefono">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="email">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="direccion">Dirección</label>
+                                <input type="text" class="form-control" id="direccion" name="direccion">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" form="addProveedorForm">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Proveedor -->
+<div class="modal fade" id="editProveedorModal" tabindex="-1" aria-labelledby="editProveedorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProveedorModalLabel">Editar Proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProveedorForm" action="{{ url_for('admin.edit_proveedor') }}" method="POST">
+                    <input type="hidden" id="editProveedorId" name="proveedorId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="editNombre" class="required-field">Nombre</label>
+                                <input type="text" class="form-control" id="editNombre" name="nombre" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="editTelefono">Teléfono</label>
+                                <input type="text" class="form-control" id="editTelefono" name="telefono">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="editEmail">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="editEmail" name="email">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="editDireccion">Dirección</label>
+                                <input type="text" class="form-control" id="editDireccion" name="direccion">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" form="editProveedorForm">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Detalles del Proveedor -->
+<div class="modal fade" id="viewProveedorModal" tabindex="-1" aria-labelledby="viewProveedorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewProveedorModalLabel">Detalles del Proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Información Básica</h6>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>ID Proveedor</th>
+                                <td id="viewProveedorId"></td>
+                            </tr>
+                            <tr>
+                                <th>Nombre</th>
+                                <td id="viewProveedorNombre"></td>
+                            </tr>
+                        </table>
+                        
+                        <div class="contact-info">
+                            <h6 class="font-weight-bold">Información de Contacto</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-phone"></i>
+                                <span id="viewProveedorTelefono"></span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-envelope"></i>
+                                <span id="viewProveedorEmail"></span>
+                            </div>
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-map-marker-alt mt-1"></i>
+                                <span id="viewProveedorDireccion"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Compras Recientes</h6>
+                        <div class="purchase-history" id="purchaseHistory">
+                            <!-- Las compras se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="editProveedor(document.getElementById('viewProveedorId').textContent)">Editar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar a este proveedor?</p>
+                <p><strong>Nota:</strong> Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteProveedorForm" action="{{ url_for('admin.delete_proveedor') }}" method="POST">
+                    <input type="hidden" id="deleteProveedorId" name="proveedorId">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    $(document).ready(function() {
+        // Inicializar DataTable
+        var table = $('#proveedoresTable').DataTable({
+            responsive: true,
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            },
+            columnDefs: [
+                { orderable: false, targets: -1 } // Deshabilitar ordenamiento en la columna de acciones
+            ]
+        });
+        
+        // Filtros de tabla
+        $('#filterNombre').on('keyup', function() {
+            table.column(1).search(this.value).draw();
+        });
+        
+        $('#filterEmail').on('keyup', function() {
+            table.column(3).search(this.value).draw();
+        });
+    });
+    
+    // Funciones para manejar proveedores
+    function viewProveedor(proveedorId) {
+        // Hacer una solicitud AJAX para obtener los detalles del proveedor
+        $.ajax({
+            url: "{{ url_for('admin.get_proveedor_details') }}",
+            type: "GET",
+            data: { proveedorId: proveedorId },
+            success: function(response) {
+                if (response.success) {
+                    var proveedor = response.proveedor;
+                    
+                    // Llenar los campos del modal
+                    $('#viewProveedorId').text(proveedor.id);
+                    $('#viewProveedorNombre').text(proveedor.nombre);
+                    $('#viewProveedorTelefono').text(proveedor.telefono || 'No especificado');
+                    $('#viewProveedorEmail').text(proveedor.email || 'No especificado');
+                    $('#viewProveedorDireccion').text(proveedor.direccion || 'No especificada');
+                    
+                    // Cargar historial de compras
+                    var purchaseHistory = $('#purchaseHistory');
+                    purchaseHistory.empty();
+                    
+                    if (response.compras && response.compras.length > 0) {
+                        response.compras.forEach(function(compra) {
+                            var purchaseItem = $('<div class="purchase-item"></div>');
+                            purchaseItem.append('<div class="purchase-date">' + compra.fecha + '</div>');
+                            purchaseItem.append('<div class="purchase-amount">$' + compra.total.toFixed(2) + '</div>');
+                            purchaseItem.append('<div><a href="#" onclick="viewPurchase(' + compra.id + ')">Ver detalles</a></div>');
+                            purchaseHistory.append(purchaseItem);
+                        });
+                    } else {
+                        purchaseHistory.append('<div class="p-3 text-center">No hay compras registradas</div>');
+                    }
+                    
+                    // Mostrar el modal
+                    $('#viewProveedorModal').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message || 'No se pudo cargar la información del proveedor'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al cargar la información del proveedor'
+                });
+            }
+        });
+    }
+    
+    function editProveedor(proveedorId) {
+        // Cerrar el modal de detalles si está abierto
+        $('#viewProveedorModal').modal('hide');
+        
+        // Hacer una solicitud AJAX para obtener los detalles del proveedor
+        $.ajax({
+            url: "{{ url_for('admin.get_proveedor_details') }}",
+            type: "GET",
+            data: { proveedorId: proveedorId },
+            success: function(response) {
+                if (response.success) {
+                    var proveedor = response.proveedor;
+                    
+                    // Llenar los campos del formulario
+                    $('#editProveedorId').val(proveedor.id);
+                    $('#editNombre').val(proveedor.nombre);
+                    $('#editTelefono').val(proveedor.telefono);
+                    $('#editEmail').val(proveedor.email);
+                    $('#editDireccion').val(proveedor.direccion);
+                    
+                    // Mostrar el modal
+                    $('#editProveedorModal').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message || 'No se pudo cargar la información del proveedor'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al cargar la información del proveedor'
+                });
+            }
+        });
+    }
+    
+    function confirmDelete(proveedorId) {
+        $('#deleteProveedorId').val(proveedorId);
+        $('#deleteConfirmModal').modal('show');
+    }
+    
+    function viewPurchase(purchaseId) {
+        // Aquí podrías implementar la lógica para ver los detalles de una compra
+        alert('Funcionalidad para ver compra ' + purchaseId + ' será implementada');
+    }
+</script>
+{% endblock %}

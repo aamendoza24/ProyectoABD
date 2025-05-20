@@ -85,7 +85,7 @@ def login():
             session['email'] = user['email']
             session['role'] = user['role']
             
-            flash("Inicio de sesión exitoso.", "success")
+            #flash("Inicio de sesión exitoso.", "success")
             return redirect(url_for('dashboard.index'))
         else:
             # Incrementar contador de intentos fallidos
@@ -132,7 +132,7 @@ def login():
 def logout():
     """Cerrar sesión de usuario"""
     session.clear()
-    flash("Has cerrado sesión correctamente.", "success")
+    #flash("Has cerrado sesión correctamente.", "success")
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])

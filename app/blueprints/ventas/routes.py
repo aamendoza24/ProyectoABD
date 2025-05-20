@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, flash, jsonify
+from flask import Blueprint, render_template, request, flash, jsonify, session
 from datetime import datetime, timedelta, date
 from app.utils.db import get_db_connection
 from app.utils import login_required, role_required
 from app.blueprints.ventas import ventas_bp
+import sqlite3
 
 #ventas_bp = Blueprint('ventas', __name__, url_prefix='')
 
@@ -24,7 +25,6 @@ def catalogo():
 
     return render_template("ventas/realizar_venta.html", productos=productos, categorias=categorias)
 
-
 @ventas_bp.route("/guardar_venta", methods=["POST"])
 def guardar_venta():
     data = request.get_json()
@@ -33,42 +33,69 @@ def guardar_venta():
     total = data.get("total")
     descuento = data.get("descuento", 0)
     tipo_pago = data.get("tipo_pago")
+    cliente_id = data.get("cliente_id")  # <-- Nuevo: ID de cliente existente
     cliente_nombre = data.get("cliente_nombre")
-    cliente_id = data.get("cliente_id")
+    cliente_telefono = data.get("cliente_telefono")
     cambio = data.get("cambio", 0)
     nota = data.get("nota", "")
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    user_id = session.get("user_id")
 
     try:
         db = get_db_connection()
         cursor = db.cursor()
 
+        # Obtener el IDEmpleado desde el usuario en sesión
+        cursor.execute("SELECT IDEmpleado FROM usuarios WHERE id = ?", (user_id,))
+        empleado = cursor.fetchone()
+        if not empleado:
+            return jsonify({"error": "No se encontró el empleado asociado al usuario"}), 400
+        id_empleado = empleado["IDEmpleado"]
+
+        id_sucursal = 1  # Asume sucursal 1 por defecto
+
+        # Determinar el cliente a usar
+        if cliente_id:  # Cliente existente
+            cliente_id_final = cliente_id
+        elif cliente_nombre and cliente_telefono:  # Nuevo cliente
+            cursor.execute("""
+                INSERT INTO Cliente (NombreCompleto, Telefono) VALUES (?, ?)
+            """, (cliente_nombre, cliente_telefono))
+            cliente_id_final = cursor.lastrowid
+        else:  # Sin cliente (venta general)
+            cliente_id_final = None
+
         # Insertar la venta
         cursor.execute("""
-            INSERT INTO Venta (Fecha, Total)
-            VALUES (?, ?)
-        """, (fecha, total))
+            INSERT INTO Venta (Fecha, Total, IDEmpleado, IDCliente, IDSucursal, MetodoPago, Descuento)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (fecha, total, id_empleado, cliente_id_final, id_sucursal, tipo_pago, descuento))
         venta_id = cursor.lastrowid
 
-        # Insertar los productos vendidos
-        print(productos)
+        # Insertar los productos vendidos y actualizar stock
         for producto in productos:
-            print("Producto insertado ", producto)
+            id_producto = producto["id"]
+            cantidad = producto["cantidad"]
+            precio = producto["precio"]
+            subtotal = cantidad * precio
+
             cursor.execute("""
                 INSERT INTO Detalle_Venta (IDVenta, IDProducto, Cantidad, PrecioUnitario, Subtotal)
                 VALUES (?, ?, ?, ?, ?)
-            """, (venta_id, producto["id"], producto["cantidad"], producto["precio"], producto["cantidad"] * producto["precio"] ))
+            """, (venta_id, id_producto, cantidad, precio, subtotal))
 
-
-            #Actualizacion del stock de productos
-            cursor.execute("UPDATE Stock_Sucursal SET Cantidad = Cantidad - ? WHERE IDProducto = ?", (producto["cantidad"], producto["id"]))
-
+            cursor.execute("""
+                UPDATE Stock_Sucursal SET Cantidad = Cantidad - ?
+                WHERE IDProducto = ? AND IDSucursal = ?
+            """, (cantidad, id_producto, id_sucursal))
 
         db.commit()
         return jsonify({"success": True, "mensaje": "Venta guardada exitosamente"}), 200
 
     except Exception as e:
         print("Error:", e)
+        db.rollback()
         return jsonify({"error": "No se pudo guardar la venta"}), 500
 
 
@@ -438,3 +465,39 @@ def reporte():
         categorias=categorias,
         productos_rendimiento=productos_rendimiento
     )
+
+#ruta para la busqueda de clientes en la vista de finalizar venta
+
+@ventas_bp.route('/buscar-clientes', methods=['POST'])
+def buscar_clientes():
+    try:
+        termino = request.json.get('termino', '').strip()
+        
+        if len(termino) < 2:
+            return jsonify({'error': 'Ingrese al menos 2 caracteres para buscar'}), 400
+        
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row  # <-- Asegura que fetchall devuelve dict-like rows
+        cursor = conn.cursor()
+        
+        query = """
+        SELECT IDCliente, NombreCompleto, Telefono, Email 
+        FROM Cliente 
+        WHERE NombreCompleto LIKE ? OR Telefono LIKE ?
+        LIMIT 10
+        """
+        
+        search_term = f'%{termino}%'
+        cursor.execute(query, (search_term, search_term))
+        clientes = cursor.fetchall()
+        
+        resultados = [dict(cliente) for cliente in clientes]
+        
+        conn.close()
+        
+        return jsonify({'clientes': resultados})
+        
+    except Exception as e:
+        if 'conn' in locals():
+            conn.close()
+        return jsonify({'error': str(e)}), 500

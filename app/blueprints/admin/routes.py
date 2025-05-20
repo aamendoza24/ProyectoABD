@@ -2,7 +2,7 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from app.blueprints.admin import admin_bp
 from app.utils.db import get_db_connection
-from app.utils import role_required
+from app.utils import role_required, login_required
 import bcrypt
 from datetime import datetime, timedelta
 import sqlite3
@@ -459,3 +459,128 @@ def delete_employee():
     finally:
         if conn:
             conn.close()
+
+#rutas para el apartado de proveedores
+# Ruta para la página principal de proveedores
+
+
+# Página principal de proveedores
+@admin_bp.route('/proveedores')
+@login_required
+def proveedores():
+    conn = get_db_connection()
+    proveedores = conn.execute("SELECT * FROM Proveedor").fetchall()
+    conn.close()
+    return render_template('admin/proveedores.html', proveedores=proveedores)
+
+# Añadir proveedor
+@admin_bp.route('/add_proveedor', methods=['POST'])
+@login_required
+def add_proveedor():
+    try:
+        nombre = request.form['nombre']
+        telefono = request.form['telefono']
+        email = request.form['email']
+        direccion = request.form['direccion']
+        
+        conn = get_db_connection()
+        conn.execute("""
+            INSERT INTO Proveedor (Nombre, Telefono, Email, DireccionCompleta)
+            VALUES (?, ?, ?, ?)""",
+            (nombre, telefono, email, direccion))
+        conn.commit()
+        conn.close()
+
+        flash('Proveedor añadido correctamente', 'success')
+    except Exception as e:
+        flash(f'Error al añadir proveedor: {str(e)}', 'danger')
+    return redirect(url_for('admin.proveedores'))
+
+# Editar proveedor
+@admin_bp.route('/edit_proveedor', methods=['POST'])
+@login_required
+def edit_proveedor():
+    try:
+        proveedor_id = request.form['proveedorId']
+        nombre = request.form['nombre']
+        telefono = request.form['telefono']
+        email = request.form['email']
+        direccion = request.form['direccion']
+
+        conn = get_db_connection()
+        conn.execute("""
+            UPDATE Proveedor 
+            SET Nombre = ?, Telefono = ?, Email = ?, DireccionCompleta = ?
+            WHERE IDProveedor = ?""",
+            (nombre, telefono, email, direccion, proveedor_id))
+        conn.commit()
+        conn.close()
+
+        flash('Proveedor actualizado correctamente', 'success')
+    except Exception as e:
+        flash(f'Error al actualizar proveedor: {str(e)}', 'danger')
+    return redirect(url_for('admin.proveedores'))
+
+# Eliminar proveedor
+@admin_bp.route('/delete_proveedor', methods=['POST'])
+@login_required
+def delete_proveedor():
+    try:
+        proveedor_id = request.form['proveedorId']
+        conn = get_db_connection()
+        compras_asociadas = conn.execute("""
+            SELECT COUNT(*) as total FROM Detalle_Compra WHERE IDProveedor = ?""",
+            (proveedor_id,)).fetchone()['total']
+        
+        if compras_asociadas > 0:
+            flash('No se puede eliminar el proveedor porque tiene compras asociadas', 'warning')
+        else:
+            conn.execute("DELETE FROM Proveedor WHERE IDProveedor = ?", (proveedor_id,))
+            conn.commit()
+            flash('Proveedor eliminado correctamente', 'success')
+        conn.close()
+    except Exception as e:
+        flash(f'Error al eliminar proveedor: {str(e)}', 'danger')
+    return redirect(url_for('admin.proveedores'))
+
+# Obtener detalles de proveedor (AJAX)
+@admin_bp.route('/get_proveedor_details')
+@login_required
+def get_proveedor_details():
+    try:
+        proveedor_id = request.args.get('proveedorId')
+        conn = get_db_connection()
+        proveedor = conn.execute("SELECT * FROM Proveedor WHERE IDProveedor = ?", (proveedor_id,)).fetchone()
+        
+        if not proveedor:
+            return jsonify({'success': False, 'message': 'Proveedor no encontrado'})
+
+        compras = conn.execute("""
+            SELECT c.IDCompra, c.Fecha, c.Total
+            FROM Compra c
+            JOIN Detalle_Compra dc ON c.IDCompra = dc.IDCompra
+            WHERE dc.IDProveedor = ?
+            ORDER BY c.Fecha DESC
+            LIMIT 5
+        """, (proveedor_id,)).fetchall()
+        conn.close()
+
+        compras_data = [{
+            'id': c['IDCompra'],
+            'fecha': c['Fecha'],
+            'total': float(c['Total']) if c['Total'] else 0
+        } for c in compras]
+
+        return jsonify({
+            'success': True,
+            'proveedor': {
+                'id': proveedor['IDProveedor'],
+                'nombre': proveedor['Nombre'],
+                'telefono': proveedor['Telefono'],
+                'email': proveedor['Email'],
+                'direccion': proveedor['DireccionCompleta']
+            },
+            'compras': compras_data
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
