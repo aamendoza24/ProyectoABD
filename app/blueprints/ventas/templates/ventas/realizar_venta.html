@@ -512,6 +512,44 @@
         z-index: -1;
     }
 
+    /* Mejora visual para el select de clientes */
+    #listaClientes {
+        min-height: 100px;
+        max-height: 180px;
+        overflow-y: auto;
+        border: 2px solid #4e73df;
+        border-radius: 0.4rem;
+        font-size: 0.95rem;
+        background: #f8f9fc;
+        transition: border-color 0.2s;
+    }
+
+    #listaClientes:focus {
+        border-color: #1cc88a;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(30,200,138,0.15);
+    }
+
+    #listaClientes option {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e3e6f0;
+        cursor: pointer;
+    }
+
+    #listaClientes option[selected], #listaClientes option:checked {
+        background-color: #e6f7ee;
+        color: #1cc88a;
+        font-weight: bold;
+    }
+
+    /* Ajuste visual para el select cuando solo hay una fila */
+    #listaClientes[size="1"] {
+        min-height: unset !important;
+        max-height: 38px !important;
+        height: 38px !important;
+        overflow-y: hidden !important;
+        transition: height 0.2s;
+    }
 
 </style>
 {% endblock %}
@@ -666,15 +704,16 @@
                         <!-- Sección para cliente existente -->
                         <div id="clienteExistenteSection" style="display: none;">
                             <div class="mb-3">
-                                <label for="buscarCliente" class="form-label">Buscar cliente (nombre o teléfono)</label>
+                               <label for="buscarCliente" class="form-label">Buscar cliente (nombre o teléfono)</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="buscarCliente" placeholder="Nombre o teléfono">
+                                    <input type="text" class="form-control" id="buscarCliente" placeholder="Nombre o teléfono" aria-describedby="buscarClienteHelp">
                                     <button class="btn btn-outline-secondary" type="button" id="btnBuscarCliente">
                                         <i class="fas fa-search"></i>
                                     </button>
                                 </div>
-                                <div class="mt-2" id="resultadosCliente" style="display: none;">
-                                    <select class="form-select" id="listaClientes" size="3"></select>
+                                <small id="buscarClienteHelp" class="form-text text-muted">Escriba al menos 2 caracteres para buscar.</small>
+                                <div class="mt-2" id="resultadosCliente" style="display: none;" aria-live="polite">
+                                    <select class="form-select" id="listaClientes" size="1"></select>
                                 </div>
                             </div>
                         </div>

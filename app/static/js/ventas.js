@@ -279,6 +279,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             const $lista = $('#listaClientes');
             $lista.empty();
+            
 
             if (data.clientes && data.clientes.length > 0) {
                 data.clientes.forEach(cliente => {
@@ -289,9 +290,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     </option>`);
                 });
                 $('#resultadosCliente').show();
+                listaClientes.size = 1;
             } else {
-                $('#resultadosCliente').hide();
-                alert('No se encontraron clientes');
+                $lista.append('<option disabled selected>No se encontraron clientes</option>');
+                $('#resultadosCliente').show();
             }
         })
         .catch(error => {
@@ -391,11 +393,64 @@ document.addEventListener("DOMContentLoaded", function () {
     let clienteSeleccionadoNombre = '';
     let clienteSeleccionadoTelefono = '';
 
+    const listaClientes = document.getElementById('listaClientes');
+
+// Expande el select al hacer click
+listaClientes.addEventListener('mousedown', function(e) {
+    if (this.options.length > 1) {
+        this.size = this.options.length;
+    }
+});
+
+    // Contrae el select al perder el foco
+    listaClientes.addEventListener('blur', function(e) {
+        this.size = 1;
+    });
+
+    // Contrae el select y deja solo la opción seleccionada visible al elegir
+    listaClientes.addEventListener('change', function(e) {
+        this.size = 1;
+        // Opcional: si quieres ocultar las demás opciones después de seleccionar
+        for (let i = 0; i < this.options.length; i++) {
+            this.options[i].style.display = (i === this.selectedIndex) ? '' : 'none';
+        }
+        // Si quieres permitir volver a expandir, puedes restaurar las opciones al hacer click en "Cambiar cliente"
+    });
+
     $('#listaClientes').on('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        clienteSeleccionadoId = selectedOption.value;
-        clienteSeleccionadoNombre = selectedOption.getAttribute('data-nombre');
-        clienteSeleccionadoTelefono = selectedOption.getAttribute('data-telefono');
+        const selectedIndex = this.selectedIndex;
+        const options = this.options;
+
+        // Oculta todas las opciones excepto la seleccionada
+        for (let i = 0; i < options.length; i++) {
+            if (i !== selectedIndex) {
+                options[i].style.display = 'none';
+            } else {
+                options[i].style.display = '';
+            }
+        }
+
+        // Ajusta el tamaño del select a una fila
+        this.size = 1;
+
+        // Opcional: muestra un botón para cambiar de cliente
+        if (!document.getElementById('btnCambiarCliente')) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-link btn-sm mt-2';
+            btn.id = 'btnCambiarCliente';
+            btn.textContent = 'Cambiar cliente';
+            btn.onclick = () => {
+                // Muestra todas las opciones de nuevo
+                for (let i = 0; i < options.length; i++) {
+                    options[i].style.display = '';
+                }
+                $('#listaClientes').val(''); // Deselecciona
+                this.size = options.length; // Restaura el tamaño original
+                btn.remove();
+            };
+            this.parentNode.appendChild(btn);
+        }
     });
 
     // Finalizar pago
@@ -658,11 +713,12 @@ document.addEventListener("DOMContentLoaded", function () {
         // Información de la empresa (puedes personalizar esto)
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text('Tu Empresa, S.A.', 20, 40);
-        doc.text('Dirección: Calle Principal #123', 20, 45);
-        doc.text('Teléfono: (123) 456-7890', 20, 50);
-        doc.text('Email: info@tuempresa.com', 20, 55);
-        
+        doc.text('Librería Indiana', 20, 40);
+        doc.text('Dirección: Vanegas, Esquipulas.', 20, 45);
+        doc.text('Del colegio Pablo Antonio Cuadras 500 mts al oeste', 20, 50);
+        doc.text('Teléfono: (505) 7756-5332', 20, 55);
+        doc.text('Email: info@libreriaindiana.com', 20, 60);
+
         // Información de la factura
         doc.setFont('helvetica', 'bold');
         doc.text('INFORMACIÓN DE VENTA:', 140, 40);
