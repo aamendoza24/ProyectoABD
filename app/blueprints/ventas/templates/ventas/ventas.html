@@ -894,10 +894,13 @@
                     const metodoPago = venta.metodo_pago || 'No especificado';
                     const fecha = venta.fecha || 'Fecha no disponible';
                     
+                    const empleado = venta.empleado || 'No registrado';
+
                     $("#venta-info").html(`
                         <p class="mb-1"><strong>ID Venta:</strong> ${venta.id}</p>
                         <p class="mb-1"><strong>Fecha:</strong> ${fecha}</p>
                         <p class="mb-0"><strong>Cliente:</strong> ${cliente}</p>
+                        <p class="mb-0"><strong>Empleado:</strong> ${empleado}</p>
                         <p class="mb-0"><strong>Método de Pago:</strong> ${metodoPago}</p>
                     `);
                     

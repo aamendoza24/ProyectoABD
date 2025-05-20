@@ -1429,12 +1429,44 @@
     
     // Función para actualizar el dashboard
     function actualizarDashboard() {
-        const desde = document.getElementById('dashboardFechaInicio').value;
-        const hasta = document.getElementById('dashboardFechaFin').value;
-        
-        // Aquí se implementaría una llamada AJAX para obtener datos actualizados
-        // Por ahora, mostramos un mensaje de actualización
-        alert(`Dashboard actualizado para el período: ${desde} a ${hasta}`);
+        const fecha_inicio = document.getElementById('dashboardFechaInicio').value;
+        const fecha_fin = document.getElementById('dashboardFechaFin').value;
+
+        fetch('/ventas/dashboard_datos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fecha_inicio, fecha_fin })
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Actualiza KPIs
+            document.querySelector('.kpi-card.primary .kpi-value').textContent = `C$ ${data.total_ventas.toFixed(2)}`;
+            document.querySelector('.kpi-card.success .kpi-value').textContent = `C$ ${data.ticket_promedio.toFixed(2)}`;
+            document.querySelector('.kpi-card.warning .kpi-value').textContent = data.total_transacciones;
+            // Si tienes productos vendidos como KPI, actualízalo aquí si lo incluyes en la respuesta
+
+            // Actualiza gráficos
+            actualizarGraficoBarras(data.fechas, data.totales);
+            actualizarGraficoPastel(data.nombres_productos, data.cantidades_vendidas);
+        });
+    }
+
+    // Función para actualizar el gráfico de barras
+    function actualizarGraficoBarras(labels, data) {
+        if (window.graficoBarras) {
+            window.graficoBarras.data.labels = labels;
+            window.graficoBarras.data.datasets[0].data = data;
+            window.graficoBarras.update();
+        }
+    }
+
+    // Función para actualizar el gráfico de pastel
+    function actualizarGraficoPastel(labels, data) {
+        if (window.graficoPastelDashboard) {
+            window.graficoPastelDashboard.data.labels = labels;
+            window.graficoPastelDashboard.data.datasets[0].data = data;
+            window.graficoPastelDashboard.update();
+        }
     }
     
     // Función para seleccionar períodos predefinidos

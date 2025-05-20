@@ -159,7 +159,7 @@
                                     <label for="filterStatus">Estado</label>
                                     <select class="form-control" id="filterStatus">
                                         <option value="">Todos</option>
-                                        <option value="active">Activos</option>
+                                        <option value="activo">Activos</option>
                                         <option value="inactive">Inactivos</option>
                                         <option value="locked">Bloqueados</option>
                                     </select>
@@ -210,7 +210,6 @@
                                     <th>Nombre</th>
                                     <th>Usuario</th>
                                     <th>Email</th>
-                                    <th>Cargo</th>
                                     <th>Rol</th>
                                     <th>Estado</th>
                                     <th>Último Acceso</th>
@@ -224,7 +223,6 @@
                                     <td>{{ employee.NombreCompleto }}</td>
                                     <td>{{ employee.user }}</td>
                                     <td>{{ employee.email }}</td>
-                                    <td>{{ employee.cargo_nombre }}</td>
                                     <td>{{ employee.role|capitalize }}</td>
                                     <td>
                                         {% if employee.account_locked %}
@@ -634,12 +632,12 @@
             }
             
             if (roleFilter) {
-                table.column(5).search(roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1)).draw();
+                table.column(4).search(roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1)).draw();
             }
             
-            if (cargoFilter) {
-                table.column(4).search($('#filterCargo option:selected').text()).draw();
-            }
+            //if (cargoFilter) {
+              //  table.column(4).search($('#filterCargo option:selected').text()).draw();
+            //}
             
             // Para el filtro de sucursal, necesitaríamos añadir la columna de sucursal a la tabla
         }

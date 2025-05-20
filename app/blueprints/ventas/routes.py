@@ -10,6 +10,7 @@ import sqlite3
 
 #ruta para mostrar los productos en el apartado de venta
 @ventas_bp.route('/catalogo')
+@role_required(['admin', 'gerente', 'empleado', 'vendedor'])
 def catalogo():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -161,6 +162,7 @@ def obtener_clientes():
     return clientes
 
 @ventas_bp.route("/historial", methods=["GET", "POST"])
+@role_required(['admin', 'gerente', 'empleado', 'vendedor'])
 def historial():
     """Ruta para el historial de ventas"""
     if request.method == "POST":
@@ -190,12 +192,16 @@ def detalles_venta(id_venta):
     conexion = get_db_connection()
     cursor = conexion.cursor()
 
-    # Obtener información de la venta
+    # Obtener información de la venta, incluyendo el empleado
     cursor.execute("""
-        SELECT v.IDVenta, v.Fecha, v.Total, COALESCE(c.NombreCompleto, 'Cliente General') as Cliente, 
-               COALESCE(v.MetodoPago, 'efectivo') as MetodoPago, COALESCE(v.Descuento, 0) as Descuento
+        SELECT v.IDVenta, v.Fecha, v.Total, 
+               COALESCE(c.NombreCompleto, 'Cliente General') as Cliente, 
+               COALESCE(v.MetodoPago, 'efectivo') as MetodoPago, 
+               COALESCE(v.Descuento, 0) as Descuento,
+               COALESCE(e.NombreCompleto, 'No registrado') as Empleado
         FROM Venta v
         LEFT JOIN Cliente c ON v.IDCliente = c.IDCliente
+        LEFT JOIN Empleado e ON v.IDEmpleado = e.IDEmpleado
         WHERE v.IDVenta = ?
     """, (id_venta,))
     
@@ -211,7 +217,8 @@ def detalles_venta(id_venta):
         "total": venta_row[2],
         "cliente": venta_row[3],
         "metodo_pago": venta_row[4],
-        "descuento": venta_row[5]
+        "descuento": venta_row[5],
+        "empleado": venta_row[6]
     }
 
     # Obtener detalles de la venta
@@ -501,3 +508,64 @@ def buscar_clientes():
         if 'conn' in locals():
             conn.close()
         return jsonify({'error': str(e)}), 500
+
+#ruta para el dashboard de ventas
+@ventas_bp.route("/dashboard_datos", methods=["POST"])
+@role_required(['admin', 'gerente'])
+def dashboard_datos():
+    data = request.get_json()
+    fecha_inicio = data.get("fecha_inicio")
+    fecha_fin = data.get("fecha_fin")
+
+    db = get_db_connection()
+    cursor = db.cursor()
+
+    # Ventas por día para el rango seleccionado
+    cursor.execute("""
+        SELECT DATE(Fecha) AS Fecha, SUM(Total) AS TotalVentas
+        FROM Venta
+        WHERE DATE(Fecha) BETWEEN ? AND ?
+        GROUP BY DATE(Fecha)
+        ORDER BY DATE(Fecha)
+    """, (fecha_inicio, fecha_fin))
+    ventas = cursor.fetchall()
+    fechas = [row["Fecha"] for row in ventas]
+    totales = [row["TotalVentas"] for row in ventas]
+
+    # KPIs
+    cursor.execute("""
+        SELECT SUM(Total) as TotalVentas, COUNT(*) as TotalTransacciones, AVG(Total) as TicketPromedio
+        FROM Venta
+        WHERE DATE(Fecha) BETWEEN ? AND ?
+    """, (fecha_inicio, fecha_fin))
+    kpi = cursor.fetchone()
+    total_ventas = kpi["TotalVentas"] or 0
+    total_transacciones = kpi["TotalTransacciones"] or 0
+    ticket_promedio = kpi["TicketPromedio"] or 0
+
+    # Top productos
+    cursor.execute("""
+        SELECT P.Nombre, SUM(DV.Cantidad) as TotalVendido, SUM(DV.Cantidad * DV.PrecioUnitario) as TotalVentas
+        FROM Detalle_Venta DV
+        JOIN Producto P ON DV.IDProducto = P.IDProducto
+        JOIN Venta V ON V.IDVenta = DV.IDVenta
+        WHERE DATE(V.Fecha) BETWEEN ? AND ?
+        GROUP BY P.IDProducto
+        ORDER BY TotalVendido DESC
+        LIMIT 5
+    """, (fecha_inicio, fecha_fin))
+    top_productos = cursor.fetchall()
+    nombres_productos = [p["Nombre"] for p in top_productos]
+    cantidades_vendidas = [p["TotalVendido"] for p in top_productos]
+
+    db.close()
+
+    return jsonify({
+        "fechas": fechas,
+        "totales": totales,
+        "total_ventas": round(total_ventas, 2),
+        "total_transacciones": total_transacciones,
+        "ticket_promedio": round(ticket_promedio, 2),
+        "nombres_productos": nombres_productos,
+        "cantidades_vendidas": cantidades_vendidas
+    })

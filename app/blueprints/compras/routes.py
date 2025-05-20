@@ -18,7 +18,7 @@ from app.utils import role_required
 
 #historial de compras
 @compras_bp.route('/historial-compras', methods=['GET'])
-@role_required(['admin', 'gerente', 'empleado'])
+@role_required(['admin', 'gerente', 'empleado', 'almacen'])
 def historial_compras():
     """Página de historial de compras"""
     try:
@@ -239,6 +239,7 @@ def detalle_historial_compra(compra_id):
 # Ruta para finalizar compra y agregar toda la información necesaria a la base de datos
 @compras_bp.route('/', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'gerente', 'empleado', 'almacen'])
 def index():
     if request.method == 'POST':
         try:

@@ -467,6 +467,7 @@ def delete_employee():
 # Página principal de proveedores
 @admin_bp.route('/proveedores')
 @login_required
+@role_required(['admin', 'gerente'])
 def proveedores():
     conn = get_db_connection()
     proveedores = conn.execute("SELECT * FROM Proveedor").fetchall()
