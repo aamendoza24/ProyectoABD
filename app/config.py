@@ -17,3 +17,4 @@ class Config:
     
     # Configuración de tokens
     TOKEN_EXPIRY = timedelta(hours=24)  # Tokens de recuperación válidos por 24 horas
+

@@ -10,7 +10,7 @@ import sqlite3
 
 #ruta para mostrar los productos en el apartado de venta
 @ventas_bp.route('/catalogo')
-@role_required(['admin', 'gerente', 'empleado', 'vendedor'])
+@role_required(['admin', 'gerente', 'vendedor'])
 def catalogo():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -162,7 +162,7 @@ def obtener_clientes():
     return clientes
 
 @ventas_bp.route("/historial", methods=["GET", "POST"])
-@role_required(['admin', 'gerente', 'empleado', 'vendedor'])
+@role_required(['admin', 'gerente', 'vendedor'])
 def historial():
     """Ruta para el historial de ventas"""
     if request.method == "POST":

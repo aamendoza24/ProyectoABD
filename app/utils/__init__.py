@@ -26,7 +26,8 @@ def role_required(roles):
                 return redirect(url_for('auth.login'))
             
             user_role = session.get("role")
-            if user_role not in roles and 'admin' not in roles:
+            if user_role not in roles and user_role != 'admin':
+
                 #flash("No tienes permiso para acceder a esta página.", "danger")
                 abort(403)  # Forbidden
             
