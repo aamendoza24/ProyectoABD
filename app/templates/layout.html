@@ -1,89 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 
+
 <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta charset="UTF-8">
   <title>{% block title %} {% endblock %}</title>
   <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
   <link rel="icon" href="{{ url_for('static', filename='img/kaiadmin/favicon.ico') }}" type="image/x-icon" />
 
-  <!-- Preload critical fonts -->
-  <link rel="preload" href="{{ url_for('static', filename='fonts/fontawesome/fa-solid-900.woff2') }}" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="{{ url_for('static', filename='fonts/fontawesome/fa-regular-400.woff2') }}" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="{{ url_for('static', filename='fonts/fontawesome/fa-brands-400.woff2') }}" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="{{ url_for('static', filename='fonts/simple-line-icons/Simple-Line-Icons.woff2') }}" as="font" type="font/woff2" crossorigin>
-
-  <!-- Optimized font loading -->
-  <style>
-    /* Font Awesome - only load woff2 for better performance */
-    @font-face {
-      font-family: 'Font Awesome 5 Solid';
-      font-style: normal;
-      font-weight: 900;
-      font-display: swap;
-      src: url('{{ url_for("static", filename="fonts/fontawesome/fa-solid-900.woff2") }}') format('woff2');
-    }
-    
-    @font-face {
-      font-family: 'Font Awesome 5 Regular';
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url('{{ url_for("static", filename="fonts/fontawesome/fa-regular-400.woff2") }}') format('woff2');
-    }
-    
-    @font-face {
-      font-family: 'Font Awesome 5 Brands';
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url('{{ url_for("static", filename="fonts/fontawesome/fa-brands-400.woff2") }}') format('woff2');
-    }
-    
-    @font-face {
-      font-family: 'simple-line-icons';
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url('{{ url_for("static", filename="fonts/simple-line-icons/Simple-Line-Icons.woff2") }}') format('woff2');
-    }
-
-    /* Fallback fonts for better performance */
-    .fa, .fas { font-family: 'Font Awesome 5 Solid', sans-serif; font-weight: 900; }
-    .far { font-family: 'Font Awesome 5 Regular', sans-serif; font-weight: 400; }
-    .fab { font-family: 'Font Awesome 5 Brands', sans-serif; }
-    
-    /* Simple Line Icons fallback */
-    [class^="icon-"], [class*=" icon-"] { font-family: 'simple-line-icons', sans-serif; }
-    
-    /* System font fallback for better performance */
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    }
-  </style>
-
-  <!-- External CDNs with integrity and preconnect -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="preconnect" href="https://code.jquery.com">
+  <!-- Preconexiones -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
-  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
-  <!-- CSS Files - combined and minified -->
+  <!-- Preload de recursos críticos -->
+  <link rel="preload" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" as="style">
+  <link rel="preload" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" as="style">
+
+  <!-- Fuentes -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/plugins.min.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-
-  <!-- CSS Just for demo purpose -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+
   <style>
     .navbar-brand {
       width: 180px;
       height: 100%;
       object-fit: contain;
+    }
+    body {
+      font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
   </style>
   {% block style %} {% endblock %}
@@ -300,7 +250,7 @@
     </div>
   </div>
 
-  <!-- Core JS Files - loaded at end for better performance -->
+  <!-- Core JS Files -->
   <script src="{{ url_for('static', filename='js/core/jquery-3.7.1.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/core/popper.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/core/bootstrap.min.js') }}"></script>
@@ -331,7 +281,7 @@
   <script src="{{ url_for('static', filename='js/plugin/sweetalert/sweetalert.min.js') }}"></script>
 
   <!-- Kaiadmin JS -->
-  <script src="{{ url_for('static', filename='js/kaiadmin.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/kaiadmin.min.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 
