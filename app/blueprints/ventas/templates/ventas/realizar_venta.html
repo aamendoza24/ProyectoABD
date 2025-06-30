@@ -553,6 +553,29 @@
         transition: height 0.2s;
     }
 
+    /* Responsive adjustments for mobile */
+    @media (max-width: 767px) {
+        body {
+            height: auto;
+            overflow: auto;
+        }
+
+        .main-container, .catalogo-scroll-container {
+            height: auto;
+            overflow: visible;
+        }
+
+        .carrito-card {
+            position: relative;
+            height: auto;
+            margin-bottom: 2rem;
+        }
+
+        .col-lg-4.h-100, .col-lg-8.h-100 {
+            height: auto !important;
+        }
+    }
+
 </style>
 {% endblock %}
 
