@@ -1,0 +1,1007 @@
+{% extends "layout.html" %}
+
+{% block title %}Balance General - Reportes{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.bootstrap5.min.css">
+
+<style>
+/* Estilos personalizados para el dashboard */
+.dashboard-card {
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    overflow: hidden;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    position: relative;
+}
+
+.kpi-card.sales {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.kpi-card.purchases {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+}
+
+.kpi-card.profit {
+    background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%);
+}
+
+.kpi-card.margin {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #333;
+}
+
+.kpi-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2.5rem;
+    opacity: 0.3;
+}
+
+.kpi-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+.kpi-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.filter-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.top-products-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.product-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.product-item:last-child {
+    border-bottom: none;
+}
+
+.product-rank {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.product-info h6 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.product-info small {
+    color: #666;
+}
+
+.product-sales {
+    text-align: right;
+}
+
+.product-sales .sales-amount {
+    font-weight: bold;
+    color: #11998e;
+    font-size: 1.1rem;
+}
+
+.product-sales .sales-count {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.period-toggle {
+    background: white;
+    border-radius: 25px;
+    padding: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.period-toggle .btn {
+    border-radius: 20px;
+    border: none;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.period-toggle .btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+}
+
+.detailed-report {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.transaction-row {
+    transition: background-color 0.3s ease;
+}
+
+.transaction-row:hover {
+    background-color: #f8f9fa;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+}
+
+.spinner-border-custom {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+    border-color: #667eea;
+    border-right-color: transparent;
+}
+
+.export-buttons .btn {
+    border-radius: 25px;
+    padding: 10px 25px;
+    font-weight: 500;
+    margin: 0 5px;
+}
+
+.btn-export-pdf {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+    border: none;
+    color: white;
+}
+
+.btn-export-excel {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border: none;
+    color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .kpi-value {
+        font-size: 2rem;
+    }
+    
+    .chart-container {
+        height: 300px;
+        padding: 15px;
+    }
+    
+    .product-item {
+        padding: 10px 0;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Tooltips personalizados */
+.custom-tooltip {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+/* Estilos adicionales siguiendo el patrón de referencia */
+.btn-group .btn-check:checked + .btn {
+    background-color: #4361ee;
+    border-color: #4361ee;
+    color: white;
+}
+
+.badge-trend {
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.badge-trend i {
+    margin-right: 0.25rem;
+}
+
+.badge-trend.up {
+    background-color: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+}
+
+.badge-trend.down {
+    background-color: rgba(231, 74, 59, 0.1);
+    color: #e74a3b;
+}
+
+.badge-trend.neutral {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+.positive-value {
+    color: #1cc88a;
+    font-weight: 600;
+}
+
+.negative-value {
+    color: #e74a3b;
+    font-weight: 600;
+}
+
+.neutral-value {
+    color: #6c757d;
+}
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        Balance General
+                    </h2>
+                    <p class="text-muted mb-0">Dashboard completo del rendimiento del negocio</p>
+                </div>
+                <div class="export-buttons">
+                    <button class="btn btn-export-pdf" id="exportPDF">
+                        <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                    </button>
+                    <button class="btn btn-export-excel" id="exportExcel">
+                        <i class="fas fa-file-excel me-2"></i>Exportar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-filter me-2"></i>Filtros
+                    </h5>
+                    <form id="filterForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                            <input type="text" class="form-control datepicker" id="fechaInicio" placeholder="Seleccionar fecha">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fechaFin" class="form-label">Fecha Fin</label>
+                            <input type="text" class="form-control datepicker" id="fechaFin" placeholder="Seleccionar fecha">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="categoria" class="form-label">Categoría</label>
+                            <select class="form-select" id="categoria">
+                                <option value="">Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.IDCategoria }}">{{ categoria.Nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sucursal" class="form-label">Sucursal</label>
+                            <select class="form-select" id="sucursal">
+                                <option value="">Todas las sucursales</option>
+                                {% for sucursal in sucursales %}
+                                <option value="{{ sucursal.IDSucursal }}">{{ sucursal.Nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" id="applyFilters">
+                                <i class="fas fa-search me-2"></i>Aplicar Filtros
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="clearFilters">
+                                <i class="fas fa-times me-2"></i>Limpiar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Dashboard -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card kpi-card sales fade-in-up">
+                <div class="card-body">
+                    <i class="fas fa-shopping-cart kpi-icon"></i>
+                    <h3 class="kpi-value" id="totalSales">C$ 0.00</h3>
+                    <p class="kpi-label">Ventas Totales</p>
+                    <small class="d-block mt-2">
+                        <i class="fas fa-arrow-up me-1"></i>
+                        <span id="salesGrowth">0%</span> vs período anterior
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card kpi-card purchases fade-in-up">
+                <div class="card-body">
+                    <i class="fas fa-truck kpi-icon"></i>
+                    <h3 class="kpi-value" id="totalPurchases">C$ 0.00</h3>
+                    <p class="kpi-label">Compras Totales</p>
+                    <small class="d-block mt-2">
+                        <i class="fas fa-arrow-down me-1"></i>
+                        <span id="purchasesGrowth">0%</span> vs período anterior
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card kpi-card profit fade-in-up">
+                <div class="card-body">
+                    <i class="fas fa-chart-line kpi-icon"></i>
+                    <h3 class="kpi-value" id="netProfit">C$ 0.00</h3>
+                    <p class="kpi-label">Ganancia Neta</p>
+                    <small class="d-block mt-2">
+                        <i class="fas fa-arrow-up me-1"></i>
+                        <span id="profitGrowth">0%</span> vs período anterior
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card kpi-card margin fade-in-up">
+                <div class="card-body">
+                    <i class="fas fa-percentage kpi-icon"></i>
+                    <h3 class="kpi-value" id="profitMargin">0%</h3>
+                    <p class="kpi-label">Margen de Utilidad</p>
+                    <small class="d-block mt-2">
+                        <i class="fas fa-arrow-up me-1"></i>
+                        <span id="marginGrowth">0%</span> vs período anterior
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos y Top Productos -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-3">
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Ingresos vs Egresos
+                    </h5>
+                    <div class="period-toggle btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-period="monthly">Mensual</button>
+                        <button type="button" class="btn btn-outline-primary" data-period="quarterly">Trimestral</button>
+                        <button type="button" class="btn btn-outline-primary" data-period="yearly">Anual</button>
+                    </div>
+                </div>
+                <canvas id="incomeExpenseChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-3">
+            <div class="card top-products-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-trophy me-2"></i>Top 5 Productos
+                    </h5>
+                    <div id="topProductsList">
+                        <!-- Los productos se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte Detallado -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card detailed-report">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-table me-2"></i>Reporte Detallado de Transacciones
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <div class="btn-group" role="group" aria-label="Agrupación">
+                                <input type="radio" class="btn-check" name="groupBy" id="groupDaily" value="daily" checked>
+                                <label class="btn btn-outline-primary btn-sm" for="groupDaily">Diario</label>
+                                
+                                <input type="radio" class="btn-check" name="groupBy" id="groupWeekly" value="weekly">
+                                <label class="btn btn-outline-primary btn-sm" for="groupWeekly">Semanal</label>
+                                
+                                <input type="radio" class="btn-check" name="groupBy" id="groupMonthly" value="monthly">
+                                <label class="btn btn-outline-primary btn-sm" for="groupMonthly">Mensual</label>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" id="addNote">
+                                <i class="fas fa-sticky-note me-1"></i>Agregar Nota
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="transactionsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Período</th>
+                                    <th class="text-end">Ingresos (C$)</th>
+                                    <th class="text-end">Egresos (C$)</th>
+                                    <th class="text-end">Balance (C$)</th>
+                                    <th class="text-center">Tendencia</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsBody">
+                                <!-- Las transacciones se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar notas -->
+    <div class="modal fade" id="noteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Nota</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="noteForm">
+                        <div class="mb-3">
+                            <label for="noteTitle" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="noteTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="noteContent" class="form-label">Contenido</label>
+                            <textarea class="form-control" id="noteContent" rows="4" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveNote">Guardar Nota</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Variables globales
+    let incomeExpenseChart = null;
+    let currentPeriod = 'monthly';
+    let currentFilters = {};
+    
+    // Inicializar componentes
+    initializeDatePickers();
+    initializeDataTable();
+    loadDashboardData();
+    loadTransactionsTable();
+    
+    // Event listeners
+    $('#applyFilters').click(applyFilters);
+    $('#clearFilters').click(clearFilters);
+    $('#exportPDF').click(exportToPDF);
+    $('#exportExcel').click(exportToExcel);
+    $('#addNote').click(() => $('#noteModal').modal('show'));
+    $('#saveNote').click(saveNote);
+    
+    // Period toggle
+    $('.period-toggle .btn').click(function() {
+        $('.period-toggle .btn').removeClass('active');
+        $(this).addClass('active');
+        currentPeriod = $(this).data('period');
+        loadIncomeExpenseChart();
+    });
+
+    // Event listeners para agrupación
+    $('input[name="groupBy"]').change(function() {
+        loadTransactionsTable();
+    });
+    
+    // Inicializar date pickers
+    function initializeDatePickers() {
+        flatpickr(".datepicker", {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+        
+        // Establecer fechas por defecto (último mes)
+        const today = new Date();
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+        
+        $('#fechaFin').val(today.toISOString().split('T')[0]);
+        $('#fechaInicio').val(lastMonth.toISOString().split('T')[0]);
+    }
+    
+    // Inicializar DataTable
+    function initializeDataTable() {
+        $('#transactionsTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            },
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            order: [[0, 'desc']],
+            pageLength: 25,
+            responsive: true
+        });
+    }
+    
+    // Cargar datos del dashboard
+    function loadDashboardData() {
+        showLoading();
+        
+        $.ajax({
+            url: '/reportes/balance/data',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(getCurrentFilters()),
+            success: function(response) {
+                updateKPIs(response.kpis);
+                updateTopProducts(response.top_products);
+                loadIncomeExpenseChart();
+                hideLoading();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading dashboard data:', error);
+                showNotification('Error al cargar los datos del dashboard', 'error');
+                hideLoading();
+            }
+        });
+    }
+    
+    // Actualizar KPIs
+    function updateKPIs(kpis) {
+        $('#totalSales').text('C$ ' + formatNumber(kpis.total_sales));
+        $('#totalPurchases').text('C$ ' + formatNumber(kpis.total_purchases));
+        $('#netProfit').text('C$ ' + formatNumber(kpis.net_profit));
+        $('#profitMargin').text(kpis.profit_margin.toFixed(1) + '%');
+        
+        // Actualizar indicadores de crecimiento
+        updateGrowthIndicator('#salesGrowth', kpis.sales_growth);
+        updateGrowthIndicator('#purchasesGrowth', kpis.purchases_growth);
+        updateGrowthIndicator('#profitGrowth', kpis.profit_growth);
+        updateGrowthIndicator('#marginGrowth', kpis.margin_growth);
+    }
+    
+    // Actualizar indicador de crecimiento
+    function updateGrowthIndicator(selector, growth) {
+        const element = $(selector);
+        const icon = element.prev('i');
+        
+        element.text(Math.abs(growth).toFixed(1) + '%');
+        
+        if (growth > 0) {
+            icon.removeClass('fa-arrow-down').addClass('fa-arrow-up');
+            element.parent().removeClass('text-danger').addClass('text-success');
+        } else if (growth < 0) {
+            icon.removeClass('fa-arrow-up').addClass('fa-arrow-down');
+            element.parent().removeClass('text-success').addClass('text-danger');
+        } else {
+            icon.removeClass('fa-arrow-up fa-arrow-down').addClass('fa-minus');
+            element.parent().removeClass('text-success text-danger');
+        }
+    }
+    
+    // Actualizar top productos
+    function updateTopProducts(products) {
+        const container = $('#topProductsList');
+        container.empty();
+        
+        if (products.length === 0) {
+            container.html('<p class="text-muted text-center">No hay datos disponibles</p>');
+            return;
+        }
+        
+        products.forEach((product, index) => {
+            const item = $(`
+                <div class="product-item">
+                    <div class="d-flex align-items-center">
+                        <div class="product-rank">${index + 1}</div>
+                        <div class="product-info ms-3">
+                            <h6>${product.name}</h6>
+                            <small>${product.category}</small>
+                        </div>
+                    </div>
+                    <div class="product-sales">
+                        <div class="sales-amount">C$ ${formatNumber(product.total_sales)}</div>
+                        <div class="sales-count">${product.quantity_sold} vendidos</div>
+                    </div>
+                </div>
+            `);
+            container.append(item);
+        });
+    }
+    
+    // Cargar gráfico de ingresos vs egresos
+    function loadIncomeExpenseChart() {
+        $.ajax({
+            url: '/reportes/balance/chart',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                ...getCurrentFilters(),
+                period: currentPeriod
+            }),
+            success: function(response) {
+                renderIncomeExpenseChart(response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading chart data:', error);
+                showNotification('Error al cargar el gráfico', 'error');
+            }
+        });
+    }
+    
+    // Renderizar gráfico
+    function renderIncomeExpenseChart(data) {
+        const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+        
+        if (incomeExpenseChart) {
+            incomeExpenseChart.destroy();
+        }
+        
+        incomeExpenseChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Ingresos',
+                        data: data.income,
+                        borderColor: '#11998e',
+                        backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Egresos',
+                        data: data.expenses,
+                        borderColor: '#fc466b',
+                        backgroundColor: 'rgba(252, 70, 107, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': C$ ' + formatNumber(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Período'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Monto (C$)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + formatNumber(value);
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    }
+
+    // Cargar tabla de transacciones agrupadas
+    function loadTransactionsTable() {
+        const groupBy = $('input[name="groupBy"]:checked').val();
+        
+        $.ajax({
+            url: '/reportes/balance/transactions',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                ...getCurrentFilters(),
+                group_by: groupBy
+            }),
+            success: function(response) {
+                updateTransactionsTable(response.transactions);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading transactions:', error);
+                showNotification('Error al cargar las transacciones', 'error');
+            }
+        });
+    }
+
+    // Actualizar tabla de transacciones
+    function updateTransactionsTable(transactions) {
+        const table = $('#transactionsTable').DataTable();
+        table.clear();
+        
+        transactions.forEach(transaction => {
+            const trendClass = transaction.balance > 0 ? 'up' : transaction.balance < 0 ? 'down' : 'neutral';
+            const trendIcon = transaction.balance > 0 ? 'fa-arrow-up' : transaction.balance < 0 ? 'fa-arrow-down' : 'fa-equals';
+            const trendText = transaction.balance > 0 ? 'Positivo' : transaction.balance < 0 ? 'Negativo' : 'Neutral';
+            
+            const row = [
+                transaction.period,
+                `<span class="positive-value">C$ ${formatNumber(transaction.income)}</span>`,
+                `<span class="negative-value">C$ ${formatNumber(transaction.expense)}</span>`,
+                `<span class="${transaction.balance >= 0 ? 'positive-value' : 'negative-value'}">C$ ${formatNumber(transaction.balance)}</span>`,
+                `<span class="badge-trend ${trendClass}">
+                    <i class="fas ${trendIcon}"></i> ${trendText}
+                </span>`,
+                `<button class="btn btn-sm btn-outline-primary" onclick="viewPeriodDetails('${transaction.period}', '${$('input[name="groupBy"]:checked').val()}')">
+                    <i class="fas fa-eye"></i> Ver Detalles
+                </button>`
+            ];
+            table.row.add(row);
+        });
+        
+        table.draw();
+    }
+    
+    // Obtener filtros actuales
+    function getCurrentFilters() {
+        return {
+            fecha_inicio: $('#fechaInicio').val(),
+            fecha_fin: $('#fechaFin').val(),
+            categoria: $('#categoria').val(),
+            sucursal: $('#sucursal').val()
+        };
+    }
+    
+    // Aplicar filtros
+    function applyFilters() {
+        currentFilters = getCurrentFilters();
+        loadDashboardData();
+        loadTransactionsTable();
+        showNotification('Filtros aplicados correctamente', 'success');
+    }
+    
+    // Limpiar filtros
+    function clearFilters() {
+        $('#filterForm')[0].reset();
+        initializeDatePickers();
+        currentFilters = {};
+        loadDashboardData();
+        loadTransactionsTable();
+        showNotification('Filtros limpiados', 'info');
+    }
+    
+    // Exportar a PDF
+    function exportToPDF() {
+        showNotification('Generando PDF...', 'info');
+        
+        $.ajax({
+            url: '/reportes/balance/export/pdf',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(getCurrentFilters()),
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(data) {
+                const blob = new Blob([data], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'balance_general_' + new Date().toISOString().split('T')[0] + '.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showNotification('PDF descargado correctamente', 'success');
+            },
+            error: function() {
+                showNotification('Error al generar PDF', 'error');
+            }
+        });
+    }
+    
+    // Exportar a Excel
+    function exportToExcel() {
+        showNotification('Generando Excel...', 'info');
+        
+        $.ajax({
+            url: '/reportes/balance/export/excel',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(getCurrentFilters()),
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(data) {
+                const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'balance_general_' + new Date().toISOString().split('T')[0] + '.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showNotification('Excel descargado correctamente', 'success');
+            },
+            error: function() {
+                showNotification('Error al generar Excel', 'error');
+            }
+        });
+    }
+    
+    // Guardar nota
+    function saveNote() {
+        const title = $('#noteTitle').val();
+        const content = $('#noteContent').val();
+        
+        if (!title || !content) {
+            showNotification('Por favor complete todos los campos', 'warning');
+            return;
+        }
+        
+        $.ajax({
+            url: '/reportes/balance/note',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                title: title,
+                content: content,
+                filters: getCurrentFilters()
+            }),
+            success: function() {
+                $('#noteModal').modal('hide');
+                $('#noteForm')[0].reset();
+                showNotification('Nota guardada correctamente', 'success');
+            },
+            error: function() {
+                showNotification('Error al guardar la nota', 'error');
+            }
+        });
+    }
+    
+    // Funciones auxiliares
+    function formatNumber(num) {
+        return new Intl.NumberFormat('es-NI', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(num);
+    }
+    
+    function showLoading() {
+        // Implementar indicador de carga si es necesario
+    }
+    
+    function hideLoading() {
+        // Ocultar indicador de carga
+    }
+    
+    function showNotification(message, type) {
+        // Usar SweetAlert2 para notificaciones
+        Swal.fire({
+            text: message,
+            icon: type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+});
+
+// Función global para ver detalles de transacción
+function viewPeriodDetails(period, groupBy) {
+    // Implementar modal de detalles de transacción
+    console.log('Ver detalles:', period, groupBy);
+}
+</script>
+{% endblock %}

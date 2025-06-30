@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Gestión de Respaldo
+{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-database me-2"></i> Gestión de Respaldo
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Respaldo de Base de Datos</h6>
+                    <button id="createBackupBtn" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> Crear Respaldo
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="backupTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Nombre del Archivo</th>
+                                    <th>Tamaño (MB)</th>
+                                    <th>Fecha de Creación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="backupTableBody">
+                                <!-- Los respaldos se cargarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para restauración -->
+<div class="modal fade" id="restoreModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Restauración</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea restaurar este respaldo? Se creará un respaldo de la base de datos actual antes de proceder.</p>
+                <p class="font-weight-bold">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmRestoreBtn">Restaurar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('backup.static', filename='js/backup.js') }}"></script>
+{% endblock %}

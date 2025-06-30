@@ -20,6 +20,8 @@ def create_app(config_class=Config):
     from app.blueprints.compras import compras_bp
     from app.blueprints.inventario import inventario_bp
     from app.blueprints.admin import admin_bp
+    from app.blueprints.reportes import reportes_bp
+    from app.blueprints.backups import backup_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -27,7 +29,9 @@ def create_app(config_class=Config):
     app.register_blueprint(compras_bp)
     app.register_blueprint(inventario_bp)
     app.register_blueprint(admin_bp)
-    
+    app.register_blueprint(reportes_bp)
+    app.register_blueprint(backup_bp)
+
     # Configuración de caché
     @app.after_request
     def add_header(response):

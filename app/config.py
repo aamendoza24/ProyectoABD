@@ -5,8 +5,13 @@ class Config:
     SECRET_KEY = 'tu_clave_secreta'  # En producción, usar variables de entorno
     SESSION_PERMANENT = False
     SESSION_TYPE = "filesystem"
-    DATABASE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "library.db")
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DATABASE_PATH = os.path.join(BASE_DIR, 'library.db')
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{DATABASE_PATH}'  # Para compatibilidad con extensiones Flask
     
+    # Configuración de backups
+    BACKUP_FOLDER = os.path.join(BASE_DIR, 'backups')  # Carpeta donde se guardarán los backups
+    MAX_BACKUPS = 10  # Número máximo de backups a mantener
     # Configuración de correo electrónico
     MAIL_SERVER = 'smtp.gmail.com'  # Cambia según tu proveedor
     MAIL_PORT = 587

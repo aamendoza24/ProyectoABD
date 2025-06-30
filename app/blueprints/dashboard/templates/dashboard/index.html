@@ -337,7 +337,7 @@
 {% endblock %}
 
 {% block main %}
-<!-- Alertas -->
+<div class="container-fluid">
 <div class="row mb-4">
     <div class="col-12">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -616,6 +616,9 @@
         </div>
     </div>
 </div>
+</div>
+<!-- Alertas -->
+
 
 <!-- Scripts para gráficos -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

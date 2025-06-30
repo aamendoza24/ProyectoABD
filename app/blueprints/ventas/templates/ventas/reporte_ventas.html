@@ -369,8 +369,20 @@
                 <i class="fas fa-calendar-day me-1"></i> Ventas Diarias
             </button>
         </li>
-
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="productos-tab" data-bs-toggle="tab" data-bs-target="#productos" type="button" role="tab" aria-controls="productos" aria-selected="false">
+                <i class="fas fa-box me-1"></i> Análisis de Productos
+            </button>
         </li>
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance" type="button" role="tab" aria-controls="balance" aria-selected="false">
+                <i class="fas fa-balance-scale me-1"></i> Balance General
+            </button>
+        </li>
+        
+
+        
     </ul>
     
     <!-- Contenido de los tabs -->
@@ -406,7 +418,7 @@
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="exportDropdown">
                                 <li><a class="dropdown-item" href="#" onclick="exportarPDF()"><i class="fas fa-file-pdf me-2 text-danger"></i> Exportar a PDF</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="exportarExcel()"><i class="fas fa-file-excel me-2 text-success"></i> Exportar a Excel</a></li>
+                                <!-- <li><a class="dropdown-item" href="#" onclick="exportarExcel()"><i class="fas fa-file-excel me-2 text-success"></i> Exportar a Excel</a></li> -->
                             </ul>
                         </div>
                     </div>
@@ -465,7 +477,8 @@
                             <h5><i class="fas fa-chart-line card-header-icon me-2"></i> Tendencia de Ventas</h5>
                             <div class="comparison-toggle">
                                 <div class="form-check form-switch">
-                                    
+                                    <input class="form-check-input" type="checkbox" id="comparePeriodToggle" onchange="toggleComparePeriod()">
+                                    <label class="form-check-label" for="comparePeriodToggle">Comparar con período anterior</label>
                                 </div>
                             </div>
                         </div>
@@ -583,7 +596,7 @@
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="exportVentasDropdown">
                                 <li><a class="dropdown-item" href="#" onclick="exportarTablaPDF()"><i class="fas fa-file-pdf me-2 text-danger"></i> Exportar a PDF</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="exportarTablaExcel()"><i class="fas fa-file-excel me-2 text-success"></i> Exportar a Excel</a></li>
+                                <!-- <li><a class="dropdown-item" href="#" onclick="exportarTablaExcel()"><i class="fas fa-file-excel me-2 text-success"></i> Exportar a Excel</a></li> -->
                             </ul>
                         </div>
                     </div>
@@ -635,7 +648,7 @@
             
             <!-- Gráficos -->
             <div class="row">
-                <div class="col-lg-8">
+                <div class="col-lg-12">
                     <div class="dashboard-card">
                         <div class="card-header">
                             <h5><i class="fas fa-chart-bar card-header-icon me-2"></i> Crecimiento de Ventas - Últimos 7 Días</h5>
@@ -643,18 +656,6 @@
                         <div class="card-body">
                             <div class="chart-container">
                                 <canvas id="graficoBarras"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-chart-pie card-header-icon me-2"></i> Top 5 Productos Más Vendidos</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="graficoPastel"></canvas>
                             </div>
                         </div>
                     </div>
@@ -690,33 +691,6 @@
                         <button class="btn btn-primary" onclick="filtrarProductos()">
                             <i class="fas fa-search me-1"></i> Filtrar
                         </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-lg-6">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-chart-pie card-header-icon me-2"></i> Ventas por Categoría</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="graficoCategorias"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-chart-bar card-header-icon me-2"></i> Top 10 Productos</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="graficoTopProductos"></canvas>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -849,6 +823,200 @@
                 </div>
             </div>
         </div>
+
+        <!-- En la sección de Contenido de los tabs -->
+         <!-- Tab de balances-->
+        <div class="tab-pane fade" id="balance" role="tabpanel" aria-labelledby="balance-tab">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-1">
+                                <i class="fas fa-chart-line text-primary me-2"></i>
+                                Balance General
+                            </h2>
+                            <p class="text-muted mb-0">Dashboard completo del rendimiento del negocio</p>
+                        </div>
+                        <div class="export-buttons">
+                            <button class="btn btn-outline-danger" id="exportBalancePDF">
+                                <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                            </button>
+                            <!-- <button class="btn btn-outline-success" id="exportBalanceExcel">
+                                <i class="fas fa-file-excel me-2"></i>Exportar Excel
+                            </button> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card filter-card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-filter me-2"></i>Filtros
+                            </h5>
+                            <form id="balanceFilterForm" class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="balanceFechaInicio" class="form-label">Fecha Inicio</label>
+                                    <input type="date" class="form-control" id="balanceFechaInicio">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="balanceFechaFin" class="form-label">Fecha Fin</label>
+                                    <input type="date" class="form-control" id="balanceFechaFin">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="balanceCategoria" class="form-label">Categoría</label>
+                                    <select class="form-select" id="balanceCategoria">
+                                        <option value="">Todas las categorías</option>
+                                        {% for categoria in categorias %}
+                                        <option value="{{ categoria.IDCategoria }}">{{ categoria.Nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="balanceSucursal" class="form-label">Sucursal</label>
+                                    <select class="form-select" id="balanceSucursal">
+                                        <option value="">Todas las sucursales</option>
+                                        {% for sucursal in sucursales %}
+                                        <option value="{{ sucursal.IDSucursal }}">{{ sucursal.Nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" id="applyBalanceFilters">
+                                        <i class="fas fa-search me-2"></i>Aplicar Filtros
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="clearBalanceFilters">
+                                        <i class="fas fa-times me-2"></i>Limpiar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs Dashboard -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card dashboard-card kpi-card success sales">
+                        <div class="card-body">
+                            <i class="fas fa-shopping-cart kpi-icon"></i>
+                            <h3 class="kpi-value" id="totalSalesBalance">C$ 0.00</h3>
+                            <p class="kpi-label">Ventas Totales</p>
+                            <small class="d-block mt-2">
+                                <i class="fas fa-arrow-up me-1"></i>
+                                <span id="salesGrowthBalance">0%</span> vs período anterior
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card dashboard-card kpi-card primary purchases">
+                        <div class="card-body">
+                            <i class="fas fa-truck kpi-icon"></i>
+                            <h3 class="kpi-value" id="totalPurchasesBalance">C$ 0.00</h3>
+                            <p class="kpi-label">Compras Totales</p>
+                            <small class="d-block mt-2">
+                                <i class="fas fa-arrow-down me-1"></i>
+                                <span id="purchasesGrowthBalance">0%</span> vs período anterior
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card dashboard-card kpi-card danger profit">
+                        <div class="card-body">
+                            <i class="fas fa-chart-line kpi-icon"></i>
+                            <h3 class="kpi-value" id="netProfitBalance">C$ 0.00</h3>
+                            <p class="kpi-label">Ganancia Neta</p>
+                            <small class="d-block mt-2">
+                                <i class="fas fa-arrow-up me-1"></i>
+                                <span id="profitGrowthBalance">0%</span> vs período anterior
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card dashboard-card kpi-card success margin">
+                        <div class="card-body">
+                            <i class="fas fa-percentage kpi-icon"></i>
+                            <h3 class="kpi-value" id="profitMarginBalance">0%</h3>
+                            <p class="kpi-label">Margen de Utilidad</p>
+                            <small class="d-block mt-2">
+                                <i class="fas fa-arrow-up me-1"></i>
+                                <span id="marginGrowthBalance">0%</span> vs período anterior
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos y Top Productos -->
+            <div class="row mb-4">
+                <div class="col-lg-12 mb-3">
+                    <div class="chart-container">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Ingresos vs Egresos
+                            </h5>
+                            <div class="balance-period-toggle group" role="group">
+                                <button type="button" class="btn btn-outline-primary active" data-period="monthly">Mensual</button>
+                                <button type="button" class="btn btn-outline-primary" data-period="quarterly">Trimestral</button>
+                                <button type="button" class="btn btn-outline-primary" data-period="yearly">Anual</button>
+                            </div>
+                        </div>
+                        <canvas id="incomeExpenseChartBalance"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reporte Detallado -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card detailed-report">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-table me-2"></i>Reporte Detallado de Transacciones
+                                </h5>
+                                <div class="d-flex gap-2">
+                                    <div class="btn-group" role="group" aria-label="Agrupación">
+                                        <input type="radio" class="btn-check" name="balanceGroupBy" id="balanceGroupDaily" value="daily" checked>
+                                        <label class="btn btn-outline-primary btn-sm" for="balanceGroupDaily">Diario</label>
+                                        
+                                        <input type="radio" class="btn-check" name="balanceGroupBy" id="balanceGroupWeekly" value="weekly">
+                                        <label class="btn btn-outline-primary btn-sm" for="balanceGroupWeekly">Semanal</label>
+                                        
+                                        <input type="radio" class="btn-check" name="balanceGroupBy" id="balanceGroupMonthly" value="monthly">
+                                        <label class="btn btn-outline-primary btn-sm" for="balanceGroupMonthly">Mensual</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="transactionsTableBalance">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Período</th>
+                                            <th class="text-end">Ingresos (C$)</th>
+                                            <th class="text-end">Egresos (C$)</th>
+                                            <th class="text-end">Balance (C$)</th>
+                                            <th class="text-center">Tendencia</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactionsBodyBalance">
+                                        <!-- Las transacciones se cargarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -917,7 +1085,7 @@
     function inicializarGraficos() {
         // Gráfico de barras
         const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
-        new Chart(ctxBarras, {
+        window.graficoBarras = new Chart(ctxBarras, {
             type: 'bar',
             data: {
                 labels: labelsBarras,
@@ -958,8 +1126,8 @@
         });
         
         // Gráfico de pastel
-        const ctxPastel = document.getElementById('graficoPastel').getContext('2d');
-        new Chart(ctxPastel, {
+        const ctxPastel = document.getElementById('graficoPastelDashboard').getContext('2d');
+        window.actualizarGraficoPastel = new Chart(ctxPastel, {
             type: 'pie',
             data: {
                 labels: labelsPastel,
@@ -1045,7 +1213,7 @@
         
         // Gráfico de pastel (Dashboard)
         const ctxPastelDashboard = document.getElementById('graficoPastelDashboard').getContext('2d');
-        new Chart(ctxPastelDashboard, {
+        window.graficoPastelDashboard = new Chart(ctxPastelDashboard, {
             type: 'doughnut',
             data: {
                 labels: labelsPastel,
@@ -1432,7 +1600,7 @@
         const fecha_inicio = document.getElementById('dashboardFechaInicio').value;
         const fecha_fin = document.getElementById('dashboardFechaFin').value;
 
-        fetch('/ventas/dashboard_datos', {
+        fetch('/dashboard_datos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fecha_inicio, fecha_fin })
@@ -1465,6 +1633,7 @@
         if (window.graficoPastelDashboard) {
             window.graficoPastelDashboard.data.labels = labels;
             window.graficoPastelDashboard.data.datasets[0].data = data;
+            window.graficoPastelDashboard.data.datasets[0].backgroundColor = coloresPrimarios.slice(0, labels.length);
             window.graficoPastelDashboard.update();
         }
     }
@@ -1528,12 +1697,49 @@
     }
     
     // Función para filtrar productos
+    // Función para filtrar productos
     function filtrarProductos() {
         const desde = document.getElementById('productosFechaInicio').value;
         const hasta = document.getElementById('productosFechaFin').value;
         const categoria = document.getElementById('categoriaProducto').value;
         
-        alert(`Productos filtrados: ${desde} a ${hasta}, Categoría: ${categoria || 'Todas'}`);
+        fetch('/filtrar_productos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                fecha_inicio: desde, 
+                fecha_fin: hasta, 
+                id_categoria: categoria 
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Actualizar la tabla de productos
+            actualizarTablaProductos(data.productos);
+        })
+        .catch(error => {
+            console.error('Error al filtrar productos:', error);
+            alert('Error al filtrar productos. Consulte la consola para más detalles.');
+        });
+    }
+
+    // Función para actualizar la tabla de productos
+    function actualizarTablaProductos(productos) {
+        const tbody = document.querySelector('#tablaProductos tbody');
+        tbody.innerHTML = ''; // Limpiar tabla
+        
+        productos.forEach(producto => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${producto.Nombre}</td>
+                <td>${producto.Categoria}</td>
+                <td class="text-center">${producto.UnidadesVendidas}</td>
+                <td class="text-end">C$ ${producto.PrecioPromedio}</td>
+                <td class="text-end">C$ ${producto.TotalVentas}</td>
+                <td class="text-center">${producto.PorcentajeTotal}%</td>
+            `;
+            tbody.appendChild(row);
+        });
     }
     
     // Función para exportar a PDF
@@ -1685,6 +1891,417 @@
             alert('Error al exportar tabla a Excel. Consulte la consola para más detalles.');
         }
     }
+    
+</script>
+<script>
+$(document).ready(function() {
+    // Variables globales para el balance
+    let balanceChart = null;
+    let balanceCurrentPeriod = 'monthly';
+    let balanceCurrentFilters = {};
+    
+    // Inicializar componentes del balance
+    initializeBalanceDatePickers();
+    initializeBalanceDataTable();
+    loadBalanceData();
+    
+    // Event listeners para el balance
+    $('#applyBalanceFilters').click(applyBalanceFilters);
+    $('#clearBalanceFilters').click(clearBalanceFilters);
+    $('#exportBalancePDF').click(exportBalanceToPDF);
+    $('#exportBalanceExcel').click(exportBalanceToExcel);
+    
+    // Period toggle para el balance
+    $('.balance-period-toggle .btn').click(function() {
+        $('.balance-period-toggle .btn').removeClass('active');
+        $(this).addClass('active');
+        balanceCurrentPeriod = $(this).data('period');
+        loadBalanceChart();
+    });
+
+    // Event listeners para agrupación del balance
+    $('input[name="balanceGroupBy"]').change(function() {
+        loadBalanceTransactions();
+    });
+    
+    // Inicializar date pickers para el balance
+    function initializeBalanceDatePickers() {
+        // Establecer fechas por defecto (último mes)
+        const hoy = new Date();
+        const lastMonth = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate());
+        
+        $('#balanceFechaFin').val(hoy.toISOString().split('T')[0]);
+        $('#balanceFechaInicio').val(lastMonth.toISOString().split('T')[0]);
+    }
+    
+    // Inicializar DataTable para el balance
+    function initializeBalanceDataTable() {
+        $('#transactionsTableBalance').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            },
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            order: [[0, 'desc']],
+            pageLength: 25,
+            responsive: true
+        });
+    }
+    
+    // Cargar datos del dashboard del balance
+    function loadBalanceData() {
+        showBalanceLoading();
+        
+        $.ajax({
+            url: '/reportes/balance/data',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(getBalanceCurrentFilters()),
+            success: function(response) {
+                updateBalanceKPIs(response.kpis);
+                updateBalanceTopProducts(response.top_products);
+                loadBalanceChart();
+                hideBalanceLoading();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading balance data:', error);
+                showBalanceNotification('Error al cargar los datos del balance', 'error');
+                hideBalanceLoading();
+            }
+        });
+    }
+    
+    // Actualizar KPIs del balance
+    function updateBalanceKPIs(kpis) {
+        $('#totalSalesBalance').text('C$ ' + formatBalanceNumber(kpis.total_sales));
+        $('#totalPurchasesBalance').text('C$ ' + formatBalanceNumber(kpis.total_purchases));
+        $('#netProfitBalance').text('C$ ' + formatBalanceNumber(kpis.net_profit));
+        $('#profitMarginBalance').text(kpis.profit_margin.toFixed(1) + '%');
+        
+        // Actualizar indicadores de crecimiento
+        updateBalanceGrowthIndicator('#salesGrowthBalance', kpis.sales_growth);
+        updateBalanceGrowthIndicator('#purchasesGrowthBalance', kpis.purchases_growth);
+        updateBalanceGrowthIndicator('#profitGrowthBalance', kpis.profit_growth);
+        updateBalanceGrowthIndicator('#marginGrowthBalance', kpis.margin_growth);
+    }
+    
+    // Actualizar indicador de crecimiento del balance
+    function updateBalanceGrowthIndicator(selector, growth) {
+        const element = $(selector);
+        const icon = element.prev('i');
+        
+        element.text(Math.abs(growth).toFixed(1) + '%');
+        
+        if (growth > 0) {
+            icon.removeClass('fa-arrow-down').addClass('fa-arrow-up');
+            element.parent().removeClass('text-danger').addClass('text-success');
+        } else if (growth < 0) {
+            icon.removeClass('fa-arrow-up').addClass('fa-arrow-down');
+            element.parent().removeClass('text-success').addClass('text-danger');
+        } else {
+            icon.removeClass('fa-arrow-up fa-arrow-down').addClass('fa-minus');
+            element.parent().removeClass('text-success text-danger');
+        }
+    }
+    
+    // Actualizar top productos del balance
+    function updateBalanceTopProducts(products) {
+        const container = $('#topProductsListBalance');
+        container.empty();
+        
+        if (products.length === 0) {
+            container.html('<p class="text-muted text-center">No hay datos disponibles</p>');
+            return;
+        }
+        
+        products.forEach((product, index) => {
+            const item = $(`
+                <div class="product-item">
+                    <div class="d-flex align-items-center">
+                        <div class="product-rank">${index + 1}</div>
+                        <div class="product-info ms-3">
+                            <h6>${product.name}</h6>
+                            <small>${product.category}</small>
+                        </div>
+                    </div>
+                    <div class="product-sales">
+                        <div class="sales-amount">C$ ${formatBalanceNumber(product.total_sales)}</div>
+                        <div class="sales-count">${product.quantity_sold} vendidos</div>
+                    </div>
+                </div>
+            `);
+            container.append(item);
+        });
+    }
+    
+    // Cargar gráfico de ingresos vs egresos del balance
+    function loadBalanceChart() {
+        $.ajax({
+            url: '/reportes/balance/chart',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                ...getBalanceCurrentFilters(),
+                period: balanceCurrentPeriod
+            }),
+            success: function(response) {
+                renderBalanceChart(response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading balance chart data:', error);
+                showBalanceNotification('Error al cargar el gráfico del balance', 'error');
+            }
+        });
+    }
+    
+    // Renderizar gráfico del balance
+    function renderBalanceChart(data) {
+        const ctx = document.getElementById('incomeExpenseChartBalance').getContext('2d');
+        
+        if (balanceChart) {
+            balanceChart.destroy();
+        }
+        
+        balanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Ingresos',
+                        data: data.income,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Egresos',
+                        data: data.expenses,
+                        borderColor: '#e74a3b',
+                        backgroundColor: 'rgba(231, 74, 59, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': C$ ' + formatBalanceNumber(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Período'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Monto (C$)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'C$ ' + formatBalanceNumber(value);
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    }
+
+    // Cargar tabla de transacciones agrupadas del balance
+    function loadBalanceTransactions() {
+        const groupBy = $('input[name="balanceGroupBy"]:checked').val();
+        
+        $.ajax({
+            url: '/reportes/balance/transactions',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                ...getBalanceCurrentFilters(),
+                group_by: groupBy
+            }),
+            success: function(response) {
+                updateBalanceTransactionsTable(response.transactions);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading balance transactions:', error);
+                showBalanceNotification('Error al cargar las transacciones del balance', 'error');
+            }
+        });
+    }
+
+    // Actualizar tabla de transacciones del balance
+    function updateBalanceTransactionsTable(transactions) {
+        const table = $('#transactionsTableBalance').DataTable();
+        table.clear();
+        
+        transactions.forEach(transaction => {
+            const trendClass = transaction.balance > 0 ? 'up' : transaction.balance < 0 ? 'down' : 'neutral';
+            const trendIcon = transaction.balance > 0 ? 'fa-arrow-up' : transaction.balance < 0 ? 'fa-arrow-down' : 'fa-equals';
+            const trendText = transaction.balance > 0 ? 'Positivo' : transaction.balance < 0 ? 'Negativo' : 'Neutral';
+            
+            const row = [
+                transaction.period,
+                `<span class="positive-value">C$ ${formatBalanceNumber(transaction.income)}</span>`,
+                `<span class="negative-value">C$ ${formatBalanceNumber(transaction.expense)}</span>`,
+                `<span class="${transaction.balance >= 0 ? 'positive-value' : 'negative-value'}">C$ ${formatBalanceNumber(transaction.balance)}</span>`,
+                `<span class="badge-trend ${trendClass}">
+                    <i class="fas ${trendIcon}"></i> ${trendText}
+                </span>`
+            ];
+            table.row.add(row);
+        });
+        
+        table.draw();
+    }
+    
+    // Obtener filtros actuales del balance
+    function getBalanceCurrentFilters() {
+        return {
+            fecha_inicio: $('#balanceFechaInicio').val(),
+            fecha_fin: $('#balanceFechaFin').val(),
+            categoria: $('#balanceCategoria').val(),
+            sucursal: $('#balanceSucursal').val()
+        };
+    }
+    
+    // Aplicar filtros del balance
+    function applyBalanceFilters() {
+        balanceCurrentFilters = getBalanceCurrentFilters();
+        loadBalanceData();
+        loadBalanceTransactions();
+        showBalanceNotification('Filtros aplicados correctamente', 'success');
+    }
+    
+    // Limpiar filtros del balance
+    function clearBalanceFilters() {
+        $('#balanceFilterForm')[0].reset();
+        initializeBalanceDatePickers();
+        balanceCurrentFilters = {};
+        loadBalanceData();
+        loadBalanceTransactions();
+        showBalanceNotification('Filtros limpiados', 'info');
+    }
+    
+    // Exportar a PDF desde el balance
+    function exportBalanceToPDF() {
+        showBalanceNotification('Generando PDF...', 'info');
+        
+        $.ajax({
+            url: '/reportes/balance/export/pdf',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(getBalanceCurrentFilters()),
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(data) {
+                const blob = new Blob([data], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'balance_general_' + new Date().toISOString().split('T')[0] + '.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showBalanceNotification('PDF descargado correctamente', 'success');
+            },
+            error: function() {
+                showBalanceNotification('Error al generar PDF', 'error');
+            }
+        });
+    }
+    
+    // Exportar a Excel desde el balance
+    function exportBalanceToExcel() {
+        showBalanceNotification('Generando Excel...', 'info');
+        
+        $.ajax({
+            url: '/reportes/balance/export/excel',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(getBalanceCurrentFilters()),
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(data) {
+                const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'balance_general_' + new Date().toISOString().split('T')[0] + '.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showBalanceNotification('Excel descargado correctamente', 'success');
+            },
+            error: function() {
+                showBalanceNotification('Error al generar Excel', 'error');
+            }
+        });
+    }
+    
+    // Funciones auxiliares del balance
+    function formatBalanceNumber(num) {
+        return new Intl.NumberFormat('es-NI', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(num);
+    }
+    
+    function showBalanceLoading() {
+        $('#transactionsBodyBalance').html('<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>');
+    }
+    
+    function hideBalanceLoading() {
+        // Ocultar indicador de carga
+    }
+    
+    function showBalanceNotification(message, type) {
+        Swal.fire({
+            text: message,
+            icon: type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+});
+
+// Función global para ver detalles de transacción del balance
+function viewBalancePeriodDetails(period, groupBy) {
+    console.log('Ver detalles del balance:', period, groupBy);
+}
 </script>
 {% endblock %}
 
