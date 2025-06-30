@@ -51,7 +51,8 @@ def mostrar_stock():
                 WHERE dc.IDProducto = p.IDProducto
                 ORDER BY co.Fecha DESC, dc.IDDetalleCompra DESC
                 LIMIT 1
-            ), 0.0) AS precio_compra
+            ), 0.0) AS precio_compra,
+            p.Descripcion
         FROM Producto AS p
         LEFT JOIN Categoria AS c ON p.IDCategoria = c.IDCategoria
         LEFT JOIN Stock_Sucursal AS s ON p.IDProducto = s.IDProducto AND s.IDSucursal = 1
