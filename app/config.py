@@ -12,6 +12,11 @@ class Config:
     # Configuración de backups
     BACKUP_FOLDER = os.path.join(BASE_DIR, 'backups')  # Carpeta donde se guardarán los backups
     MAX_BACKUPS = 10  # Número máximo de backups a mantener
+
+    AUTO_BACKUP_ENABLED = True
+    AUTO_BACKUP_TIME = '12:00'  # Formato HH:MM
+    MAX_AUTO_BACKUPS = 10  # Número máximo de backups a conservar
+    #BACKUP_FOLDER = os.path.join(os.path.dirname(__file__), 'backups')
     
     # Configuración de correo electrónico
     MAIL_SERVER = 'smtp.gmail.com'  # Cambia según tu proveedor

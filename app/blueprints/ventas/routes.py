@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from io import BytesIO
 import base64
+import pytz
 
 
 #ruta para mostrar los productos en el apartado de venta
@@ -49,7 +50,9 @@ def guardar_venta():
     cliente_telefono = data.get("cliente_telefono")
     cambio = data.get("cambio", 0)
     nota = data.get("nota", "")
-    fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    nicaragua_tz = pytz.timezone('America/Managua')
+    fecha = datetime.now(nicaragua_tz).strftime("%Y-%m-%d %H:%M:%S")
 
     user_id = session.get("user_id")
 

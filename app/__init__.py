@@ -4,6 +4,7 @@ from flask_mail import Mail
 from app.config import Config
 from app.extensions import session, mail
 from datetime import datetime
+import os
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -58,5 +59,13 @@ def create_app(config_class=Config):
         return {
             'current_year': datetime.now().year
         }
+    
+        # Iniciar scheduler solo en producción
+    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        from app.scheduler import start_scheduler
+        try:
+            start_scheduler(app)
+        except Exception as e:
+            app.logger.error(f"No se pudo iniciar el scheduler: {str(e)}")
     
     return app

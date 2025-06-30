@@ -590,7 +590,7 @@ listaClientes.addEventListener('mousedown', function(e) {
                 });
             }
         }).then(() => {
-            limpiarCarrito();
+            location.reload();
         });
     }
 

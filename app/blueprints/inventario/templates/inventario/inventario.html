@@ -419,7 +419,10 @@
                     <div>
                         <h5 class="card-title">{{ producto[1] }}</h5>
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="precio">C$ {{ producto[2] }}</span>
+                            <div>
+                                <span class="text-muted d-block" style="font-size: 0.8rem;">Compra: C$ {{ "%.2f"|format(producto[7]) }}</span>
+                                <span class="precio d-block">Venta: C$ {{ "%.2f"|format(producto[2]) }}</span>
+                            </div>
                             <span class="stock {% if producto[6] < 10 %}stock-low{% else %}stock-ok{% endif %}">
                                 {{ producto[6] }} unidades
                             </span>

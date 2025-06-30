@@ -36,12 +36,25 @@ def mostrar_stock():
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT p.IDProducto, p.Nombre, p.Precio, p.ImagenURL, p.IDCategoria, c.Nombre, 
-               s.Cantidad AS stock_total
+        SELECT 
+            p.IDProducto, 
+            p.Nombre, 
+            p.Precio AS precio_venta, 
+            p.ImagenURL, 
+            p.IDCategoria, 
+            c.Nombre AS nombre_categoria, 
+            COALESCE(s.Cantidad, 0) AS stock_total,
+            COALESCE((
+                SELECT (dc.Subtotal / CASE WHEN dc.Cantidad = 0 THEN 1 ELSE CAST(dc.Cantidad AS REAL) END)
+                FROM Detalle_Compra dc
+                JOIN Compra co ON dc.IDCompra = co.IDCompra
+                WHERE dc.IDProducto = p.IDProducto
+                ORDER BY co.Fecha DESC, dc.IDDetalleCompra DESC
+                LIMIT 1
+            ), 0.0) AS precio_compra
         FROM Producto AS p
-        JOIN Categoria AS c ON p.IDCategoria = c.IDCategoria
-        JOIN Stock_Sucursal AS s ON p.IDProducto = s.IDProducto
-        WHERE s.IDSucursal = 1
+        LEFT JOIN Categoria AS c ON p.IDCategoria = c.IDCategoria
+        LEFT JOIN Stock_Sucursal AS s ON p.IDProducto = s.IDProducto AND s.IDSucursal = 1
     """)
     
     productos = cursor.fetchall()

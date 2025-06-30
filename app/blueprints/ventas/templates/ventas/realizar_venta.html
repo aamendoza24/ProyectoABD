@@ -5,6 +5,8 @@
 {% endblock %}
 
 {% block style %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <style>
     :root {
         --primary-color: #4e73df;
@@ -642,8 +644,7 @@
                                         <img src="{{ producto.ImagenURL or url_for('static', filename='img/no-image.jpg') }}" 
                                              class="card-img-top" 
                                              alt="{{ producto.Nombre }}"
-                                             
-                                             onerror="this.src='{{ url_for('static', filename='img/no-image.jpg') }}';">
+                                             onerror="this.src='{{ url_for('static', filename='img/no-image.jpg') }}'">
                                         <div class="card-body text-center d-flex flex-column">
                                             <h5 class="card-title">{{ producto.Nombre }}</h5>
                                             <p class="producto-precio mb-2">C$ {{ "%.2f"|format(producto.Precio) }}</p>
@@ -802,11 +803,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 
+{% endblock %}
+
+
+{% block scripts %}
 <!-- Bibliotecas necesarias para generar PDFs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{{ url_for('static', filename='js/ventas.js') }}?v=1.0"></script>
-<!-- JavaScript -->
-
 {% endblock %}

@@ -4,6 +4,7 @@ from flask import render_template, jsonify, send_file, current_app
 from werkzeug.utils import secure_filename
 from app.blueprints.backups import backup_bp
 import sqlite3
+import pytz
 #from .services import create_backup_service, list_backups_service, restore_backup_service
 
 
@@ -106,7 +107,8 @@ def create_backup():
             while len(existing_backups) >= current_app.config['MAX_BACKUPS']:
                 os.remove(os.path.join(backup_dir, existing_backups.pop(0)))
         
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        nicaragua_tz = pytz.timezone('America/Managua')
+        timestamp = datetime.now(nicaragua_tz).strftime('%Y%m%d_%H%M%S')
         backup_filename = f"backup_{timestamp}.db"
         backup_path = os.path.join(backup_dir, backup_filename)
         
@@ -155,7 +157,8 @@ def restore_backup(filename):
             return api_response(False, 'Archivo de respaldo no encontrado', status_code=404)
         
         # Crear copia de seguridad preventiva
-        preventive_filename = f"pre_restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+        nicaragua_tz = pytz.timezone('America/Managua')
+        preventive_filename = f"pre_restore_{datetime.now(nicaragua_tz).strftime('%Y%m%d_%H%M%S')}.db"
         preventive_path = os.path.join(backup_dir, preventive_filename)
         
         current_db = sqlite3.connect(db_path)
