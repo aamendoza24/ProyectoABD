@@ -195,6 +195,13 @@
                 </a>
               </li>
 
+              <!-- Botón de Ayuda -->
+              <li class="nav-item topbar-icon">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#helpModal" title="Ayuda del Sistema">
+                  <i class="fa fa-question-circle"></i>
+                </a>
+              </li>
+
               <li class="nav-item topbar-user dropdown hidden-caret">
                 <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#" aria-expanded="false">
                   <div class="avatar-sm">
@@ -283,6 +290,247 @@
   <!-- Kaiadmin JS -->
   <script src="{{ url_for('static', filename='js/kaiadmin.min.js') }}" defer></script>
   {% block scripts %}{% endblock %}
+
+  <!-- Modal de Ayuda -->
+  <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="helpModalLabel">
+            <i class="fa fa-question-circle text-primary me-2"></i>
+            Ayuda del Sistema - Módulos Disponibles
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <!-- Dashboard -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-home me-2"></i>
+                    Dashboard
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="card-text small">
+                    Panel principal que muestra métricas clave del negocio, incluyendo ventas totales, 
+                    transacciones, ticket promedio y productos vendidos. Permite filtrar por períodos 
+                    (hoy, semana, mes, año) y muestra alertas de stock bajo.
+                  </p>
+                  <div class="mt-2">
+                    <span class="badge bg-info">KPIs</span>
+                    <span class="badge bg-info">Métricas</span>
+                    <span class="badge bg-info">Gráficos</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ventas -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    Ventas
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="card-text small">
+                    Sistema completo de gestión de ventas. Permite realizar ventas con carrito de compras, 
+                    gestionar clientes, aplicar descuentos y generar reportes detallados. Incluye historial 
+                    de ventas con filtros avanzados.
+                  </p>
+                  <div class="mt-2">
+                    <span class="badge bg-success">Catálogo</span>
+                    <span class="badge bg-success">Carrito</span>
+                    <span class="badge bg-success">Clientes</span>
+                    <span class="badge bg-success">Reportes</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inventario -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 border-warning">
+                <div class="card-header bg-warning text-dark">
+                  <h6 class="mb-0">
+                    <i class="fas fa-boxes me-2"></i>
+                    Inventario
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="card-text small">
+                    Control completo del inventario de productos. Permite agregar, editar y eliminar productos, 
+                    gestionar categorías, subir imágenes y controlar el stock. Incluye alertas de stock bajo 
+                    y gestión de imágenes con ImgBB.
+                  </p>
+                  <div class="mt-2">
+                    <span class="badge bg-warning text-dark">Productos</span>
+                    <span class="badge bg-warning text-dark">Stock</span>
+                    <span class="badge bg-warning text-dark">Categorías</span>
+                    <span class="badge bg-warning text-dark">Imágenes</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compras -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 border-info">
+                <div class="card-header bg-info text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-truck me-2"></i>
+                    Compras
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="card-text small">
+                    Gestión de compras a proveedores. Permite registrar compras de productos, 
+                    gestionar proveedores, generar historial de compras con filtros y exportar 
+                    reportes en PDF. Incluye control de stock automático.
+                  </p>
+                  <div class="mt-2">
+                    <span class="badge bg-info">Proveedores</span>
+                    <span class="badge bg-info">Compras</span>
+                    <span class="badge bg-info">Historial</span>
+                    <span class="badge bg-info">PDF</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Admin -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 border-secondary">
+                <div class="card-header bg-secondary text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-user-tie me-2"></i>
+                    Administración
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="card-text small">
+                    Gestión de empleados y proveedores. Permite crear, editar y eliminar empleados, 
+                    asignar roles y permisos, gestionar cuentas de usuario y administrar proveedores 
+                    con información completa de contacto.
+                  </p>
+                  <div class="mt-2">
+                    <span class="badge bg-secondary">Empleados</span>
+                    <span class="badge bg-secondary">Roles</span>
+                    <span class="badge bg-secondary">Proveedores</span>
+                    <span class="badge bg-secondary">Usuarios</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reportes -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 border-danger">
+                <div class="card-header bg-danger text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-file-pdf me-2"></i>
+                    Reportes
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="card-text small">
+                    Sistema avanzado de reportes y balance general. Genera reportes detallados 
+                    con KPIs, gráficos de ingresos vs egresos, análisis de productos y exportación 
+                    a PDF y Excel. Incluye filtros por fechas y categorías.
+                  </p>
+                  <div class="mt-2">
+                    <span class="badge bg-danger">Balance</span>
+                    <span class="badge bg-danger">KPIs</span>
+                    <span class="badge bg-danger">Gráficos</span>
+                    <span class="badge bg-danger">Export</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backups -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 border-dark">
+                <div class="card-header bg-dark text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    Respaldos
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="card-text small">
+                    Sistema de respaldos automáticos de la base de datos. Permite crear, restaurar, 
+                    descargar y eliminar respaldos. Incluye respaldos preventivos antes de restaurar 
+                    y gestión de múltiples versiones de respaldo.
+                  </p>
+                  <div class="mt-2">
+                    <span class="badge bg-dark">Backup</span>
+                    <span class="badge bg-dark">Restore</span>
+                    <span class="badge bg-dark">Download</span>
+                    <span class="badge bg-dark">Seguridad</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Autenticación -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-lock me-2"></i>
+                    Autenticación
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <p class="card-text small">
+                    Sistema de autenticación seguro con roles y permisos. Incluye login/logout, 
+                    recuperación de contraseña por email, bloqueo de cuentas por intentos fallidos 
+                    y gestión de sesiones de usuario.
+                  </p>
+                  <div class="mt-2">
+                    <span class="badge bg-primary">Login</span>
+                    <span class="badge bg-primary">Roles</span>
+                    <span class="badge bg-primary">Seguridad</span>
+                    <span class="badge bg-primary">Recuperación</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información adicional -->
+          <div class="alert alert-info mt-3">
+            <h6 class="alert-heading">
+              <i class="fas fa-info-circle me-2"></i>
+              Información del Sistema
+            </h6>
+            <p class="mb-2 small">
+              Este sistema está diseñado para la gestión integral de un negocio, incluyendo ventas, 
+              inventario, compras y administración. Cada módulo está optimizado para su función específica 
+              y todos trabajan de manera integrada.
+            </p>
+            <hr>
+            <p class="mb-0 small">
+              <strong>Roles disponibles:</strong> Administrador, Gerente, Vendedor, Empleado, Almacén
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <a href="#" class="btn btn-primary" onclick="window.open('https://deepwiki.com/aamendoza24/ProyectoABD', '_blank')">
+            <i class="fas fa-book me-2"></i>
+            Documentación Completa
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
