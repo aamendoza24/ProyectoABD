@@ -13,6 +13,8 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
     /* Estilos personalizados para el dashboard */
     .dashboard-card {
@@ -868,24 +870,7 @@
                                     <label for="balanceFechaFin" class="form-label">Fecha Fin</label>
                                     <input type="date" class="form-control" id="balanceFechaFin">
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="balanceCategoria" class="form-label">Categoría</label>
-                                    <select class="form-select" id="balanceCategoria">
-                                        <option value="">Todas las categorías</option>
-                                        {% for categoria in categorias %}
-                                        <option value="{{ categoria.IDCategoria }}">{{ categoria.Nombre }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="balanceSucursal" class="form-label">Sucursal</label>
-                                    <select class="form-select" id="balanceSucursal">
-                                        <option value="">Todas las sucursales</option>
-                                        {% for sucursal in sucursales %}
-                                        <option value="{{ sucursal.IDSucursal }}">{{ sucursal.Nombre }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
+                                
                                 <div class="col-12">
                                     <button type="button" class="btn btn-primary" id="applyBalanceFilters">
                                         <i class="fas fa-search me-2"></i>Aplicar Filtros
