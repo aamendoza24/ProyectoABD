@@ -301,20 +301,24 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Toggle entre cliente existente y nuevo
-    $('#clienteExistenteCheck').change(function() {
-        if ($(this).is(':checked')) {
-            $('#clienteExistenteSection').show();
-            $('#nuevoClienteSection').hide();
+    // ===== LÓGICA TIPO DE CLIENTE (PILLS) =====
+    let currentClientMode = 'general';
+    
+    $('#clientTabs button[data-bs-toggle="pill"]').on('shown.bs.tab', function (event) {
+        currentClientMode = event.target.id.replace('tab-', '');
+        
+        if(currentClientMode === 'existente') {
             $('#clienteNombre, #clienteTelefono').val('');
-        } else {
-            $('#clienteExistenteSection').hide();
-            $('#nuevoClienteSection').show();
+        } else if(currentClientMode === 'nuevo') {
             $('#buscarCliente').val('');
             $('#resultadosCliente').hide();
+            clienteSeleccionadoId = null;
+        } else if(currentClientMode === 'general') {
+            $('#clienteNombre, #clienteTelefono, #buscarCliente').val('');
+            $('#resultadosCliente').hide();
+            clienteSeleccionadoId = null;
         }
     });
-
     // Buscar cliente
     $('#btnBuscarCliente').click(buscarClientes);
     $('#buscarCliente').keyup(function(e) {
@@ -369,23 +373,40 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // Cambiar validación según método de pago
     tipoPagoSelect.addEventListener("change", function() {
-        if (this.value !== "efectivo") {
-            dineroRecibidoInput.classList.remove("is-invalid");
-            dineroRecibidoFeedback.textContent = "";
+        const val = this.value;
+        const total = parseFloat(totalPagoInput.value.replace("C$ ", "")) || 0;
+        
+        dineroRecibidoInput.classList.remove("is-invalid");
+        dineroRecibidoFeedback.textContent = "";
             
-            if (this.value === "tarjeta" || this.value === "transferencia") {
-                dineroRecibidoInput.value = totalPagoInput.value.replace("C$ ", "");
-                cambioInput.value = "0.00";
+        if (val === "tarjeta" || val === "transferencia") {
+            dineroRecibidoInput.value = totalPagoInput.value.replace("C$ ", "");
+            cambioInput.value = "0.00";
+            $('#wrapperPlazoCredito').addClass('d-none');
+            $('#labelDineroRecibido').text('Dinero Recibido (C$)');
+            $('#tab-general').removeClass('disabled').prop('disabled', false);
+            $('#warningCreditoCliente').addClass('d-none');
+        } else if (val === "credito") {
+            dineroRecibidoInput.value = "0"; // Puede ser 0 la prima
+            cambioInput.value = "0.00";
+            
+            $('#wrapperPlazoCredito').removeClass('d-none');
+            $('#labelDineroRecibido').text('Prima Inicial (Opcional)');
+            
+            // Credito exige un cliente no general
+            $('#tab-general').addClass('disabled').prop('disabled', true);
+            $('#warningCreditoCliente').removeClass('d-none');
+            if(currentClientMode === 'general') {
+                $('#tab-existente').tab('show'); // Forzar a saltar a otro tab
             }
         } else {
-            // Validar nuevamente si es efectivo
-            const total = parseFloat(totalPagoInput.value.replace("C$ ", ""));
-            const recibido = parseFloat(dineroRecibidoInput.value) || 0;
-            
-            if (recibido < total) {
-                dineroRecibidoInput.classList.add("is-invalid");
-                dineroRecibidoFeedback.textContent = "La cantidad recibida es menor al total";
-            }
+            // Efectivo
+            dineroRecibidoInput.value = "";
+            cambioInput.value = "0.00";
+            $('#wrapperPlazoCredito').addClass('d-none');
+            $('#labelDineroRecibido').text('Dinero Recibido (C$)');
+            $('#tab-general').removeClass('disabled').prop('disabled', false);
+            $('#warningCreditoCliente').addClass('d-none');
         }
     });
     // variable para almacenar el cliente seleccionado
@@ -420,6 +441,12 @@ listaClientes.addEventListener('mousedown', function(e) {
     $('#listaClientes').on('change', function() {
         const selectedIndex = this.selectedIndex;
         const options = this.options;
+        const selectedOption = $(this.options[selectedIndex]);
+
+        // Actualizar variables globales
+        clienteSeleccionadoId = val = $(this).val();
+        clienteSeleccionadoNombre = selectedOption.data('nombre') || '';
+        clienteSeleccionadoTelefono = selectedOption.data('telefono') || '';
 
         // Oculta todas las opciones excepto la seleccionada
         for (let i = 0; i < options.length; i++) {
@@ -446,6 +473,9 @@ listaClientes.addEventListener('mousedown', function(e) {
                     options[i].style.display = '';
                 }
                 $('#listaClientes').val(''); // Deselecciona
+                clienteSeleccionadoId = null;
+                clienteSeleccionadoNombre = '';
+                clienteSeleccionadoTelefono = '';
                 this.size = options.length; // Restaura el tamaño original
                 btn.remove();
             };
@@ -467,20 +497,30 @@ listaClientes.addEventListener('mousedown', function(e) {
         const descuento = parseFloat(document.getElementById("descuento").value) || 0;
         const total = calcularTotalFinal();
 
-        // Detectar si es cliente existente
-        const esClienteExistente = $('#clienteExistenteCheck').is(':checked');
+        // Validar que el crédito tenga cliente
+        if(tipoPago === 'credito' && currentClientMode === 'general') {
+            Swal.fire("Error", "Las ventas al crédito requieren obligatoriamente registrar o buscar un cliente.", "error");
+            return;
+        }
+
+        // Detectar tipo de cliente
         let datosCliente = {};
 
-        if (esClienteExistente && clienteSeleccionadoId) {
+        if (currentClientMode === 'existente' && clienteSeleccionadoId) {
             datosCliente = {
                 cliente_id: clienteSeleccionadoId
             };
-        } else if (!esClienteExistente && (clienteNombre || clienteTelefono)) {
+        } else if (currentClientMode === 'nuevo' && (clienteNombre || clienteTelefono)) {
             datosCliente = {
                 cliente_nombre: clienteNombre || null,
                 cliente_telefono: clienteTelefono || null
             };
-        } // Si no hay datos, se enviará venta general (sin cliente)
+        } 
+        
+        let diasPlazo = null;
+        if(tipoPago === 'credito') {
+            diasPlazo = $('#diasPlazo').val();
+        }
 
         // Enviar datos al servidor
         fetch('/guardar_venta', {
@@ -493,6 +533,7 @@ listaClientes.addEventListener('mousedown', function(e) {
                 total,
                 descuento,
                 tipo_pago: tipoPago,
+                dias_plazo: diasPlazo,
                 dinero_recibido: dineroRecibido,
                 cambio,
                 nota: notaVenta || '',

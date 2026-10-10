@@ -13,6 +13,8 @@ def create_app(config_class=Config):
     # Inicializar extensiones
     session.init_app(app)
     mail.init_app(app)
+    from app.extensions import db
+    db.init_app(app)
     
     # Registrar blueprints
     from app.blueprints.auth import auth_bp
@@ -23,6 +25,8 @@ def create_app(config_class=Config):
     from app.blueprints.admin import admin_bp
     from app.blueprints.reportes import reportes_bp
     from app.blueprints.backups import backup_bp
+    from app.blueprints.creditos import creditos_bp
+    from app.blueprints.caja import caja_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -32,6 +36,8 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp)
     app.register_blueprint(reportes_bp)
     app.register_blueprint(backup_bp)
+    app.register_blueprint(creditos_bp)
+    app.register_blueprint(caja_bp, url_prefix='/caja')
 
     # Configuración de caché
     @app.after_request

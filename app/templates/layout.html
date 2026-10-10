@@ -18,7 +18,8 @@
   <link rel="preload" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" as="style">
 
   <!-- Fuentes -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <!-- CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
@@ -32,6 +33,7 @@
       height: 100%;
       object-fit: contain;
     }
+
     body {
       font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
@@ -45,14 +47,14 @@
   <div class="wrapper">
     <!-- Sidebar -->
     {% set current_path = request.path %}
-    
+
     <div class="sidebar" data-background-color="dark">
       <div class="sidebar-logo">
         <!-- Logo Header -->
         <div class="logo-header" data-background-color="dark">
           <a href="{{ url_for('dashboard.index') }}" class="logo">
-            <img src="{{ url_for('static', filename='img/logo_claro.png') }}" alt="navbar brand"
-              class="navbar-brand" height="20" />
+            <img src="{{ url_for('static', filename='img/logo_tienda.png') }}" alt="navbar brand" class="navbar-brand"
+              height="20" />
           </a>
           <div class="nav-toggle">
             <button class="btn btn-toggle toggle-sidebar">
@@ -72,8 +74,7 @@
         <div class="sidebar-content">
           <ul class="nav nav-secondary">
             <li class="nav-item {% if current_path == url_for('dashboard.index') %}active{% endif %}">
-              <a href="{{ url_for('dashboard.index') }}" 
-                aria-expanded="false">
+              <a href="{{ url_for('dashboard.index') }}" aria-expanded="false">
                 <i class="fas fa-home"></i>
                 <p>Principal</p>
               </a>
@@ -84,7 +85,8 @@
               </span>
               <h4 class="text-section">Operaciones</h4>
             </li>
-            <li class="nav-item {% if current_path in [url_for('ventas.catalogo'), url_for('ventas.historial')] %}active{% endif %}">
+            <li
+              class="nav-item {% if current_path in [url_for('ventas.catalogo'), url_for('ventas.historial')] %}active{% endif %}">
               <a data-bs-toggle="collapse" href="#ventas">
                 <i class="fas fa-shopping-cart"></i>
                 <p>Ventas</p>
@@ -104,6 +106,18 @@
                   </li>
                 </ul>
               </div>
+            </li>
+            <li class="nav-item {% if current_path == url_for('creditos.index') %}active{% endif %}">
+              <a href="{{ url_for('creditos.index') }}">
+                <i class="fas fa-hand-holding-usd"></i>
+                <p>Cuentas por Cobrar</p>
+              </a>
+            </li>
+            <li class="nav-item {% if current_path == url_for('caja.index') %}active{% endif %}">
+              <a href="{{ url_for('caja.index') }}">
+                <i class="fas fa-cash-register"></i>
+                <p>Arqueos de Caja</p>
+              </a>
             </li>
             <li class="nav-item {% if current_path == url_for('inventario.mostrar_stock') %}active{% endif %}">
               <a href="{{ url_for('inventario.mostrar_stock') }}">
@@ -199,7 +213,8 @@
 
               <!-- Botón de Ayuda -->
               <li class="nav-item topbar-icon">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#helpModal" title="Ayuda del Sistema">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#helpModal"
+                  title="Ayuda del Sistema">
                   <i class="fa fa-question-circle"></i>
                 </a>
               </li>
@@ -317,8 +332,8 @@
                 </div>
                 <div class="card-body">
                   <p class="card-text small">
-                    Panel principal que muestra métricas clave del negocio, incluyendo ventas totales, 
-                    transacciones, ticket promedio y productos vendidos. Permite filtrar por períodos 
+                    Panel principal que muestra métricas clave del negocio, incluyendo ventas totales,
+                    transacciones, ticket promedio y productos vendidos. Permite filtrar por períodos
                     (hoy, semana, mes, año) y muestra alertas de stock bajo.
                   </p>
                   <div class="mt-2">
@@ -341,8 +356,8 @@
                 </div>
                 <div class="card-body">
                   <p class="card-text small">
-                    Sistema completo de gestión de ventas. Permite realizar ventas con carrito de compras, 
-                    gestionar clientes, aplicar descuentos y generar reportes detallados. Incluye historial 
+                    Sistema completo de gestión de ventas. Permite realizar ventas con carrito de compras,
+                    gestionar clientes, aplicar descuentos y generar reportes detallados. Incluye historial
                     de ventas con filtros avanzados.
                   </p>
                   <div class="mt-2">
@@ -366,8 +381,8 @@
                 </div>
                 <div class="card-body">
                   <p class="card-text small">
-                    Control completo del inventario de productos. Permite agregar, editar y eliminar productos, 
-                    gestionar categorías, subir imágenes y controlar el stock. Incluye alertas de stock bajo 
+                    Control completo del inventario de productos. Permite agregar, editar y eliminar productos,
+                    gestionar categorías, subir imágenes y controlar el stock. Incluye alertas de stock bajo
                     y gestión de imágenes con ImgBB.
                   </p>
                   <div class="mt-2">
@@ -391,8 +406,8 @@
                 </div>
                 <div class="card-body">
                   <p class="card-text small">
-                    Gestión de compras a proveedores. Permite registrar compras de productos, 
-                    gestionar proveedores, generar historial de compras con filtros y exportar 
+                    Gestión de compras a proveedores. Permite registrar compras de productos,
+                    gestionar proveedores, generar historial de compras con filtros y exportar
                     reportes en PDF. Incluye control de stock automático.
                   </p>
                   <div class="mt-2">
@@ -416,8 +431,8 @@
                 </div>
                 <div class="card-body">
                   <p class="card-text small">
-                    Gestión de empleados y proveedores. Permite crear, editar y eliminar empleados, 
-                    asignar roles y permisos, gestionar cuentas de usuario y administrar proveedores 
+                    Gestión de empleados y proveedores. Permite crear, editar y eliminar empleados,
+                    asignar roles y permisos, gestionar cuentas de usuario y administrar proveedores
                     con información completa de contacto.
                   </p>
                   <div class="mt-2">
@@ -441,8 +456,8 @@
                 </div>
                 <div class="card-body">
                   <p class="card-text small">
-                    Sistema avanzado de reportes y balance general. Genera reportes detallados 
-                    con KPIs, gráficos de ingresos vs egresos, análisis de productos y exportación 
+                    Sistema avanzado de reportes y balance general. Genera reportes detallados
+                    con KPIs, gráficos de ingresos vs egresos, análisis de productos y exportación
                     a PDF y Excel. Incluye filtros por fechas y categorías.
                   </p>
                   <div class="mt-2">
@@ -466,8 +481,8 @@
                 </div>
                 <div class="card-body">
                   <p class="card-text small">
-                    Sistema de respaldos automáticos de la base de datos. Permite crear, restaurar, 
-                    descargar y eliminar respaldos. Incluye respaldos preventivos antes de restaurar 
+                    Sistema de respaldos automáticos de la base de datos. Permite crear, restaurar,
+                    descargar y eliminar respaldos. Incluye respaldos preventivos antes de restaurar
                     y gestión de múltiples versiones de respaldo.
                   </p>
                   <div class="mt-2">
@@ -491,8 +506,8 @@
                 </div>
                 <div class="card-body">
                   <p class="card-text small">
-                    Sistema de autenticación seguro con roles y permisos. Incluye login/logout, 
-                    recuperación de contraseña por email, bloqueo de cuentas por intentos fallidos 
+                    Sistema de autenticación seguro con roles y permisos. Incluye login/logout,
+                    recuperación de contraseña por email, bloqueo de cuentas por intentos fallidos
                     y gestión de sesiones de usuario.
                   </p>
                   <div class="mt-2">
@@ -513,8 +528,8 @@
               Información del Sistema
             </h6>
             <p class="mx-1 px-1 mb-2 small">
-              Este sistema está diseñado para la gestión integral de la libreria, incluyendo ventas, 
-              inventario, compras y administración. Cada módulo está optimizado para su función específica 
+              Este sistema está diseñado para la gestión integral de la libreria, incluyendo ventas,
+              inventario, compras y administración. Cada módulo está optimizado para su función específica
               y todos trabajan de manera integrada.
             </p>
             <hr>
@@ -525,7 +540,8 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <a href="#" class="btn btn-primary" onclick="window.open('https://deepwiki.com/aamendoza24/ProyectoABD', '_blank')">
+          <a href="#" class="btn btn-primary"
+            onclick="window.open('https://deepwiki.com/aamendoza24/ProyectoABD', '_blank')">
             <i class="fas fa-book me-2"></i>
             Documentación Completa
           </a>

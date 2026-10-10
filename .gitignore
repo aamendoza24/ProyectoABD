@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+env/
+flask_session/
+backups/
+tienda.db
+*.bin
+test_*.py

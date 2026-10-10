@@ -718,43 +718,55 @@
                     <!-- Información del Cliente -->
                     <div class="payment-section">
                         <h6 class="payment-section-title">
-                            <i class="fas fa-user me-2"></i>Información del Cliente
+                            <i class="fas fa-user-tag me-2"></i>Tipo de Cliente
                         </h6>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="clienteExistenteCheck">
-                            <label class="form-check-label" for="clienteExistenteCheck">Cliente existente</label>
-                        </div>
                         
-                        <!-- Sección para cliente existente -->
-                        <div id="clienteExistenteSection" style="display: none;">
-                            <div class="mb-3">
-                               <label for="buscarCliente" class="form-label">Buscar cliente (nombre o teléfono)</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="buscarCliente" placeholder="Nombre o teléfono" aria-describedby="buscarClienteHelp">
-                                    <button class="btn btn-outline-secondary" type="button" id="btnBuscarCliente">
-                                        <i class="fas fa-search"></i>
-                                    </button>
+                        <ul class="nav nav-pills nav-justified mb-3" id="clientTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tab-general" data-bs-toggle="pill" data-bs-target="#panel-general" type="button" role="tab">Cliente General</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-existente" data-bs-toggle="pill" data-bs-target="#panel-existente" type="button" role="tab">Registrado</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-nuevo" data-bs-toggle="pill" data-bs-target="#panel-nuevo" type="button" role="tab">Nvo. Cliente</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="clientTabsContent">
+                            <!-- Panel General -->
+                            <div class="tab-pane fade show active text-center p-3" id="panel-general" role="tabpanel">
+                                <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i>Venta rápida genérica al portador.</p>
+                                <span id="warningCreditoCliente" class="text-danger small fw-bold d-none">El Crédito requiere un cliente identificado.</span>
+                            </div>
+                            
+                            <!-- Panel Existente -->
+                            <div class="tab-pane fade p-2" id="panel-existente" role="tabpanel">
+                                <div class="mb-2">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" id="buscarCliente" placeholder="Nombre o num. celular...">
+                                        <button class="btn btn-outline-primary" type="button" id="btnBuscarCliente">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                    <small class="form-text text-muted" style="font-size: 0.70rem;">(Enter) para buscar.</small>
                                 </div>
-                                <small id="buscarClienteHelp" class="form-text text-muted">Escriba al menos 2 caracteres para buscar.</small>
-                                <div class="mt-2" id="resultadosCliente" style="display: none;" aria-live="polite">
-                                    <select class="form-select" id="listaClientes" size="1"></select>
+                                <div id="resultadosCliente" style="display: none;">
+                                    <label class="small text-primary fw-bold">Resultados:</label>
+                                    <select class="form-select form-select-sm" id="listaClientes" size="1"></select>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Sección para nuevo cliente -->
-                        <div id="nuevoClienteSection">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="clienteNombre" class="form-label">Nombre</label>
-                                        <input type="text" class="form-control" id="clienteNombre">
+                            
+                            <!-- Panel Nuevo -->
+                            <div class="tab-pane fade p-2" id="panel-nuevo" role="tabpanel">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label for="clienteNombre" class="form-label small">Nombre Completo</label>
+                                        <input type="text" class="form-control form-control-sm" id="clienteNombre" placeholder="Ej: Juan Perez">
                                     </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="clienteTelefono" class="form-label">Teléfono</label>
-                                        <input type="text" class="form-control" id="clienteTelefono">
+                                    <div class="col-md-6">
+                                        <label for="clienteTelefono" class="form-label small">Teléfono</label>
+                                        <input type="text" class="form-control form-control-sm" id="clienteTelefono" placeholder="Ej: 8888-8888">
                                     </div>
                                 </div>
                             </div>
@@ -769,33 +781,45 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="totalPago" class="form-label">Total a Pagar</label>
-                                    <input type="text" class="form-control bg-light" id="totalPago" readonly>
+                                    <label for="totalPago" class="form-label text-danger fw-bold">Total a Pagar</label>
+                                    <input type="text" class="form-control bg-light fw-bold text-danger border-danger" id="totalPago" readonly>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="dineroRecibido" class="form-label">Cantidad Recibida</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">C$</span>
-                                        <input type="number" class="form-control" id="dineroRecibido" required>
-                                    </div>
-                                    <div class="invalid-feedback" id="dineroRecibidoFeedback"></div>
+                                    <label for="tipoPago" class="form-label text-primary fw-bold">Forma de Pago</label>
+                                    <select class="form-select border-primary" id="tipoPago">
+                                        <option value="efectivo">Contado: Efectivo</option>
+                                        <option value="tarjeta">Contado: Tarjeta</option>
+                                        <option value="transferencia">Contado: Transfer.</option>
+                                        <option value="credito">Crédito a Plazos</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="tipoPago" class="form-label">Método de Pago</label>
-                                    <select class="form-select" id="tipoPago">
-                                        <option value="efectivo">Efectivo</option>
-                                        <option value="tarjeta">Tarjeta</option>
-                                        <option value="transferencia">Transferencia</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="cambio" class="form-label">Cambio</label>
+                                <div class="mb-3" id="wrapperDineroRecibido">
+                                    <label for="dineroRecibido" class="form-label" id="labelDineroRecibido">Dinero Recibido (C$)</label>
                                     <div class="input-group">
-                                        <span class="input-group-text">C$</span>
-                                        <input type="text" class="form-control bg-light" id="cambio" readonly>
+                                        <span class="input-group-text"><i class="fas fa-coins"></i></span>
+                                        <input type="number" step="0.01" class="form-control" id="dineroRecibido" required>
                                     </div>
+                                    <div class="invalid-feedback" id="dineroRecibidoFeedback"></div>
+                                </div>
+                                <div class="mb-3" id="wrapperCambio">
+                                    <label for="cambio" class="form-label text-success">Cambio Vuelto</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">C$</span>
+                                        <input type="text" class="form-control bg-light text-success fw-bold" id="cambio" readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3 d-none p-2 bg-light border-warning rounded border" id="wrapperPlazoCredito">
+                                    <label for="diasPlazo" class="form-label text-warning fw-bold mb-0"><i class="fas fa-calendar-alt me-1"></i>Plazo Autorizado</label>
+                                    <select class="form-select form-select-sm mt-1" id="diasPlazo">
+                                        <option value="15">15 Días Hábiles</option>
+                                        <option value="30" selected>30 Días (Menos de un Mes)</option>
+                                        <option value="45">45 Días</option>
+                                        <option value="60">60 Días (Financiamiento)</option>
+                                    </select>
+                                    <small class="text-muted d-block mt-1" style="font-size:0.7rem;">Si recibe abono hoy, anótelo en "Dinero Recibido".</small>
                                 </div>
                             </div>
                         </div>

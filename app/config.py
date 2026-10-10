@@ -23,7 +23,7 @@ class Config:
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USERNAME = 'aamendoza201@gmail.com'  # Cambia por tu correo
-    MAIL_PASSWORD = 'tdeo aeyf jelg fwph'  # Usa contraseñas de aplicación para Gmail
+    MAIL_PASSWORD = 'iqek utfx rzwj abvv'  # Usa contraseñas de aplicación para Gmail
     MAIL_DEFAULT_SENDER = ('Librería Indiana', 'aamendoza201@gmail.com')
     
     # Configuración de tokens

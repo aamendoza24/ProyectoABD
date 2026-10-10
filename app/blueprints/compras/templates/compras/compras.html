@@ -7,7 +7,7 @@
             <i class="fas fa-shopping-cart text-primary me-3"></i>
             Registro de Compras
         </h2>
-        <a href="{{ url_for('compras.historial') }}" class="btn btn-outline-primary">
+        <a href="{{ url_for('compras.historial_compras') }}" class="btn btn-outline-primary">
             <i class="fas fa-history me-2"></i>
             Ver Historial
         </a>
@@ -88,7 +88,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Columna derecha: Agregar Productos -->
         <div class="col-md-7">
             <div class="card shadow-sm h-100">
@@ -99,11 +99,12 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-5">
                             <div class="form-floating">
-                                <input type="text" id="buscarProducto" class="form-control" placeholder="Buscar producto"
-                                    autocomplete="off">
+                                <input type="text" id="buscarProducto" class="form-control"
+                                    placeholder="Buscar producto" autocomplete="off">
                                 <label for="buscarProducto">Buscar Producto</label>
                             </div>
-                            <div id="sugerencias" class="list-group position-absolute z-3" style="width: calc(100% - 1.5rem);">
+                            <div id="sugerencias" class="list-group position-absolute z-3"
+                                style="width: calc(100% - 1.5rem);">
                             </div>
                         </div>
                         <div class="col-md-2">

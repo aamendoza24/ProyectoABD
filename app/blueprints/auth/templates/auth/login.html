@@ -1,28 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Librería</title>
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
-    
+
     <!-- Fonts and icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
-        body, html {
+
+        body,
+        html {
             height: 100%;
             font-family: 'Public Sans', sans-serif;
             color: #333;
         }
-        
+
         .auth-container {
             height: 100%;
             width: 100%;
@@ -35,7 +38,7 @@
             background-repeat: no-repeat;
             position: relative;
         }
-        
+
         .auth-container::before {
             content: '';
             position: absolute;
@@ -46,7 +49,7 @@
             background-color: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
         }
-        
+
         .auth-card {
             width: 400px;
             border-radius: 10px;
@@ -57,40 +60,40 @@
             z-index: 10;
             animation: fadeIn 0.5s ease-out forwards;
         }
-        
+
         .auth-header {
             background-color: #4e73df;
             color: white;
             padding: 25px 20px;
             text-align: center;
         }
-        
+
         .auth-header img {
             max-width: 150px;
             margin-bottom: 15px;
         }
-        
+
         .auth-header h4 {
             margin: 0;
             font-weight: 600;
             font-size: 1.5rem;
         }
-        
+
         .auth-body {
             padding: 30px;
         }
-        
+
         .form-group {
             margin-bottom: 20px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
             color: #495057;
         }
-        
+
         .form-control {
             width: 100%;
             padding: 12px 15px;
@@ -99,13 +102,13 @@
             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
             font-size: 1rem;
         }
-        
+
         .form-control:focus {
             border-color: #4e73df;
             box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
             outline: none;
         }
-        
+
         .btn-primary {
             background-color: #4e73df;
             border: none;
@@ -118,56 +121,56 @@
             transition: background-color 0.15s ease-in-out;
             font-size: 1rem;
         }
-        
+
         .btn-primary:hover {
             background-color: #2e59d9;
         }
-        
+
         .auth-footer {
             padding: 15px 30px;
             text-align: center;
             border-top: 1px solid #eee;
             background-color: #f8f9fc;
         }
-        
+
         .auth-footer a {
             color: #4e73df;
             text-decoration: none;
         }
-        
+
         .auth-footer a:hover {
             text-decoration: underline;
         }
-        
+
         .alert {
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 5px;
         }
-        
+
         .alert-danger {
             background-color: rgba(231, 74, 59, 0.1);
             color: #e74a3b;
             border: 1px solid rgba(231, 74, 59, 0.2);
         }
-        
+
         .alert-success {
             background-color: rgba(28, 200, 138, 0.1);
             color: #1cc88a;
             border: 1px solid rgba(28, 200, 138, 0.2);
         }
-        
+
         .form-text {
             display: block;
             margin-top: 5px;
             font-size: 0.85rem;
             color: #6c757d;
         }
-        
+
         .password-toggle {
             position: relative;
         }
-        
+
         .password-toggle i {
             position: absolute;
             right: 10px;
@@ -175,54 +178,62 @@
             cursor: pointer;
             color: #6c757d;
         }
-        
+
         .forgot-password {
             text-align: right;
             margin-bottom: 20px;
         }
-        
+
         .forgot-password a {
             color: #4e73df;
             font-size: 0.85rem;
             text-decoration: none;
         }
-        
+
         .forgot-password a:hover {
             text-decoration: underline;
         }
-        
+
         /* Animaciones */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <img src="{{ url_for('static', filename='img/logo_final.png') }}" alt="Logo">
+                <img src="{{ url_for('static', filename='img/logo_chalotte.png') }}" alt="Logo">
 
             </div>
-            
+
             <div class="auth-body">
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
                 {% endwith %}
-                
+
                 <form id="loginForm" method="POST" action="{{ url_for('auth.login') }}">
                     <div class="form-group">
                         <label for="username">Usuario</label>
                         <input type="text" class="form-control" id="username" name="username" required autofocus>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="password">Contraseña</label>
                         <div class="password-toggle">
@@ -230,50 +241,51 @@
                             <i class="fa fa-eye-slash toggle-password"></i>
                         </div>
                     </div>
-                    
+
                     <div class="forgot-password">
                         <a href="{{ url_for('auth.forgot_password') }}">¿Olvidaste tu contraseña?</a>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
                 </form>
             </div>
-            
+
             <div class="auth-footer">
-                <p>© {{ current_year }} Librería Indiana- Todos los derechos reservados</p>
+                <p>© {{ current_year }} Variedades Charlotte- Todos los derechos reservados</p>
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Toggle password visibility
             const togglePassword = document.querySelector('.toggle-password');
             const passwordInput = document.querySelector('#password');
-            
-            togglePassword.addEventListener('click', function() {
+
+            togglePassword.addEventListener('click', function () {
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
                 this.classList.toggle('fa-eye');
                 this.classList.toggle('fa-eye-slash');
             });
-            
+
             // Form validation
             const loginForm = document.getElementById('loginForm');
-            
-            loginForm.addEventListener('submit', function(event) {
+
+            loginForm.addEventListener('submit', function (event) {
                 const username = document.getElementById('username').value.trim();
                 const password = document.getElementById('password').value.trim();
-                
+
                 if (!username || !password) {
                     event.preventDefault();
                     alert('Por favor, completa todos los campos');
                     return false;
                 }
-                
+
                 return true;
             });
         });
     </script>
 </body>
+
 </html>

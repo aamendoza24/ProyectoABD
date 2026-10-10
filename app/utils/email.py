@@ -11,7 +11,7 @@ def generate_token():
 def send_password_reset_email(user_email, token):
     """Envía un correo electrónico con el enlace para restablecer la contraseña"""
     msg = Message(
-        subject="Recuperación de Contraseña - Librería",
+        subject="Recuperación de Contraseña - Variedades Charlotte",
         recipients=[user_email]
     )
     
@@ -38,7 +38,7 @@ def send_password_reset_email(user_email, token):
     Si no solicitaste este cambio, puedes ignorar este correo y tu contraseña permanecerá sin cambios.
     
     Saludos,
-    Equipo de Librería Indiana
+    Equipo de Variedades Charlotte
     """
     
     # Enviar el correo

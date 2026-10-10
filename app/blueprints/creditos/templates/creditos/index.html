@@ -1,0 +1,414 @@
+{% extends "layout.html" %}
+
+{% block title %}Cuentas por Cobrar{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
+
+<style>
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-activo {
+        background-color: rgba(246, 194, 62, 0.1);
+        color: #f6c23e;
+        border: 1px solid rgba(246, 194, 62, 0.2);
+    }
+    
+    .status-pagado {
+        background-color: rgba(28, 200, 138, 0.1);
+        color: #1cc88a;
+        border: 1px solid rgba(28, 200, 138, 0.2);
+    }
+    
+    .status-vencido {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+        border: 1px solid rgba(231, 74, 59, 0.2);
+    }
+    
+    .action-btn {
+        margin: 0 2px;
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .modal-header {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    .filter-section {
+        background-color: #f8f9fc;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #e3e6f0;
+    }
+    
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .card {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        border: none;
+        border-radius: 0.35rem;
+    }
+    
+    .activity-log {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .activity-item {
+        padding: 10px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-time {
+        font-size: 0.8rem;
+        color: #858796;
+    }
+    
+    .activity-type {
+        font-weight: 600;
+        color: #1cc88a;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h4 class="page-title">Cuentas por Cobrar (Créditos)</h4>
+        <ul class="breadcrumbs">
+            <li class="nav-home">
+                <a href="{{ url_for('dashboard.index') }}">
+                    <i class="fas fa-home"></i>
+                </a>
+            </li>
+            <li class="separator">
+                <i class="fas fa-angle-right"></i>
+            </li>
+            <li class="nav-item">
+                <a href="#">Operaciones</a>
+            </li>
+            <li class="separator">
+                <i class="fas fa-angle-right"></i>
+            </li>
+            <li class="nav-item">
+                <a href="#">Cuentas por Cobrar</a>
+            </li>
+        </ul>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Listado de Créditos</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="filter-section mb-4">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="filterStatus">Estado</label>
+                                    <select class="form-control" id="filterStatus">
+                                        <option value="">Todos</option>
+                                        <option value="activo">Activos</option>
+                                        <option value="pagado">Pagados</option>
+                                        <option value="vencido">Vencidos</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="creditosTable" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID Crédito</th>
+                                    <th>Cliente</th>
+                                    <th>Monto Deuda</th>
+                                    <th>Saldo Pendiente</th>
+                                    <th>Fecha Límite</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in creditos %}
+                                <tr>
+                                    <td>#CR-{{ c.id }}</td>
+                                    <td>{{ c.cliente }}</td>
+                                    <td>C$ {{ "%.2f"|format(c.monto_deuda) }}</td>
+                                    <td><strong>C$ {{ "%.2f"|format(c.saldo_pendiente) }}</strong></td>
+                                    <td>{{ c.fecha_limite }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ c.estado }}">{{ c.estado|capitalize }}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm action-btn" onclick="viewCredito({{ c.id }})" title="Ver Detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if c.estado != 'pagado' %}
+                                        <button class="btn btn-success btn-sm action-btn" onclick="openAbonar({{ c.id }}, '{{ c.saldo_pendiente }}')" title="Abonar">
+                                            <i class="fas fa-dollar-sign"></i> Abono
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalles -->
+<div class="modal fade" id="viewCreditoModal" tabindex="-1" aria-labelledby="viewCreditoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewCreditoModalLabel">Expediente del Crédito</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Información General</h6>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>ID Crédito</th>
+                                <td id="vId"></td>
+                            </tr>
+                            <tr>
+                                <th>ID Venta Asociada</th>
+                                <td id="vVenta"></td>
+                            </tr>
+                            <tr>
+                                <th>Cliente</th>
+                                <td id="vCliente"></td>
+                            </tr>
+                            <tr>
+                                <th>Teléfono</th>
+                                <td id="vTel"></td>
+                            </tr>
+                            <tr>
+                                <th>Estado</th>
+                                <td id="vEstado"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Finanzas</h6>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Otorgamiento</th>
+                                <td id="vCreacion"></td>
+                            </tr>
+                            <tr>
+                                <th>Límite de Pago</th>
+                                <td id="vLimite"></td>
+                            </tr>
+                            <tr>
+                                <th>Deuda Inicial</th>
+                                <td id="vDeuda" class="text-danger"></td>
+                            </tr>
+                            <tr>
+                                <th>Saldo Pendiente</th>
+                                <td id="vSaldo" class="text-primary font-weight-bold"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6 class="font-weight-bold">Historial de Pagos</h6>
+                        <div class="activity-log" id="pagosLog">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Abonar -->
+<div class="modal fade" id="abonarModal" tabindex="-1" aria-labelledby="abonarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="abonarModalLabel">Registrar Abono a Crédito</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="abonarForm">
+                    <input type="hidden" id="abonarCreditId">
+                    <div class="form-group mb-3">
+                        <label>Saldo Actual Pendiente</label>
+                        <input type="text" class="form-control" id="abonarMax" readonly disabled>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="abonarMonto" class="required-field">Monto a Abonar (C$)</label>
+                        <input type="number" step="0.01" class="form-control" id="abonarMonto" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="abonarMetodo">Método de Pago</label>
+                        <select class="form-control" id="abonarMetodo" required>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia Bancaria</option>
+                            <option value="tarjeta">Tarjeta</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="abonarReferencia">Referencia / Comprobante (Opcional)</label>
+                        <input type="text" class="form-control" id="abonarReferencia" placeholder="# Voucher">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="submitAbono()">Registrar Abono</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    var table;
+    $(document).ready(function() {
+        table = $('#creditosTable').DataTable({
+            responsive: true,
+            language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json' },
+            order: [[4, "asc"]] // Ordenar por fecha límite primero
+        });
+
+        $('#filterStatus').on('change', function() {
+            var val = $(this).val();
+            table.column(5).search(val ? val : '', true, false).draw();
+        });
+    });
+    
+    function viewCredito(id) {
+        $.ajax({
+            url: "/creditos/" + id + "/detalles",
+            type: "GET",
+            success: function(res) {
+                if(res.success) {
+                    var d = res.detalles;
+                    $('#vId').text("#CR-" + d.id);
+                    $('#vVenta').text(d.venta_id);
+                    $('#vCliente').text(d.cliente_nombre);
+                    $('#vTel').text(d.cliente_telefono);
+                    $('#vCreacion').text(d.fecha_creacion);
+                    $('#vLimite').text(d.fecha_limite);
+                    $('#vDeuda').text("C$ " + d.monto_deuda.toFixed(2));
+                    $('#vSaldo').text("C$ " + d.saldo_pendiente.toFixed(2));
+                    
+                    var bClass = d.estado == 'pagado' ? 'status-pagado' : (d.estado == 'vencido' ? 'status-vencido' : 'status-activo');
+                    $('#vEstado').html('<span class="status-badge ' + bClass + '">' + d.estado + '</span>');
+                    
+                    var log = $('#pagosLog');
+                    log.empty();
+                    
+                    if(d.pagos && d.pagos.length > 0) {
+                        d.pagos.forEach(function(p) {
+                            var item = $('<div class="activity-item"></div>');
+                            item.append('<div class="activity-time">' + p.fecha_pago + ' | ' + p.metodo_pago + ' (' + p.referencia + ')</div>');
+                            item.append('<div class="activity-type">+ C$ ' + p.monto.toFixed(2) + '</div>');
+                            log.append(item);
+                        });
+                    } else {
+                        log.append('<div class="text-center text-muted">No existen abonos aún.</div>');
+                    }
+                    
+                    $('#viewCreditoModal').modal('show');
+                }
+            }
+        });
+    }
+
+    function openAbonar(id, saldo_pendiente) {
+        $('#abonarCreditId').val(id);
+        $('#abonarMax').val("C$ " + saldo_pendiente);
+        $('#abonarMonto').attr('max', saldo_pendiente).val('');
+        $('#abonarMetodo').val('efectivo');
+        $('#abonarReferencia').val('');
+        $('#abonarModal').modal('show');
+    }
+
+    function submitAbono() {
+        var id = $('#abonarCreditId').val();
+        var monto = $('#abonarMonto').val();
+        var metodo = $('#abonarMetodo').val();
+        var ref = $('#abonarReferencia').val();
+
+        if(!monto || monto <= 0) {
+            Swal.fire("Error", "Monto inválido", "error");
+            return;
+        }
+
+        $.ajax({
+            url: "/creditos/" + id + "/abonar",
+            type: "POST",
+            data: { monto: monto, metodo_pago: metodo, referencia: ref },
+            success: function(res) {
+                if(res.success) {
+                    $('#abonarModal').modal('hide');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Abono Procesado',
+                        text: res.message,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire("Error", res.message, "error");
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
